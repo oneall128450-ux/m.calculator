@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <!-- إعدادات مظهر التطبيق المستقل للجوال -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1a2332">
+    <meta name="theme-color" content="#0f172a">
 
+    <!-- ربط التطبيق بملف الإعدادات والأيقونة -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -30,11 +32,12 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        /* إخفاء أسهم حقول الأرقام الافتراضية واجبار اتجاه الأرقام */
+        
+        /* إخفاء أسهم حقول الأرقام الافتراضية وإجبار اتجاه الأرقام لليسار */
         input[type="number"] {
             -webkit-appearance: none;
             margin: 0;
-            direction: ltr; /* يجعل الكرسر والكتابة متناسقة للأرقام */
+            direction: ltr; /* يحل مشكلة الكرسر العكسي */
             text-align: left;
         }
         input::-webkit-outer-spin-button,
@@ -60,12 +63,14 @@
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none">
 
+    <!-- الواجهة وبنية الحاسبة -->
     <div class="max-w-md mx-auto px-4 pt-6">
         <div class="text-center mb-6">
             <h1 class="text-2xl font-bold text-emerald-400 tracking-wide">حاسبة التداول</h1>
             <p class="text-xs text-slate-400 mt-1">إدارة الصفقات والنسب المتقدمة</p>
         </div>
 
+        <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-slate-400">المبلغ الكلي</span>
@@ -77,6 +82,7 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium">يساوي: 0.00 ر.س</div>
         </div>
 
+        <!-- بطاقة اختيار طريقة الحساب -->
         <div class="glass-card rounded-2xl p-4 mb-4">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -86,11 +92,13 @@
                 </label>
             </div>
 
+            <!-- حقل إدخال النسبة أو المبلغ المباشر -->
             <div id="inputFieldContainer" class="focus-ring border border-slate-800 bg-slate-900/50 rounded-xl p-3 flex items-center mb-3">
                 <span id="inputUnit" class="text-slate-500 font-bold ml-2">%</span>
                 <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none">
             </div>
 
+            <!-- أزرار النسبة السريعة -->
             <div id="quickRatios" class="grid grid-cols-4 gap-2">
                 <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="1">1%</button>
                 <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="2">2%</button>
@@ -101,6 +109,7 @@
             <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
         </div>
 
+        <!-- خيار أهداف منفصلة للربح والخسارة -->
         <div class="glass-card rounded-2xl p-4 mb-4">
             <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-slate-300">أهداف منفصلة للربح والخسارة</span>
@@ -110,6 +119,7 @@
                 </label>
             </div>
 
+            <!-- الحقول المتقدمة المنبثقة -->
             <div id="advancedFields" class="mt-4 pt-3 border-t border-slate-800/60 hidden space-y-3">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -130,6 +140,7 @@
             </div>
         </div>
 
+        <!-- بطاقة النتائج المباشرة -->
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-emerald-500/50">
                 <span class="text-xs font-medium text-slate-400 block mb-1">الربح (من النسبة) (+)</span>
@@ -141,11 +152,13 @@
             </div>
         </div>
 
+        <!-- زر حفظ الحسبة الحالي في السجل -->
         <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2 mb-6">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             حفظ الحسبة الحالية في سجل الجلسة
         </button>
 
+        <!-- سجل صفقات الجلسة المؤقت -->
         <div class="glass-card rounded-2xl p-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
@@ -154,11 +167,13 @@
                 </div>
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
-            <div id="logContainer" class="space-y-2 max-h-80 overflow-y-auto pr-1 text-xs">
-                </div>
+            <div id="logContainer" class="space-y-2 pr-1 text-xs">
+                <!-- صفقات مضافة برمجياً تظهر هنا -->
+            </div>
         </div>
     </div>
 
+    <!-- كود التشغيل والحساب الذكي والتخزين الدائم -->
     <script>
         let isUSD = true;
         const exchangeRate = 3.75;
@@ -238,7 +253,7 @@
             }
         }
 
-        // حفظ السجل الحالي في الذاكرة المحلية لضمان عدم ضياعه
+        // حفظ السجل الحالي في الذاكرة المحلية
         function saveLogToStorage() {
             localStorage.setItem('trading_sessions', logContainer.innerHTML);
         }
@@ -247,7 +262,6 @@
         currencyToggle.addEventListener('click', () => {
             isUSD = !isUSD;
             currencyToggle.innerText = isUSD ? '$ USD' : 'ر.س SAR';
-            // تحديث رمز العملة المخصصة داخل الحقل الثابت إن وُجد
             if (calcMethodToggle.checked) {
                 inputUnit.innerText = isUSD ? "$" : "ر.س";
             }
@@ -324,6 +338,16 @@
             
             logContainer.insertBefore(logItem, logContainer.firstChild);
             saveLogToStorage(); // حفظ في الـ LocalStorage فوراً
-        </script>
+        }); // <-- هنا كان القوس الناقص اللي عطل الدنيا!
+
+        // زر مسح السجل
+        clearLogBtn.addEventListener('click', () => {
+            logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
+            localStorage.removeItem('trading_sessions');
+        });
+
+        // التشغيل الأولي
+        loadSavedLog();
+    </script>
 </body>
 </html>
