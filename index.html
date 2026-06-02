@@ -16,17 +16,26 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         
-        /* منع التحديث عند السحب لأسفل ومنع الارتداد */
+        /* ضبط السكرول العمودي ومنع ارتداد التحديث */
         html, body {
             font-family: 'Tajawal', sans-serif;
             overscroll-behavior-y: contain;
             overflow-x: hidden;
+            overflow-y: auto; /* يسمح بالنزول لأسفل لمشاهدة الصفقات */
             background-color: #0f172a;
+            height: 100%;
         }
         .glass-card {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* إخفاء أسهم حقول الأرقام الافتراضية واجبار اتجاه الأرقام */
+        input[type="number"] {
+            -webkit-appearance: none;
+            margin: 0;
+            direction: ltr; /* يجعل الكرسر والكتابة متناسقة للأرقام */
+            text-align: left;
         }
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -64,7 +73,7 @@
                     $ USD
                 </button>
             </div>
-            <input type="number" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none text-left px-1">
+            <input type="number" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none px-1">
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium">يساوي: 0.00 ر.س</div>
         </div>
 
@@ -79,7 +88,7 @@
 
             <div id="inputFieldContainer" class="focus-ring border border-slate-800 bg-slate-900/50 rounded-xl p-3 flex items-center mb-3">
                 <span id="inputUnit" class="text-slate-500 font-bold ml-2">%</span>
-                <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none text-left">
+                <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none">
             </div>
 
             <div id="quickRatios" class="grid grid-cols-4 gap-2">
@@ -107,14 +116,14 @@
                         <label class="text-xs text-emerald-400 font-medium block mb-1">نسبة هدف الربح</label>
                         <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
                             <span class="text-slate-600 text-xs font-bold ml-1">%</span>
-                            <input type="number" id="profitTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none text-left">
+                            <input type="number" id="profitTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none">
                         </div>
                     </div>
                     <div>
                         <label class="text-xs text-rose-400 font-medium block mb-1">نسبة وقف الخسارة</label>
                         <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
                             <span class="text-slate-600 text-xs font-bold ml-1">%</span>
-                            <input type="number" id="lossTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none text-left">
+                            <input type="number" id="lossTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none">
                         </div>
                     </div>
                 </div>
@@ -137,7 +146,7 @@
             حفظ الحسبة الحالية في سجل الجلسة
         </button>
 
-        <div class="glass-card rounded-2xl p-4">
+        <div class="glass-card rounded-2xl p-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -145,7 +154,7 @@
                 </div>
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
-            <div id="logContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
+            <div id="logContainer" class="space-y-2 max-h-80 overflow-y-auto pr-1 text-xs">
                 </div>
         </div>
     </div>
@@ -238,6 +247,10 @@
         currencyToggle.addEventListener('click', () => {
             isUSD = !isUSD;
             currencyToggle.innerText = isUSD ? '$ USD' : 'ر.س SAR';
+            // تحديث رمز العملة المخصصة داخل الحقل الثابت إن وُجد
+            if (calcMethodToggle.checked) {
+                inputUnit.innerText = isUSD ? "$" : "ر.س";
+            }
             calculate();
         });
 
@@ -296,7 +309,7 @@
             let typeLabel = isPercentageMethod ? `نسبة (${inputVal}%)` : `مبلغ ثابت`;
             
             const logItem = document.createElement('div');
-            logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 animate-fadeIn mb-2";
+            logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2";
             
             logItem.innerHTML = `
                 <div class="flex justify-between font-bold text-slate-400">
@@ -311,16 +324,6 @@
             
             logContainer.insertBefore(logItem, logContainer.firstChild);
             saveLogToStorage(); // حفظ في الـ LocalStorage فوراً
-        });
-
-        // زر مسح السجل بالكامل
-        clearLogBtn.addEventListener('click', () => {
-            logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
-            localStorage.removeItem('trading_sessions'); // مسح الذاكرة
-        });
-
-        // تشغيل التحميل الأولي عند فتح التطبيق
-        loadSavedLog();
-    </script>
+        </script>
 </body>
 </html>
