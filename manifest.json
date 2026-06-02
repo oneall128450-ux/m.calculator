@@ -1,0 +1,18 @@
+{
+  "name": "حاسبة التداول الاحترافية",
+  "short_name": "حاسبة التداول",
+  "description": "تطبيق إدارة الصفقات والنسب المتقدمة للتداول",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a2332",
+  "theme-color": "#1a2332",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
