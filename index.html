@@ -1,24 +1,42 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-   <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a2332">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a2332">
 
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
-        body { font-family: 'Tajawal', sans-serif; background-color: #0f172a; color: #f8fafc; touch-action: manipulation; }
-        .glass-card { background: rgba(30, 41, 59, 0.95); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2rem; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .focus-ring:focus-within { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         
+        /* منع التحديث عند السحب لأسفل ومنع الارتداد */
+        html, body {
+            font-family: 'Tajawal', sans-serif;
+            overscroll-behavior-y: contain;
+            overflow-x: hidden;
+            background-color: #0f172a;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .focus-ring:focus-within {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
         .toggle-dot {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -31,335 +49,278 @@
         }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center justify-start min-h-screen py-8">
+<body class="text-slate-200 min-h-screen pb-12 select-none">
 
-    <div class="glass-card w-full max-w-md p-6 sm:p-8 space-y-5">
-        
-        <div class="text-center space-y-1">
-            <h1 class="text-2xl font-black text-emerald-400">حاسبة التداول</h1>
-            <p class="text-xs text-slate-500 font-bold">إدارة الصفقات والنسب المتقدمة</p>
+    <div class="max-w-md mx-auto px-4 pt-6">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-emerald-400 tracking-wide">حاسبة التداول</h1>
+            <p class="text-xs text-slate-400 mt-1">إدارة الصفقات والنسب المتقدمة</p>
         </div>
 
-        <!-- 1. قسم المبلغ والعملة -->
-        <div>
-            <div class="flex bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 focus-ring transition-all">
-                <!-- زر العملة -->
-                <button id="currency-btn" onclick="toggleCurrency()" class="bg-slate-700 hover:bg-slate-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-slate-600 w-28 shrink-0 tap-active">
-                    USD $
+        <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-slate-400">المبلغ الكلي</span>
+                <button id="currencyToggle" class="tap-active bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700">
+                    $ USD
                 </button>
-                <!-- إدخال المبلغ -->
-                <input type="number" id="amount" placeholder="المبلغ الكلي" class="w-full bg-transparent px-4 py-4 text-xl font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
             </div>
-            <!-- نص التحويل -->
-            <div class="mt-2 px-2 flex items-center text-xs font-bold text-slate-400">
-                <svg class="w-4 h-4 ml-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                <span id="conversion-text">يساوي: 0.00 ر.س</span>
-            </div>
+            <input type="number" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none text-left px-1">
+            <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium">يساوي: 0.00 ر.س</div>
         </div>
 
-        <div class="h-px w-full bg-slate-800 rounded-full"></div>
-
-        <!-- 2. قسم النسبة مع مفتاح التبديل -->
-        <div class="space-y-3">
-            <div class="flex bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
-                
-                <!-- مفتاح التبديل التفاعلي لحجم الصفقة -->
-                <div class="px-4 py-4 border-l border-slate-700 flex items-center justify-center shrink-0">
-                    <label for="toggle-switch" class="flex items-center cursor-pointer select-none">
-                        <div class="relative">
-                            <input type="checkbox" id="toggle-switch" class="sr-only" checked onchange="toggleBaseMode()">
-                            <div id="switch-bg" class="toggle-bg block w-14 h-8 bg-emerald-500 rounded-full"></div>
-                            <div id="switch-dot" class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow transition-transform translate-x-6"></div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- إدخال النسبة -->
-                <input type="number" id="percent" placeholder="النسبة لخصم الصفقة" class="w-full bg-transparent px-2 py-4 text-xl font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
-                
-                <!-- علامة % -->
-                <div class="px-4 py-4 bg-slate-800/50 font-black text-slate-500 text-xl border-r border-slate-700 shrink-0">
-                    %
-                </div>
-            </div>
-
-            <!-- أزرار النسب السريعة الفورية -->
-            <div class="grid grid-cols-4 gap-2">
-                <button onclick="quickPercent(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">1%</button>
-                <button onclick="quickPercent(2)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">2%</button>
-                <button onclick="quickPercent(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">5%</button>
-                <button onclick="quickPercent(10)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">10%</button>
-            </div>
-            
-            <!-- قيمة النسبة المنفصلة (حجم الصفقة) -->
-            <div id="percent-info-box" class="mt-2 px-2 flex items-center text-xs font-bold text-emerald-500 transition-opacity">
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span id="percent-value-text">قيمة النسبة (الصفقة): 0.00 $</span>
-            </div>
-        </div>
-
-        <!-- 3. قسم خيار الأهداف المنفصلة -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-2xl border border-slate-700/50">
-                <span class="text-xs font-bold text-slate-300">أهداف منفصلة للربح والخسارة</span>
-                <label for="custom-targets-toggle" class="flex items-center cursor-pointer select-none">
-                    <div class="relative">
-                        <input type="checkbox" id="custom-targets-toggle" class="sr-only" onchange="toggleCustomTargets()">
-                        <div id="targets-switch-bg" class="toggle-bg block w-12 h-7 bg-slate-600 rounded-full"></div>
-                        <div id="targets-switch-dot" class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow transition-transform"></div>
-                    </div>
+        <div class="glass-card rounded-2xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-4">
+                <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
+                <label class="relative inline-flex items-center cursor-pointer tap-active">
+                    <input type="checkbox" id="calcMethodToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-dot peer-checked:bg-emerald-500 toggle-bg"></div>
                 </label>
             </div>
 
-            <!-- حقول الأهداف المنفصلة (تظهر فقط عند التفعيل) -->
-            <div id="custom-targets-section" class="grid grid-cols-2 gap-3 hidden transition-all">
-                <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-emerald-400 mr-1">نسبة هدف الربح</label>
-                    <div class="flex bg-slate-800 rounded-xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
-                        <input type="number" id="custom-profit-pct" placeholder="ربح %" class="w-full bg-transparent px-2 py-2.5 text-sm font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
-                        <span class="px-2 text-xs font-bold text-slate-500">%</span>
+            <div id="inputFieldContainer" class="focus-ring border border-slate-800 bg-slate-900/50 rounded-xl p-3 flex items-center mb-3">
+                <span id="inputUnit" class="text-slate-500 font-bold ml-2">%</span>
+                <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none text-left">
+            </div>
+
+            <div id="quickRatios" class="grid grid-cols-4 gap-2">
+                <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="1">1%</button>
+                <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="2">2%</button>
+                <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="5">5%</button>
+                <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="10">10%</button>
+            </div>
+            
+            <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-slate-300">أهداف منفصلة للربح والخسارة</span>
+                <label class="relative inline-flex items-center cursor-pointer tap-active">
+                    <input type="checkbox" id="advancedTargetsToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-dot peer-checked:bg-emerald-500 toggle-bg"></div>
+                </label>
+            </div>
+
+            <div id="advancedFields" class="mt-4 pt-3 border-t border-slate-800/60 hidden space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-emerald-400 font-medium block mb-1">نسبة هدف الربح</label>
+                        <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
+                            <span class="text-slate-600 text-xs font-bold ml-1">%</span>
+                            <input type="number" id="profitTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none text-left">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-rose-400 font-medium block mb-1">نسبة وقف الخسارة</label>
+                        <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
+                            <span class="text-slate-600 text-xs font-bold ml-1">%</span>
+                            <input type="number" id="lossTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none text-left">
+                        </div>
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-rose-400 mr-1">نسبة وقف الخسارة</label>
-                    <div class="flex bg-slate-800 rounded-xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
-                        <input type="number" id="custom-loss-pct" placeholder="خسارة %" class="w-full bg-transparent px-2 py-2.5 text-sm font-bold outline-none text-center text-rose-300" dir="ltr" oninput="calculate()">
-                        <span class="px-2 text-xs font-bold text-slate-500">%</span>
-                    </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-emerald-500/50">
+                <span class="text-xs font-medium text-slate-400 block mb-1">الربح (من النسبة) (+)</span>
+                <div id="profitOutput" class="text-xl font-bold text-emerald-400">0.00</div>
+            </div>
+            <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-rose-500/50">
+                <span class="text-xs font-medium text-slate-400 block mb-1">الخسارة (من النسبة) (-)</span>
+                <div id="lossOutput" class="text-xl font-bold text-rose-400">0.00</div>
+            </div>
+        </div>
+
+        <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2 mb-6">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            حفظ الحسبة الحالية في سجل الجلسة
+        </button>
+
+        <div class="glass-card rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    سجل صفقات الجلسة المؤقت
                 </div>
+                <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
+            <div id="logContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
+                </div>
         </div>
-
-        <!-- 4. قسم النتائج النهائية -->
-        <div class="grid grid-cols-2 gap-4 pt-1">
-            <!-- الربح -->
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all" id="box-plus">
-                <span id="label-plus" class="block text-[10px] text-emerald-500 font-bold mb-1 uppercase tracking-wider">الربح (من النسبة) (+)</span>
-                <div id="res-plus" class="text-xl sm:text-2xl font-black text-emerald-400">0.00</div>
-            </div>
-            <!-- الخسارة -->
-            <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-center transition-all" id="box-minus">
-                <span id="label-minus" class="block text-[10px] text-rose-500 font-bold mb-1 uppercase tracking-wider">الخسارة (من النسبة) (-)</span>
-                <div id="res-minus" class="text-xl sm:text-2xl font-black text-rose-400">0.00</div>
-            </div>
-        </div>
-
-        <!-- حفظ الصفقات الفوري في سجل الجلسة -->
-        <div class="pt-1">
-            <button onclick="saveCurrentTrade()" class="w-full bg-slate-750 hover:bg-slate-700 text-slate-400 hover:text-emerald-400 py-3 rounded-2xl text-xs font-bold border border-slate-700 border-dashed transition-all flex items-center justify-center gap-1 tap-active">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                حفظ الحسبة الحالية في سجل الجلسة
-            </button>
-        </div>
-
-    </div>
-
-    <!-- سجل الجلسة السريع -->
-    <div id="session-log-card" class="glass-card w-full max-w-md p-6 mt-6 space-y-4 hidden transition-all">
-        <div class="flex justify-between items-center">
-            <h2 class="text-sm font-bold text-slate-400 flex items-center gap-1">
-                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                سجل صفقات الجلسة المؤقت
-            </h2>
-            <button onclick="clearLog()" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold tap-active">مسح السجل</button>
-        </div>
-        <div id="log-container" class="space-y-3 max-h-48 overflow-y-auto pr-1"></div>
     </div>
 
     <script>
         let isUSD = true;
-        let isBaseCalculated = true;
-        let useCustomTargets = false;
         const exchangeRate = 3.75;
-        let savedTrades = [];
 
-        function quickPercent(val) {
-            document.getElementById('percent').value = val;
-            calculate();
-        }
+        const totalAmountInput = document.getElementById('totalAmount');
+        const strategyInput = document.getElementById('strategyInput');
+        const profitTargetInput = document.getElementById('profitTargetInput');
+        const lossTargetInput = document.getElementById('lossTargetInput');
+        
+        const currencyToggle = document.getElementById('currencyToggle');
+        const calcMethodToggle = document.getElementById('calcMethodToggle');
+        const advancedTargetsToggle = document.getElementById('advancedTargetsToggle');
+        
+        const convertedAmount = document.getElementById('convertedAmount');
+        const methodLabel = document.getElementById('methodLabel');
+        const inputUnit = document.getElementById('inputUnit');
+        const dealValueOutput = document.getElementById('dealValueOutput');
+        
+        const profitOutput = document.getElementById('profitOutput');
+        const lossOutput = document.getElementById('lossOutput');
+        
+        const advancedFields = document.getElementById('advancedFields');
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const logContainer = document.getElementById('logContainer');
+        const clearLogBtn = document.getElementById('clearLogBtn');
 
-        function toggleCurrency() {
-            const amountEl = document.getElementById('amount');
-            let amount = parseFloat(amountEl.value) || 0;
-
-            if (amount > 0) {
-                if (isUSD) {
-                    amountEl.value = (amount * exchangeRate).toFixed(2);
-                } else {
-                    amountEl.value = (amount / exchangeRate).toFixed(2);
-                }
-            }
-
-            isUSD = !isUSD;
-            const btn = document.getElementById('currency-btn');
-            if (isUSD) {
-                btn.innerText = 'USD $';
-                btn.className = 'bg-slate-700 hover:bg-slate-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-slate-600 w-28 shrink-0 tap-active';
-            } else {
-                btn.innerText = 'SA ر.س';
-                btn.className = 'bg-emerald-700 hover:bg-emerald-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-emerald-600 w-28 shrink-0 tap-active';
-            }
-            calculate();
-        }
-
-        function toggleBaseMode() {
-            const toggle = document.getElementById('toggle-switch');
-            isBaseCalculated = toggle.checked;
-
-            const switchBg = document.getElementById('switch-bg');
-            const switchDot = document.getElementById('switch-dot');
-            const infoBox = document.getElementById('percent-info-box');
-
-            if (isBaseCalculated) {
-                switchBg.className = 'toggle-bg block w-14 h-8 bg-emerald-500 rounded-full';
-                switchDot.style.transform = 'translateX(24px)';
-                infoBox.style.opacity = '1';
-                updateResultLabels();
-            } else {
-                switchBg.className = 'toggle-bg block w-14 h-8 bg-slate-600 rounded-full';
-                switchDot.style.transform = 'translateX(0px)';
-                infoBox.style.opacity = '0.4';
-                updateResultLabels();
-            }
-            calculate();
-        }
-
-        function toggleCustomTargets() {
-            const toggle = document.getElementById('custom-targets-toggle');
-            useCustomTargets = toggle.checked;
-
-            const switchBg = document.getElementById('targets-switch-bg');
-            const switchDot = document.getElementById('targets-switch-dot');
-            const section = document.getElementById('custom-targets-section');
-
-            if (useCustomTargets) {
-                switchBg.className = 'toggle-bg block w-12 h-7 bg-emerald-500 rounded-full';
-                switchDot.style.transform = 'translateX(20px)';
-                section.classList.remove('hidden');
-            } else {
-                switchBg.className = 'toggle-bg block w-12 h-7 bg-slate-600 rounded-full';
-                switchDot.style.transform = 'translateX(0px)';
-                section.classList.add('hidden');
-            }
-            calculate();
-        }
-
-        function updateResultLabels() {
-            const labelPlus = document.getElementById('label-plus');
-            const labelMinus = document.getElementById('label-minus');
-            
-            if (isBaseCalculated) {
-                labelPlus.innerText = 'الربح (من النسبة) (+)';
-                labelMinus.innerText = 'الخسارة (من النسبة) (-)';
-            } else {
-                labelPlus.innerText = 'الربح (من الإجمالي) (+)';
-                labelMinus.innerText = 'الخسارة (من الإجمالي) (-)';
-            }
-        }
-
-        function formatNum(num) {
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
+        // محرك الحسابات الذكي الرئيسي
         function calculate() {
-            const amountInput = document.getElementById('amount').value;
-            const percentInput = document.getElementById('percent').value;
-            const customProfitInput = document.getElementById('custom-profit-pct').value;
-            const customLossInput = document.getElementById('custom-loss-pct').value;
+            const total = parseFloat(totalAmountInput.value) || 0;
+            const inputVal = parseFloat(strategyInput.value) || 0;
             
-            const amount = parseFloat(amountInput) || 0;
-            const percent = parseFloat(percentInput) || 0;
-
-            const profitPercent = useCustomTargets ? (parseFloat(customProfitInput) || 0) : percent;
-            const lossPercent = useCustomTargets ? (parseFloat(customLossInput) || 0) : percent;
-
-            const currencySymbol = isUSD ? '$' : 'ر.س';
-            const otherSymbol = isUSD ? 'ر.س' : '$';
-
+            // تحويل العملة المعروضة تحت الحقل
             if (isUSD) {
-                document.getElementById('conversion-text').innerText = `يساوي: ${formatNum(amount * exchangeRate)} ${otherSymbol}`;
+                convertedAmount.innerText = `يساوي: ${(total * exchangeRate).toFixed(2)} ر.س`;
             } else {
-                document.getElementById('conversion-text').innerText = `يساوي: ${formatNum(amount / exchangeRate)} ${otherSymbol}`;
+                convertedAmount.innerText = `يساوي: ${(total / exchangeRate).toFixed(2)} $`;
             }
 
-            const percentValue = (percent / 100) * amount;
-            document.getElementById('percent-value-text').innerText = `قيمة النسبة (الصفقة): ${formatNum(percentValue)} ${currencySymbol}`;
+            let dealValue = 0;
+            const isPercentageMethod = !calcMethodToggle.checked;
 
-            const baseAmountForCalc = isBaseCalculated ? percentValue : amount;
-            
-            const differencePlus = (profitPercent / 100) * baseAmountForCalc;
-            const differenceMinus = (lossPercent / 100) * baseAmountForCalc;
-
-            const totalPlus = baseAmountForCalc + differencePlus;
-            const totalMinus = baseAmountForCalc - differenceMinus;
-
-            if (amount > 0) {
-                document.getElementById('res-plus').innerText = formatNum(totalPlus);
-                document.getElementById('res-minus').innerText = formatNum(totalMinus);
+            if (isPercentageMethod) {
+                dealValue = total * (inputVal / 100);
+                dealValueOutput.innerText = `قيمة النسبة (الصفقة): ${dealValue.toFixed(2)} ${isUSD ? '$' : 'ر.س'}`;
+                dealValueOutput.classList.remove('hidden');
             } else {
-                document.getElementById('res-plus').innerText = "0.00";
-                document.getElementById('res-minus').innerText = "0.00";
+                dealValue = inputVal;
+                dealValueOutput.classList.add('hidden');
+            }
+
+            let finalProfit = 0;
+            let finalLoss = 0;
+
+            if (advancedTargetsToggle.checked) {
+                const pTarget = parseFloat(profitTargetInput.value) || 0;
+                const lTarget = parseFloat(lossTargetInput.value) || 0;
+                finalProfit = dealValue * (pTarget / 100);
+                finalLoss = dealValue * (lTarget / 100);
+            } else {
+                finalProfit = dealValue;
+                finalLoss = dealValue;
+            }
+
+            // عرض النتائج النهائية بشكل منسق مع رمز العملة
+            const unit = isUSD ? '$' : 'ر.س';
+            profitOutput.innerText = `${finalProfit.toFixed(2)} ${unit}`;
+            lossOutput.innerText = `${finalLoss.toFixed(2)} ${unit}`;
+        }
+
+        // استرجاع السجل المحفوظ تلقائياً عند فتح التطبيق
+        function loadSavedLog() {
+            const savedData = localStorage.getItem('trading_sessions');
+            if (savedData) {
+                logContainer.innerHTML = savedData;
+            } else {
+                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
             }
         }
 
-        function saveCurrentTrade() {
-            const amount = parseFloat(document.getElementById('amount').value) || 0;
-            const percent = parseFloat(document.getElementById('percent').value) || 0;
-            
-            if (amount === 0) return;
-
-            const resPlus = document.getElementById('res-plus').innerText;
-            const resMinus = document.getElementById('res-minus').innerText;
-            const currencySymbol = isUSD ? '$' : 'ر.س';
-            const modeName = isBaseCalculated ? 'نسبة' : 'إجمالي';
-
-            const trade = {
-                id: Date.now(),
-                amount: amount,
-                percent: percent,
-                resPlus: resPlus,
-                resMinus: resMinus,
-                currencySymbol: currencySymbol,
-                modeName: modeName
-            };
-
-            savedTrades.unshift(trade);
-            renderLog();
+        // حفظ السجل الحالي في الذاكرة المحلية لضمان عدم ضياعه
+        function saveLogToStorage() {
+            localStorage.setItem('trading_sessions', logContainer.innerHTML);
         }
 
-        function renderLog() {
-            const container = document.getElementById('log-container');
-            const card = document.getElementById('session-log-card');
+        // تبديل العملات
+        currencyToggle.addEventListener('click', () => {
+            isUSD = !isUSD;
+            currencyToggle.innerText = isUSD ? '$ USD' : 'ر.س SAR';
+            calculate();
+        });
 
-            if (savedTrades.length === 0) {
-                card.classList.add('hidden');
-                return;
+        // تغيير طريقة الحساب (نسبة مئوية أو مبلغ ثابت)
+        calcMethodToggle.addEventListener('change', () => {
+            if (calcMethodToggle.checked) {
+                methodLabel.innerText = "مبلغ ثابت مخصص للمخاطرة";
+                inputUnit.innerText = isUSD ? "$" : "ر.س";
+                strategyInput.placeholder = "0.00";
+                document.getElementById('quickRatios').classList.add('hidden');
+            } else {
+                methodLabel.innerText = "نسبة لخصم الصفقة %";
+                inputUnit.innerText = "%";
+                strategyInput.placeholder = "0";
+                document.getElementById('quickRatios').classList.remove('hidden');
             }
+            strategyInput.value = '';
+            calculate();
+        });
 
-            card.classList.remove('hidden');
-            container.innerHTML = '';
+        // تفعيل الأهداف المنفصلة
+        advancedTargetsToggle.addEventListener('change', () => {
+            if (advancedTargetsToggle.checked) {
+                advancedFields.classList.remove('hidden');
+            } else {
+                advancedFields.classList.add('hidden');
+            }
+            calculate();
+        });
 
-            savedTrades.forEach(trade => {
-                const item = document.createElement('div');
-                item.className = 'bg-slate-800/60 p-3 rounded-xl border border-slate-750 text-xs space-y-1 relative';
-                item.innerHTML = `
-                    <div class="flex justify-between font-bold text-slate-300">
-                        <span>مبلغ: ${trade.amount} ${trade.currencySymbol} (${trade.percent}%)</span>
-                        <span class="text-slate-500 font-normal text-[10px]">نوع: ${trade.modeName}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-700/50">
-                        <span class="text-emerald-400 font-black">ربح: ${trade.resPlus} ${trade.currencySymbol}</span>
-                        <span class="text-rose-400 font-black">خسارة: ${trade.resMinus} ${trade.currencySymbol}</span>
-                    </div>
-                `;
-                container.appendChild(item);
+        // أزرار النسب السريعة
+        document.querySelectorAll('.ratio-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                strategyInput.value = btn.getAttribute('data-value');
+                calculate();
             });
-        }
+        });
 
-        function clearLog() {
-            savedTrades = [];
-            renderLog();
-        }
+        // مستمعي الأحداث للمدخلات
+        [totalAmountInput, strategyInput, profitTargetInput, lossTargetInput].forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
+        // زر إضافة الصفقة الحالية للسجل الدائم
+        saveSessionBtn.addEventListener('click', () => {
+            const total = parseFloat(totalAmountInput.value) || 0;
+            if (total === 0) return;
+
+            const emptyMsg = document.getElementById('emptyLogMsg');
+            if (emptyMsg) emptyMsg.remove();
+
+            const unit = isUSD ? '$' : 'ر.س';
+            const isPercentageMethod = !calcMethodToggle.checked;
+            const inputVal = strategyInput.value || '0';
+
+            let typeLabel = isPercentageMethod ? `نسبة (${inputVal}%)` : `مبلغ ثابت`;
+            
+            const logItem = document.createElement('div');
+            logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 animate-fadeIn mb-2";
+            
+            logItem.innerHTML = `
+                <div class="flex justify-between font-bold text-slate-400">
+                    <span>مبلغ: ${total} ${unit}</span>
+                    <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">نوع: ${typeLabel}</span>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-emerald-400 font-semibold">ربح: ${profitOutput.innerText}</span>
+                    <span class="text-rose-400 font-semibold">خسارة: ${lossOutput.innerText}</span>
+                </div>
+            `;
+            
+            logContainer.insertBefore(logItem, logContainer.firstChild);
+            saveLogToStorage(); // حفظ في الـ LocalStorage فوراً
+        });
+
+        // زر مسح السجل بالكامل
+        clearLogBtn.addEventListener('click', () => {
+            logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
+            localStorage.removeItem('trading_sessions'); // مسح الذاكرة
+        });
+
+        // تشغيل التحميل الأولي عند فتح التطبيق
+        loadSavedLog();
     </script>
 </body>
 </html>
