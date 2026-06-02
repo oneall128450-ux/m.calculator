@@ -1,192 +1,362 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="حاسبة التداول">
-    
-    <!-- أيقونة التطبيق (اللوجو) -->
-    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/96/chart-line.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/144/chart-line.png">
-
-    <title>حاسبة التداول</title>
+    <title>حاسبة التداول الاحترافية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        body { font-family: 'Tajawal', sans-serif; background-color: #0f172a; color: #f8fafc; touch-action: manipulation; }
+        .glass-card { background: rgba(30, 41, 59, 0.95); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2rem; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .focus-ring:focus-within { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
         
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            margin: 0;
-            overflow: hidden;
-            touch-action: manipulation;
-            user-select: none;
+        .toggle-dot {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .app-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        .toggle-bg {
+            transition: background-color 0.3s ease;
         }
-
-        .glass-card {
-            background: rgba(30, 41, 59, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 100%;
-            max-width: 400px;
-            border-radius: 2.5rem;
-            padding: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .input-group input {
-            background: #1e293b;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus {
-            border-color: #10b981;
-            background: #0f172a;
-            outline: none;
-        }
-
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .tap-feedback:active {
-            transform: scale(0.96);
+        .tap-active:active {
+            opacity: 0.7;
+            transform: scale(0.98);
         }
     </style>
 </head>
-<body>
+<body class="p-4 flex flex-col items-center justify-start min-h-screen py-8">
 
-    <div class="app-container">
-        <!-- قسم اللوجو -->
-        <div class="mb-6 flex flex-col items-center text-center">
-            <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 17l6-6 4 4 8-8"></path>
-                    <polyline points="14 7 21 7 21 14"></polyline>
-                </svg>
-            </div>
-            <h1 class="text-2xl font-black text-white">حاسبة التداول</h1>
-            <p class="text-slate-500 text-[10px] uppercase tracking-widest font-bold tracking-widest">النسخة الاحترافية (بدون إنترنت)</p>
+    <div class="glass-card w-full max-w-md p-6 sm:p-8 space-y-5">
+        
+        <div class="text-center space-y-1">
+            <h1 class="text-2xl font-black text-emerald-400">حاسبة التداول</h1>
+            <p class="text-xs text-slate-500 font-bold">إدارة الصفقات والنسب المتقدمة</p>
         </div>
 
-        <div class="glass-card">
-            <div class="space-y-5">
-                <!-- إدخال القيمة -->
-                <div class="input-group">
-                    <label class="block text-xs font-bold text-slate-400 mb-2 mr-1">المبلغ / سعر الدخول</label>
-                    <input type="number" id="amount" placeholder="اكتب هنا القيمة" 
-                           class="w-full rounded-2xl px-5 py-4 text-xl text-left font-bold text-emerald-400" dir="ltr">
+        <!-- 1. قسم المبلغ والعملة -->
+        <div>
+            <div class="flex bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 focus-ring transition-all">
+                <!-- زر العملة -->
+                <button id="currency-btn" onclick="toggleCurrency()" class="bg-slate-700 hover:bg-slate-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-slate-600 w-28 shrink-0 tap-active">
+                    USD $
+                </button>
+                <!-- إدخال المبلغ -->
+                <input type="number" id="amount" placeholder="المبلغ الكلي" class="w-full bg-transparent px-4 py-4 text-xl font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
+            </div>
+            <!-- نص التحويل -->
+            <div class="mt-2 px-2 flex items-center text-xs font-bold text-slate-400">
+                <svg class="w-4 h-4 ml-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <span id="conversion-text">يساوي: 0.00 ر.س</span>
+            </div>
+        </div>
+
+        <div class="h-px w-full bg-slate-800 rounded-full"></div>
+
+        <!-- 2. قسم النسبة مع مفتاح التبديل -->
+        <div class="space-y-3">
+            <div class="flex bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
+                
+                <!-- مفتاح التبديل التفاعلي لحجم الصفقة -->
+                <div class="px-4 py-4 border-l border-slate-700 flex items-center justify-center shrink-0">
+                    <label for="toggle-switch" class="flex items-center cursor-pointer select-none">
+                        <div class="relative">
+                            <input type="checkbox" id="toggle-switch" class="sr-only" checked onchange="toggleBaseMode()">
+                            <div id="switch-bg" class="toggle-bg block w-14 h-8 bg-emerald-500 rounded-full"></div>
+                            <div id="switch-dot" class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow transition-transform translate-x-6"></div>
+                        </div>
+                    </label>
                 </div>
 
                 <!-- إدخال النسبة -->
-                <div class="input-group">
-                    <label class="block text-xs font-bold text-slate-400 mb-2 mr-1">النسبة المئوية</label>
+                <input type="number" id="percent" placeholder="النسبة لخصم الصفقة" class="w-full bg-transparent px-2 py-4 text-xl font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
+                
+                <!-- علامة % -->
+                <div class="px-4 py-4 bg-slate-800/50 font-black text-slate-500 text-xl border-r border-slate-700 shrink-0">
+                    %
+                </div>
+            </div>
+
+            <!-- أزرار النسب السريعة الفورية -->
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="quickPercent(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">1%</button>
+                <button onclick="quickPercent(2)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">2%</button>
+                <button onclick="quickPercent(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">5%</button>
+                <button onclick="quickPercent(10)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors tap-active">10%</button>
+            </div>
+            
+            <!-- قيمة النسبة المنفصلة (حجم الصفقة) -->
+            <div id="percent-info-box" class="mt-2 px-2 flex items-center text-xs font-bold text-emerald-500 transition-opacity">
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="percent-value-text">قيمة النسبة (الصفقة): 0.00 $</span>
+            </div>
+        </div>
+
+        <!-- 3. قسم خيار الأهداف المنفصلة -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-2xl border border-slate-700/50">
+                <span class="text-xs font-bold text-slate-300">أهداف منفصلة للربح والخسارة</span>
+                <label for="custom-targets-toggle" class="flex items-center cursor-pointer select-none">
                     <div class="relative">
-                        <input type="number" id="percent" placeholder="" 
-                               class="w-full rounded-2xl px-5 py-4 text-xl text-left font-bold text-emerald-400" dir="ltr">
-                        <span class="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600 font-black text-xl">%</span>
+                        <input type="checkbox" id="custom-targets-toggle" class="sr-only" onchange="toggleCustomTargets()">
+                        <div id="targets-switch-bg" class="toggle-bg block w-12 h-7 bg-slate-600 rounded-full"></div>
+                        <div id="targets-switch-dot" class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow transition-transform"></div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- حقول الأهداف المنفصلة (تظهر فقط عند التفعيل) -->
+            <div id="custom-targets-section" class="grid grid-cols-2 gap-3 hidden transition-all">
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-emerald-400 mr-1">نسبة هدف الربح</label>
+                    <div class="flex bg-slate-800 rounded-xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
+                        <input type="number" id="custom-profit-pct" placeholder="ربح %" class="w-full bg-transparent px-2 py-2.5 text-sm font-bold outline-none text-center text-emerald-300" dir="ltr" oninput="calculate()">
+                        <span class="px-2 text-xs font-bold text-slate-500">%</span>
                     </div>
                 </div>
-
-                <!-- أزرار سريعة -->
-                <div class="grid grid-cols-4 gap-2">
-                    <button onclick="setP(1)" class="tap-feedback bg-slate-800 py-3 rounded-xl text-xs font-bold border border-slate-700">1%</button>
-                    <button onclick="setP(3)" class="tap-feedback bg-slate-800 py-3 rounded-xl text-xs font-bold border border-slate-700">3%</button>
-                    <button onclick="setP(5)" class="tap-feedback bg-slate-800 py-3 rounded-xl text-xs font-bold border border-slate-700">5%</button>
-                    <button onclick="setP(10)" class="tap-feedback bg-slate-800 py-3 rounded-xl text-xs font-bold border border-slate-700">10%</button>
-                </div>
-
-                <!-- عرض النتائج -->
-                <div class="space-y-3 pt-2">
-                    <div class="bg-slate-900/50 rounded-2xl p-4 text-center border border-white/5">
-                        <span class="text-[10px] text-slate-500 block mb-1">قيمة النسبة الصافية</span>
-                        <div id="res-val" class="text-2xl font-black text-emerald-400">0.00</div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div onclick="copyText('res-plus')" class="tap-feedback bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center cursor-pointer">
-                            <span class="text-[10px] text-emerald-500 block mb-1 font-bold">هدف الربح (+)</span>
-                            <div id="res-plus" class="text-lg font-black text-emerald-400">0.00</div>
-                        </div>
-                        <div onclick="copyText('res-minus')" class="tap-feedback bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-center cursor-pointer">
-                            <span class="text-[10px] text-rose-500 block mb-1 font-bold">وقف الخسارة (-)</span>
-                            <div id="res-minus" class="text-lg font-black text-rose-400">0.00</div>
-                        </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-rose-400 mr-1">نسبة وقف الخسارة</label>
+                    <div class="flex bg-slate-800 rounded-xl overflow-hidden border border-slate-700 focus-ring transition-all items-center">
+                        <input type="number" id="custom-loss-pct" placeholder="خسارة %" class="w-full bg-transparent px-2 py-2.5 text-sm font-bold outline-none text-center text-rose-300" dir="ltr" oninput="calculate()">
+                        <span class="px-2 text-xs font-bold text-slate-500">%</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <p class="mt-8 text-[10px] text-slate-600 font-bold uppercase tracking-widest italic">V 4.0 | التحديث النهائي</p>
-        
-        <!-- تنبيه النسخ -->
-        <div id="toast" class="fixed bottom-8 bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-2xl opacity-0 transition-all pointer-events-none transform translate-y-4">
-            تم نسخ السعر ✅
+        <!-- 4. قسم النتائج النهائية -->
+        <div class="grid grid-cols-2 gap-4 pt-1">
+            <!-- الربح -->
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all" id="box-plus">
+                <span id="label-plus" class="block text-[10px] text-emerald-500 font-bold mb-1 uppercase tracking-wider">الربح (من النسبة) (+)</span>
+                <div id="res-plus" class="text-xl sm:text-2xl font-black text-emerald-400">0.00</div>
+            </div>
+            <!-- الخسارة -->
+            <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-center transition-all" id="box-minus">
+                <span id="label-minus" class="block text-[10px] text-rose-500 font-bold mb-1 uppercase tracking-wider">الخسارة (من النسبة) (-)</span>
+                <div id="res-minus" class="text-xl sm:text-2xl font-black text-rose-400">0.00</div>
+            </div>
         </div>
+
+        <!-- حفظ الصفقات الفوري في سجل الجلسة -->
+        <div class="pt-1">
+            <button onclick="saveCurrentTrade()" class="w-full bg-slate-750 hover:bg-slate-700 text-slate-400 hover:text-emerald-400 py-3 rounded-2xl text-xs font-bold border border-slate-700 border-dashed transition-all flex items-center justify-center gap-1 tap-active">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                حفظ الحسبة الحالية في سجل الجلسة
+            </button>
+        </div>
+
+    </div>
+
+    <!-- سجل الجلسة السريع -->
+    <div id="session-log-card" class="glass-card w-full max-w-md p-6 mt-6 space-y-4 hidden transition-all">
+        <div class="flex justify-between items-center">
+            <h2 class="text-sm font-bold text-slate-400 flex items-center gap-1">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                سجل صفقات الجلسة المؤقت
+            </h2>
+            <button onclick="clearLog()" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold tap-active">مسح السجل</button>
+        </div>
+        <div id="log-container" class="space-y-3 max-h-48 overflow-y-auto pr-1"></div>
     </div>
 
     <script>
-        const aE = document.getElementById('amount'), 
-              pE = document.getElementById('percent'), 
-              rV = document.getElementById('res-val'), 
-              rP = document.getElementById('res-plus'), 
-              rM = document.getElementById('res-minus'), 
-              t = document.getElementById('toast');
+        let isUSD = true;
+        let isBaseCalculated = true;
+        let useCustomTargets = false;
+        const exchangeRate = 3.75;
+        let savedTrades = [];
 
-        // تنسيق ذكي للأرقام حسب قيمتها
-        function fmt(n) {
-            if (n === 0) return "0.00";
-            let f = n < 1 ? 6 : 2;
-            return n.toLocaleString('en-US', { minimumFractionDigits: f, maximumFractionDigits: f });
+        function quickPercent(val) {
+            document.getElementById('percent').value = val;
+            calculate();
         }
 
-        function calc() {
-            const a = parseFloat(aE.value) || 0;
-            const p = parseFloat(pE.value) || 0;
-            if (a > 0) {
-                const d = (p/100) * a;
-                rV.innerText = fmt(d);
-                rP.innerText = fmt(a + d);
-                rM.innerText = fmt(a - d);
+        function toggleCurrency() {
+            const amountEl = document.getElementById('amount');
+            let amount = parseFloat(amountEl.value) || 0;
+
+            if (amount > 0) {
+                if (isUSD) {
+                    amountEl.value = (amount * exchangeRate).toFixed(2);
+                } else {
+                    amountEl.value = (amount / exchangeRate).toFixed(2);
+                }
+            }
+
+            isUSD = !isUSD;
+            const btn = document.getElementById('currency-btn');
+            if (isUSD) {
+                btn.innerText = 'USD $';
+                btn.className = 'bg-slate-700 hover:bg-slate-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-slate-600 w-28 shrink-0 tap-active';
             } else {
-                rV.innerText = "0.00"; rP.innerText = "0.00"; rM.innerText = "0.00";
+                btn.innerText = 'SA ر.س';
+                btn.className = 'bg-emerald-700 hover:bg-emerald-600 px-4 sm:px-6 font-black text-sm sm:text-base text-white transition-colors border-l border-emerald-600 w-28 shrink-0 tap-active';
+            }
+            calculate();
+        }
+
+        function toggleBaseMode() {
+            const toggle = document.getElementById('toggle-switch');
+            isBaseCalculated = toggle.checked;
+
+            const switchBg = document.getElementById('switch-bg');
+            const switchDot = document.getElementById('switch-dot');
+            const infoBox = document.getElementById('percent-info-box');
+
+            if (isBaseCalculated) {
+                switchBg.className = 'toggle-bg block w-14 h-8 bg-emerald-500 rounded-full';
+                switchDot.style.transform = 'translateX(24px)';
+                infoBox.style.opacity = '1';
+                updateResultLabels();
+            } else {
+                switchBg.className = 'toggle-bg block w-14 h-8 bg-slate-600 rounded-full';
+                switchDot.style.transform = 'translateX(0px)';
+                infoBox.style.opacity = '0.4';
+                updateResultLabels();
+            }
+            calculate();
+        }
+
+        function toggleCustomTargets() {
+            const toggle = document.getElementById('custom-targets-toggle');
+            useCustomTargets = toggle.checked;
+
+            const switchBg = document.getElementById('targets-switch-bg');
+            const switchDot = document.getElementById('targets-switch-dot');
+            const section = document.getElementById('custom-targets-section');
+
+            if (useCustomTargets) {
+                switchBg.className = 'toggle-bg block w-12 h-7 bg-emerald-500 rounded-full';
+                switchDot.style.transform = 'translateX(20px)';
+                section.classList.remove('hidden');
+            } else {
+                switchBg.className = 'toggle-bg block w-12 h-7 bg-slate-600 rounded-full';
+                switchDot.style.transform = 'translateX(0px)';
+                section.classList.add('hidden');
+            }
+            calculate();
+        }
+
+        function updateResultLabels() {
+            const labelPlus = document.getElementById('label-plus');
+            const labelMinus = document.getElementById('label-minus');
+            
+            if (isBaseCalculated) {
+                labelPlus.innerText = 'الربح (من النسبة) (+)';
+                labelMinus.innerText = 'الخسارة (من النسبة) (-)';
+            } else {
+                labelPlus.innerText = 'الربح (من الإجمالي) (+)';
+                labelMinus.innerText = 'الخسارة (من الإجمالي) (-)';
             }
         }
 
-        function setP(v) { pE.value = v; calc(); }
+        function formatNum(num) {
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
-        function copyText(id) {
-            const v = document.getElementById(id).innerText.replace(/,/g, '');
-            if (v === "0.00") return;
-            navigator.clipboard.writeText(v).then(() => {
-                t.style.opacity = '1';
-                t.style.transform = 'translateY(0)';
-                setTimeout(() => {
-                    t.style.opacity = '0';
-                    t.style.transform = 'translateY(16px)';
-                }, 1500);
+        function calculate() {
+            const amountInput = document.getElementById('amount').value;
+            const percentInput = document.getElementById('percent').value;
+            const customProfitInput = document.getElementById('custom-profit-pct').value;
+            const customLossInput = document.getElementById('custom-loss-pct').value;
+            
+            const amount = parseFloat(amountInput) || 0;
+            const percent = parseFloat(percentInput) || 0;
+
+            const profitPercent = useCustomTargets ? (parseFloat(customProfitInput) || 0) : percent;
+            const lossPercent = useCustomTargets ? (parseFloat(customLossInput) || 0) : percent;
+
+            const currencySymbol = isUSD ? '$' : 'ر.س';
+            const otherSymbol = isUSD ? 'ر.س' : '$';
+
+            if (isUSD) {
+                document.getElementById('conversion-text').innerText = `يساوي: ${formatNum(amount * exchangeRate)} ${otherSymbol}`;
+            } else {
+                document.getElementById('conversion-text').innerText = `يساوي: ${formatNum(amount / exchangeRate)} ${otherSymbol}`;
+            }
+
+            const percentValue = (percent / 100) * amount;
+            document.getElementById('percent-value-text').innerText = `قيمة النسبة (الصفقة): ${formatNum(percentValue)} ${currencySymbol}`;
+
+            const baseAmountForCalc = isBaseCalculated ? percentValue : amount;
+            
+            const differencePlus = (profitPercent / 100) * baseAmountForCalc;
+            const differenceMinus = (lossPercent / 100) * baseAmountForCalc;
+
+            const totalPlus = baseAmountForCalc + differencePlus;
+            const totalMinus = baseAmountForCalc - differenceMinus;
+
+            if (amount > 0) {
+                document.getElementById('res-plus').innerText = formatNum(totalPlus);
+                document.getElementById('res-minus').innerText = formatNum(totalMinus);
+            } else {
+                document.getElementById('res-plus').innerText = "0.00";
+                document.getElementById('res-minus').innerText = "0.00";
+            }
+        }
+
+        function saveCurrentTrade() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const percent = parseFloat(document.getElementById('percent').value) || 0;
+            
+            if (amount === 0) return;
+
+            const resPlus = document.getElementById('res-plus').innerText;
+            const resMinus = document.getElementById('res-minus').innerText;
+            const currencySymbol = isUSD ? '$' : 'ر.س';
+            const modeName = isBaseCalculated ? 'نسبة' : 'إجمالي';
+
+            const trade = {
+                id: Date.now(),
+                amount: amount,
+                percent: percent,
+                resPlus: resPlus,
+                resMinus: resMinus,
+                currencySymbol: currencySymbol,
+                modeName: modeName
+            };
+
+            savedTrades.unshift(trade);
+            renderLog();
+        }
+
+        function renderLog() {
+            const container = document.getElementById('log-container');
+            const card = document.getElementById('session-log-card');
+
+            if (savedTrades.length === 0) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            card.classList.remove('hidden');
+            container.innerHTML = '';
+
+            savedTrades.forEach(trade => {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-800/60 p-3 rounded-xl border border-slate-750 text-xs space-y-1 relative';
+                item.innerHTML = `
+                    <div class="flex justify-between font-bold text-slate-300">
+                        <span>مبلغ: ${trade.amount} ${trade.currencySymbol} (${trade.percent}%)</span>
+                        <span class="text-slate-500 font-normal text-[10px]">نوع: ${trade.modeName}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-700/50">
+                        <span class="text-emerald-400 font-black">ربح: ${trade.resPlus} ${trade.currencySymbol}</span>
+                        <span class="text-rose-400 font-black">خسارة: ${trade.resMinus} ${trade.currencySymbol}</span>
+                    </div>
+                `;
+                container.appendChild(item);
             });
         }
 
-        aE.addEventListener('input', calc);
-        pE.addEventListener('input', calc);
-        window.onload = () => aE.focus();
+        function clearLog() {
+            savedTrades = [];
+            renderLog();
+        }
     </script>
 </body>
 </html>
+
 
 ```
