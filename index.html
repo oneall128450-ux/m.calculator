@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="appHtml">
 <head>
     <!-- إعدادات مظهر التطبيق المستقل للجوال -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
 
-    <!-- ربط التطبيق بملف الإعدادات والأيقونة -->
+    <!-- ربط التطبيق بملف الإعدادات والأيقونة المرفوعة مسبقاً -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
@@ -16,14 +16,17 @@
     <title>حاسبة التداول الاحترافية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
         
+        /* دعم خط التاجوال للعربي والإنتر للإنجليزي */
+        .lang-ar { font-family: 'Tajawal', sans-serif; }
+        .lang-en { font-family: 'Inter', sans-serif; }
+
         /* ضبط السكرول العمودي ومنع ارتداد التحديث */
         html, body {
-            font-family: 'Tajawal', sans-serif;
             overscroll-behavior-y: contain;
             overflow-x: hidden;
-            overflow-y: auto; /* يسمح بالنزول لأسفل لمشاهدة الصفقات */
+            overflow-y: auto;
             background-color: #0f172a;
             height: 100%;
         }
@@ -33,11 +36,10 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        /* إخفاء أسهم حقول الأرقام الافتراضية وإجبار اتجاه الأرقام لليسار */
+        /* إخفاء أسهم حقول الأرقام الافتراضية واجبار الاتجاه */
         input[type="number"] {
             -webkit-appearance: none;
             margin: 0;
-            direction: ltr; /* يحل مشكلة الكرسر العكسي */
             text-align: left;
         }
         input::-webkit-outer-spin-button,
@@ -61,24 +63,40 @@
         }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen pb-12 select-none">
+<body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
 
     <!-- الواجهة وبنية الحاسبة -->
     <div class="max-w-md mx-auto px-4 pt-6">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400 tracking-wide">حاسبة التداول</h1>
-            <p class="text-xs text-slate-400 mt-1">إدارة الصفقات والنسب المتقدمة</p>
+        
+        <!-- أزرار التحكم باللغة والعملة في الأعلى -->
+        <div class="flex justify-between items-center mb-4 px-1">
+            <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
+                🌐 EN
+            </button>
+            <button id="currencyToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700/60">
+                $ USD
+            </button>
+        </div>
+
+        <!-- قسم الشعار الجديد المدمج (V) فوق العنوان تماماً -->
+        <div class="text-center mb-6 space-y-3">
+            <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5">
+                <!-- تحميل الشعار المحلي logo.png مع وضع شعار احتياطي SVG فخم في حال لم تكن الصورة مرفوعة بعد -->
+                <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
+                <div id="fallbackLogo" class="hidden text-emerald-400 font-black text-3xl">V</div>
+            </div>
+            <div>
+                <h1 id="uiAppTitle" class="text-2xl font-black text-emerald-400 tracking-wide">حاسبة التداول</h1>
+                <p id="uiAppSubtitle" class="text-xs text-slate-400 mt-1">إدارة الصفقات والنسب المتقدمة</p>
+            </div>
         </div>
 
         <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-slate-400">المبلغ الكلي</span>
-                <button id="currencyToggle" class="tap-active bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700">
-                    $ USD
-                </button>
+            <div class="mb-2">
+                <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي</span>
             </div>
-            <input type="number" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none px-1">
+            <input type="number" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none px-1" style="direction: ltr;">
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium">يساوي: 0.00 ر.س</div>
         </div>
 
@@ -95,7 +113,7 @@
             <!-- حقل إدخال النسبة أو المبلغ المباشر -->
             <div id="inputFieldContainer" class="focus-ring border border-slate-800 bg-slate-900/50 rounded-xl p-3 flex items-center mb-3">
                 <span id="inputUnit" class="text-slate-500 font-bold ml-2">%</span>
-                <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none">
+                <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none" style="direction: ltr;">
             </div>
 
             <!-- أزرار النسبة السريعة -->
@@ -112,7 +130,7 @@
         <!-- خيار أهداف منفصلة للربح والخسارة -->
         <div class="glass-card rounded-2xl p-4 mb-4">
             <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-slate-300">أهداف منفصلة للربح والخسارة</span>
+                <span id="uiSeparateTargets" class="text-sm font-medium text-slate-300">أهداف منفصلة للربح والخسارة</span>
                 <label class="relative inline-flex items-center cursor-pointer tap-active">
                     <input type="checkbox" id="advancedTargetsToggle" class="sr-only peer">
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-dot peer-checked:bg-emerald-500 toggle-bg"></div>
@@ -123,17 +141,17 @@
             <div id="advancedFields" class="mt-4 pt-3 border-t border-slate-800/60 hidden space-y-3">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs text-emerald-400 font-medium block mb-1">نسبة هدف الربح</label>
+                        <label id="uiLabelProfitTarget" class="text-xs text-emerald-400 font-medium block mb-1">نسبة هدف الربح</label>
                         <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
                             <span class="text-slate-600 text-xs font-bold ml-1">%</span>
-                            <input type="number" id="profitTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none">
+                            <input type="number" id="profitTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none" style="direction: ltr;">
                         </div>
                     </div>
                     <div>
-                        <label class="text-xs text-rose-400 font-medium block mb-1">نسبة وقف الخسارة</label>
+                        <label id="uiLabelLossTarget" class="text-xs text-rose-400 font-medium block mb-1">نسبة وقف الخسارة</label>
                         <div class="focus-ring bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center">
                             <span class="text-slate-600 text-xs font-bold ml-1">%</span>
-                            <input type="number" id="lossTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none">
+                            <input type="number" id="lossTargetInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-sm font-bold text-slate-200 focus:outline-none" style="direction: ltr;">
                         </div>
                     </div>
                 </div>
@@ -143,19 +161,19 @@
         <!-- بطاقة النتائج المباشرة -->
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-emerald-500/50">
-                <span class="text-xs font-medium text-slate-400 block mb-1">الربح (من النسبة) (+)</span>
-                <div id="profitOutput" class="text-xl font-bold text-emerald-400">0.00</div>
+                <span id="label-plus" class="text-xs font-medium text-slate-400 block mb-1">الربح (من النسبة) (+)</span>
+                <div id="profitOutput" class="text-xl font-bold text-emerald-400" style="direction: ltr;">0.00</div>
             </div>
             <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-rose-500/50">
-                <span class="text-xs font-medium text-slate-400 block mb-1">الخسارة (من النسبة) (-)</span>
-                <div id="lossOutput" class="text-xl font-bold text-rose-400">0.00</div>
+                <span id="label-minus" class="text-xs font-medium text-slate-400 block mb-1">الخسارة (من النسبة) (-)</span>
+                <div id="lossOutput" class="text-xl font-bold text-rose-400" style="direction: ltr;">0.00</div>
             </div>
         </div>
 
         <!-- زر حفظ الحسبة الحالي في السجل -->
         <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2 mb-6">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            حفظ الحسبة الحالية في سجل الجلسة
+            <span id="uiSaveTradeBtn">حفظ الحسبة الحالية في سجل الجلسة</span>
         </button>
 
         <!-- سجل صفقات الجلسة المؤقت -->
@@ -163,7 +181,7 @@
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    سجل صفقات الجلسة المؤقت
+                    <span id="uiSessionLogHeader">سجل صفقات الجلسة المؤقت</span>
                 </div>
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
@@ -173,10 +191,65 @@
         </div>
     </div>
 
-    <!-- كود التشغيل والحساب الذكي والتخزين الدائم -->
+    <!-- كود التشغيل والحساب الذكي والترجمة والتخزين الدائم -->
     <script>
         let isUSD = true;
-        const exchangeRate = 3.75;
+        let currentLang = 'ar'; // اللغة الافتراضية
+        const exchangeRate = 3.75; // سعر ثابت للريال والدولار
+
+        // قاموس الترجمة الكامل لتبديل اللغات فورياً
+        const translations = {
+            ar: {
+                appTitle: "حاسبة التداول",
+                appSubtitle: "إدارة الصفقات والنسب المتقدمة",
+                totalCapital: "المبلغ الكلي",
+                methodPercent: "نسبة لخصم الصفقة %",
+                methodFixed: "مبلغ ثابت مخصص للمخاطرة",
+                separateTargets: "أهداف منفصلة للربح والخسارة",
+                profitTarget: "نسبة هدف الربح",
+                lossTarget: "نسبة وقف الخسارة",
+                dealValLabel: "قيمة النسبة (الصفقة):",
+                profitRatioLabel: "الربح (من النسبة) (+)",
+                lossRatioLabel: "الخسارة (من النسبة) (-)",
+                profitTotalLabel: "الربح (من الإجمالي) (+)",
+                lossTotalLabel: "الخسارة (من الإجمالي) (-)",
+                saveBtn: "حفظ الحسبة الحالية في سجل الجلسة",
+                logHeader: "سجل صفقات الجلسة المؤقت",
+                clearLog: "مسح السجل",
+                emptyLog: "لا توجد صفقات مسجلة حالياً في هذه الجلسة",
+                logCapital: "مبلغ:",
+                logType: "نوع:",
+                logProfit: "ربح:",
+                logLoss: "خسارة:",
+                typePercent: "نسبة",
+                typeFixed: "مبلغ ثابت"
+            },
+            en: {
+                appTitle: "Trading Calculator",
+                appSubtitle: "Advanced Position & Risk Management",
+                totalCapital: "Total Capital",
+                methodPercent: "Position size as percentage %",
+                methodFixed: "Fixed risk amount",
+                separateTargets: "Separate Take Profit & Stop Loss",
+                profitTarget: "Take Profit Target %",
+                lossTarget: "Stop Loss Target %",
+                dealValLabel: "Position Value (Deal):",
+                profitRatioLabel: "Profit (from position) (+)",
+                lossRatioLabel: "Loss (from position) (-)",
+                profitTotalLabel: "Profit (from total) (+)",
+                lossTotalLabel: "Loss (from total) (-)",
+                saveBtn: "Save Current Trade to Session Log",
+                logHeader: "Temporary Session Log",
+                clearLog: "Clear Log",
+                emptyLog: "No recorded trades in this session yet",
+                logCapital: "Capital:",
+                logType: "Type:",
+                logProfit: "Profit:",
+                logLoss: "Loss:",
+                typePercent: "Percentage",
+                typeFixed: "Fixed Amount"
+            }
+        };
 
         const totalAmountInput = document.getElementById('totalAmount');
         const strategyInput = document.getElementById('strategyInput');
@@ -184,6 +257,7 @@
         const lossTargetInput = document.getElementById('lossTargetInput');
         
         const currencyToggle = document.getElementById('currencyToggle');
+        const langToggle = document.getElementById('langToggle');
         const calcMethodToggle = document.getElementById('calcMethodToggle');
         const advancedTargetsToggle = document.getElementById('advancedTargetsToggle');
         
@@ -200,24 +274,78 @@
         const logContainer = document.getElementById('logContainer');
         const clearLogBtn = document.getElementById('clearLogBtn');
 
-        // محرك الحسابات الذكي الرئيسي
+        // وظيفة تحديث نصوص الواجهة بناء على اللغة المختارة
+        function updateLanguageUI() {
+            const t = translations[currentLang];
+            
+            // تغيير اتجاه الصفحة والمحاذاة والخطوط
+            const htmlEl = document.getElementById('appHtml');
+            const bodyEl = document.getElementById('appBody');
+            
+            if (currentLang === 'ar') {
+                htmlEl.setAttribute('dir', 'rtl');
+                htmlEl.setAttribute('lang', 'ar');
+                bodyEl.className = "text-slate-200 min-h-screen pb-12 select-none lang-ar";
+                langToggle.innerText = "🌐 EN";
+            } else {
+                htmlEl.setAttribute('dir', 'ltr');
+                htmlEl.setAttribute('lang', 'en');
+                bodyEl.className = "text-slate-200 min-h-screen pb-12 select-none lang-en";
+                langToggle.innerText = "🌐 AR";
+            }
+
+            // تحديث العناوين والبطاقات
+            document.getElementById('uiAppTitle').innerText = t.appTitle;
+            document.getElementById('uiAppSubtitle').innerText = t.appSubtitle;
+            document.getElementById('uiTotalCapital').innerText = t.totalCapital;
+            document.getElementById('uiSeparateTargets').innerText = t.separateTargets;
+            document.getElementById('uiLabelProfitTarget').innerText = t.profitTarget;
+            document.getElementById('uiLabelLossTarget').innerText = t.lossTarget;
+            document.getElementById('uiSaveTradeBtn').innerText = t.saveBtn;
+            document.getElementById('uiSessionLogHeader').innerText = t.logHeader;
+            document.getElementById('clearLogBtn').innerText = t.clearLog;
+
+            // تحديث طريقة الحساب المعروضة
+            if (calcMethodToggle.checked) {
+                methodLabel.innerText = t.methodFixed;
+            } else {
+                methodLabel.innerText = t.methodPercent;
+            }
+
+            updateResultLabels();
+            calculate();
+            renderSavedLog(); // لإعادة تحديث السجل المؤقت باللغة الجديدة
+        }
+
+        // تبديل اللغات عند نقر الزر العلوي
+        langToggle.addEventListener('click', () => {
+            currentLang = (currentLang === 'ar') ? 'en' : 'ar';
+            localStorage.setItem('app_lang', currentLang); // حفظ تفضيل اللغة بشكل دائم
+            updateLanguageUI();
+        });
+
+        // محرك الحسابات الرئيسي
         function calculate() {
             const total = parseFloat(totalAmountInput.value) || 0;
             const inputVal = parseFloat(strategyInput.value) || 0;
+            const t = translations[currentLang];
+            const isPercentageMethod = !calcMethodToggle.checked;
             
+            const currencyLabel = isUSD ? (currentLang === 'ar' ? 'دولار' : 'USD') : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+            const otherLabel = isUSD ? (currentLang === 'ar' ? 'ر.س' : 'SAR') : (currentLang === 'ar' ? 'USD' : 'USD');
+
             // تحويل العملة المعروضة تحت الحقل
             if (isUSD) {
-                convertedAmount.innerText = `يساوي: ${(total * exchangeRate).toFixed(2)} ر.س`;
+                convertedAmount.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${(total * exchangeRate).toFixed(2)} ${otherLabel}`;
             } else {
-                convertedAmount.innerText = `يساوي: ${(total / exchangeRate).toFixed(2)} $`;
+                convertedAmount.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${(total / exchangeRate).toFixed(2)} ${otherLabel}`;
             }
 
             let dealValue = 0;
-            const isPercentageMethod = !calcMethodToggle.checked;
 
             if (isPercentageMethod) {
                 dealValue = total * (inputVal / 100);
-                dealValueOutput.innerText = `قيمة النسبة (الصفقة): ${dealValue.toFixed(2)} ${isUSD ? '$' : 'ر.س'}`;
+                dealValueOutput.innerText = `${t.dealValLabel} ${dealValue.toFixed(2)} ${isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR')}`;
                 dealValueOutput.classList.remove('hidden');
             } else {
                 dealValue = inputVal;
@@ -237,46 +365,78 @@
                 finalLoss = dealValue;
             }
 
-            // عرض النتائج النهائية بشكل منسق مع رمز العملة
-            const unit = isUSD ? '$' : 'ر.س';
+            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             profitOutput.innerText = `${finalProfit.toFixed(2)} ${unit}`;
             lossOutput.innerText = `${finalLoss.toFixed(2)} ${unit}`;
         }
 
-        // استرجاع السجل المحفوظ تلقائياً عند فتح التطبيق
-        function loadSavedLog() {
-            const savedData = localStorage.getItem('trading_sessions');
+        // استرجاع السجل المحفوظ وعرضه باللغة الحالية
+        function renderSavedLog() {
+            const savedData = localStorage.getItem('trading_sessions_raw');
+            const t = translations[currentLang];
+            
             if (savedData) {
-                logContainer.innerHTML = savedData;
+                const trades = JSON.parse(savedData);
+                if (trades.length === 0) {
+                    logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`;
+                    return;
+                }
+                
+                logContainer.innerHTML = '';
+                trades.forEach(trade => {
+                    const typeText = trade.isPercent ? `${t.typePercent} (${trade.inputVal}%)` : t.typeFixed;
+                    const logItem = document.createElement('div');
+                    logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2";
+                    
+                    logItem.innerHTML = `
+                        <div class="flex justify-between font-bold text-slate-400">
+                            <span>${t.logCapital} ${trade.total} ${trade.unit}</span>
+                            <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">${t.logType} ${typeText}</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-emerald-400 font-semibold">${t.logProfit} ${trade.profit.toFixed(2)} ${trade.unit}</span>
+                            <span class="text-rose-400 font-semibold">${t.logLoss} ${trade.loss.toFixed(2)} ${trade.unit}</span>
+                        </div>
+                    `;
+                    logContainer.appendChild(logItem);
+                });
             } else {
-                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
+                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`;
             }
         }
 
-        // حفظ السجل الحالي في الذاكرة المحلية
-        function saveLogToStorage() {
-            localStorage.setItem('trading_sessions', logContainer.innerHTML);
+        // حفظ السجل في الذاكرة المحلية كبيانات خام JSON
+        function saveRawTrade(trade) {
+            let trades = [];
+            const savedData = localStorage.getItem('trading_sessions_raw');
+            if (savedData) {
+                trades = JSON.parse(savedData);
+            }
+            trades.unshift(trade);
+            localStorage.setItem('trading_sessions_raw', JSON.stringify(trades));
+            renderSavedLog();
         }
 
         // تبديل العملات
         currencyToggle.addEventListener('click', () => {
             isUSD = !isUSD;
-            currencyToggle.innerText = isUSD ? '$ USD' : 'ر.س SAR';
+            currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
             if (calcMethodToggle.checked) {
-                inputUnit.innerText = isUSD ? "$" : "ر.س";
+                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             }
             calculate();
         });
 
         // تغيير طريقة الحساب (نسبة مئوية أو مبلغ ثابت)
         calcMethodToggle.addEventListener('change', () => {
+            const t = translations[currentLang];
             if (calcMethodToggle.checked) {
-                methodLabel.innerText = "مبلغ ثابت مخصص للمخاطرة";
-                inputUnit.innerText = isUSD ? "$" : "ر.س";
+                methodLabel.innerText = t.methodFixed;
+                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
                 strategyInput.placeholder = "0.00";
                 document.getElementById('quickRatios').classList.add('hidden');
             } else {
-                methodLabel.innerText = "نسبة لخصم الصفقة %";
+                methodLabel.innerText = t.methodPercent;
                 inputUnit.innerText = "%";
                 strategyInput.placeholder = "0";
                 document.getElementById('quickRatios').classList.remove('hidden');
@@ -313,41 +473,68 @@
             const total = parseFloat(totalAmountInput.value) || 0;
             if (total === 0) return;
 
-            const emptyMsg = document.getElementById('emptyLogMsg');
-            if (emptyMsg) emptyMsg.remove();
-
-            const unit = isUSD ? '$' : 'ر.س';
             const isPercentageMethod = !calcMethodToggle.checked;
             const inputVal = strategyInput.value || '0';
+            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
 
-            let typeLabel = isPercentageMethod ? `نسبة (${inputVal}%)` : `مبلغ ثابت`;
-            
-            const logItem = document.createElement('div');
-            logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2";
-            
-            logItem.innerHTML = `
-                <div class="flex justify-between font-bold text-slate-400">
-                    <span>مبلغ: ${total} ${unit}</span>
-                    <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">نوع: ${typeLabel}</span>
-                </div>
-                <div class="flex justify-between items-center mt-1">
-                    <span class="text-emerald-400 font-semibold">ربح: ${profitOutput.innerText}</span>
-                    <span class="text-rose-400 font-semibold">خسارة: ${lossOutput.innerText}</span>
-                </div>
-            `;
-            
-            logContainer.insertBefore(logItem, logContainer.firstChild);
-            saveLogToStorage(); // حفظ في الـ LocalStorage فوراً
-        }); // <-- هنا كان القوس الناقص اللي عطل الدنيا!
+            // حساب القيم الخام للحفظ لتتوافق مع اللغتين ديناميكياً
+            const inputValNum = parseFloat(strategyInput.value) || 0;
+            let dealValue = isPercentageMethod ? total * (inputValNum / 100) : inputValNum;
+
+            let finalProfit = dealValue;
+            let finalLoss = dealValue;
+
+            if (advancedTargetsToggle.checked) {
+                const pTarget = parseFloat(profitTargetInput.value) || 0;
+                const lTarget = parseFloat(lossTargetInput.value) || 0;
+                finalProfit = dealValue * (pTarget / 100);
+                finalLoss = dealValue * (lTarget / 100);
+            }
+
+            const trade = {
+                id: Date.now(),
+                total: total,
+                isPercent: isPercentageMethod,
+                inputVal: inputVal,
+                profit: finalProfit,
+                loss: finalLoss,
+                unit: unit
+            };
+
+            saveRawTrade(trade);
+        });
 
         // زر مسح السجل
         clearLogBtn.addEventListener('click', () => {
-            logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">لا توجد صفقات مسجلة حالياً في هذه الجلسة</div>`;
-            localStorage.removeItem('trading_sessions');
+            const t = translations[currentLang];
+            logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`;
+            localStorage.removeItem('trading_sessions_raw');
         });
 
-        // التشغيل الأولي
-        loadSavedLog();
+        function updateResultLabels() {
+            const t = translations[currentLang];
+            const isBaseCalculated = !document.getElementById('calcMethodToggle').checked;
+            
+            const labelPlus = document.getElementById('label-plus');
+            const labelMinus = document.getElementById('label-minus');
+            
+            if (isBaseCalculated) {
+                labelPlus.innerText = t.profitRatioLabel;
+                labelMinus.innerText = t.lossRatioLabel;
+            } else {
+                labelPlus.innerText = t.profitTotalLabel;
+                labelMinus.innerText = t.lossTotalLabel;
+            }
+        }
+
+        // التشغيل الأولي المباشر وتحديد لغة المستخدم السابقة
+        window.addEventListener('load', () => {
+            const savedLang = localStorage.getItem('app_lang');
+            if (savedLang) {
+                currentLang = savedLang;
+            }
+            updateLanguageUI();
+        });
     </script>
 </body>
 </html>
