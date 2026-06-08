@@ -89,9 +89,10 @@
             </button>
         </div>
 
-        <!-- قسم الشعار المدمج (V) مع حظر اللمس الطويل -->
+        <!-- قسم الشعار المدمج (V) مع ميزة حماية اللمس الطويل والمنع التام للقوائم المنبثقة -->
         <div class="text-center mb-5 space-y-3">
             <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5 select-none no-select" oncontextmenu="return false;">
+                <!-- منع حفظ الصورة أو قائمة الخيارات الطويلة -->
                 <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl no-select pointer-events-none select-none" ondragstart="return false;" oncontextmenu="return false;" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
                 <div id="fallbackLogo" class="hidden text-emerald-400 font-black text-3xl select-none no-select">V</div>
             </div>
@@ -120,7 +121,7 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium">يساوي: 0.00 ر.س</div>
         </div>
 
-        <!-- بطاقة اختيار طريقة الحساب -->
+        <!-- بطاقة اختيار طريقة الحساب (تتأثر بنمط العمل) -->
         <div class="glass-card rounded-2xl p-4 mb-4">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -301,7 +302,7 @@
                 logType: "نوع:",
                 logProfit: "ربح:",
                 logLoss: "خسارة:",
-                typePercent: "نسبة",
+                typePercent: "نسبة مئوية %",
                 typeFixed: "مبلغ ثابت",
                 calcTypeLabel: "نمط الفائدة والحساب",
                 calcTypeSub: "تبديل بين الفائدة الثابتة والمُركّبة",
@@ -320,10 +321,10 @@
                 restoreStateBtn: "استعادة البيانات للآلة ↺",
                 detailsHeader: "بيانات التحليل المفصلة:",
                 detailsCapital: "رأس المال الأصلي:",
-                detailsProfitRate: "نسبة الربح المستهدفة:",
-                detailsLossRate: "نسبة وقف الخسارة:",
-                detailsMethod: "طريقة المخاطرة:",
-                detailsValue: "قيمة المخاطرة:",
+                detailsProfitRate: "نسبة هدف الربح المستهدفة:",
+                detailsLossRate: "نسبة وقف الخسارة المستهدفة:",
+                detailsMethod: "طريقة تحديد الصفقة:",
+                detailsValue: "قيمة حجم الصفقة:",
                 detailsCompound: "مضاعفة الأرباح يومياً:"
             },
             en: {
@@ -353,7 +354,7 @@
                 logType: "Type:",
                 logProfit: "Profit:",
                 logLoss: "Loss:",
-                typePercent: "Percentage",
+                typePercent: "Percentage %",
                 typeFixed: "Fixed Amount",
                 calcTypeLabel: "Interest & Calc Pattern",
                 calcTypeSub: "Toggle Simple vs Compound Interest",
@@ -374,8 +375,8 @@
                 detailsCapital: "Initial Capital:",
                 detailsProfitRate: "Profit Target Rate:",
                 detailsLossRate: "Stop Loss Rate:",
-                detailsMethod: "Risk Method:",
-                detailsValue: "Risk Amount:",
+                detailsMethod: "Position Sizing Method:",
+                detailsValue: "Position Size Value:",
                 detailsCompound: "Daily Compounding:"
             }
         };
@@ -595,6 +596,7 @@
             } 
             // 2. إذا كنا في وضع حساب الأيام النموذجي
             else {
+                // إذا لم يدخل المستخدم أي يوم، سيفترض البرنامج 0 يوم ويحسب بناءً عليه بسلاسة
                 const days = parseInt(daysCountInput.value) || 0;
                 let finalBalance = total;
 
@@ -669,12 +671,27 @@
                 
                 // تعبئة بيانات الصفقات الخاصة (مع حماية التوافق الخلفي للنسخ القديمة)
                 advancedTargetsToggle.checked = trade.advancedTargets !== undefined ? trade.advancedTargets : false;
-                profitTargetInput.value = trade.profitTarget || '';
-                lossTargetInput.value = trade.lossTarget || '';
                 
+                // استعادة نسب الأهداف من الحقل المسجل أو حسابها تلقائياً إن كانت مفقودة
                 if (advancedTargetsToggle.checked) {
+                    const inputValNum = parseFloat(trade.inputVal) || 0;
+                    const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
+                    
+                    let pTarget = trade.profitTarget;
+                    let lTarget = trade.lossTarget;
+                    
+                    // حساب النسبة تلقائياً للملفات القديمة
+                    if (dealVal > 0 && (!pTarget || !lTarget)) {
+                        pTarget = Math.round((trade.profit / dealVal) * 100);
+                        lTarget = Math.round((trade.loss / dealVal) * 100);
+                    }
+                    
+                    profitTargetInput.value = pTarget || '';
+                    lossTargetInput.value = lTarget || '';
                     advancedFields.classList.remove('hidden');
                 } else {
+                    profitTargetInput.value = '';
+                    lossTargetInput.value = '';
                     advancedFields.classList.add('hidden');
                 }
             }
@@ -688,7 +705,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // استرجاع السجل المحفوظ وعرضه باللغة الحالية مع التوسيع والاستعادة
+        // استرجاع السجل المحفوظ وعرضه باللغة الحالية مع التوسيع والاستعادة والتوافق الرجعي المالي
         function renderSavedLog() {
             const savedData = localStorage.getItem('trading_sessions_raw');
             const t = translations[currentLang];
@@ -749,10 +766,30 @@
                             </div>
                         `;
                     } else {
-                        // حسبة الصفقات العادية المعتادة بالتوسيع والاستعادة المتقدمة
+                        // حسبة الصفقات العادية المعتادة بالتوسيع والاستعادة وحل مشكلة الـ 100% للتوافق الخلفي
                         logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 transition-all duration-300";
                         const typeText = trade.isPercent ? `${t.typePercent} (${trade.inputVal}%)` : t.typeFixed;
                         
+                        // احتساب النسب تلقائياً للملفات القديمة المخزنة سابقاً لتعرض القيمة الصحيحة عوضاً عن الـ 100%
+                        let displayProfitTarget = trade.profitTarget;
+                        let displayLossTarget = trade.lossTarget;
+                        
+                        const inputValNum = parseFloat(trade.inputVal) || 0;
+                        const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
+                        
+                        if (trade.advancedTargets && (!displayProfitTarget || !displayLossTarget)) {
+                            if (dealVal > 0) {
+                                displayProfitTarget = Math.round((trade.profit / dealVal) * 100);
+                                displayLossTarget = Math.round((trade.loss / dealVal) * 100);
+                            }
+                        }
+                        
+                        // لو لم تكن أهداف منفصلة، النسبة الافتراضية هي 100% من حجم الصفقة
+                        if (trade.advancedTargets === false || trade.advancedTargets === undefined) {
+                            displayProfitTarget = '100';
+                            displayLossTarget = '100';
+                        }
+
                         logItem.innerHTML = `
                             <div class="flex justify-between font-bold text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
@@ -776,8 +813,8 @@
                                 <div>• ${t.detailsCapital} <span class="text-slate-200 font-bold">${formatNumber(trade.total)} ${trade.unit}</span></div>
                                 <div>• ${t.detailsMethod} <span class="text-slate-200 font-bold">${trade.isPercent ? t.typePercent : t.typeFixed}</span></div>
                                 <div>• ${t.detailsValue} <span class="text-slate-200 font-bold">${trade.isPercent ? `${trade.inputVal}%` : `${formatNumber(parseFloat(trade.inputVal))} ${trade.unit}`}</span></div>
-                                <div>• ${t.detailsProfitRate} <span class="text-emerald-400 font-bold">${trade.profitTarget ? `${trade.profitTarget}%` : '100%'}</span></div>
-                                <div>• ${t.detailsLossRate} <span class="text-rose-400 font-bold">${trade.lossTarget ? `${trade.lossTarget}%` : '100%'}</span></div>
+                                <div>• ${t.detailsProfitRate} <span class="text-emerald-400 font-bold">${displayProfitTarget}%</span></div>
+                                <div>• ${t.detailsLossRate} <span class="text-rose-400 font-bold">${displayLossTarget}%</span></div>
                                 
                                 <!-- زر إعادة العرض والتشغيل السحري -->
                                 <button class="w-full mt-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 tap-active" onclick="restoreTradeToCalculator(${trade.id})">
