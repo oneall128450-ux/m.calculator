@@ -202,7 +202,7 @@
 
         <!-- ================= قسم واجهة حساب الأيام والتراكم ================= -->
         <div id="panelDays" class="space-y-4 hidden">
-            <!-- خيارات إضافية لحساب الأيام -->
+            <!-- خيارات إضافية لحساب الأيام (الزر الأسود) -->
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
                     <div class="flex flex-col">
@@ -263,7 +263,7 @@
         </div>
     </div>
 
-    <!-- كود التشغيل والحساب الذكي والتخزين وإعادة الاسترجاع التراكمي -->
+    <!-- كود التشغيل والحساب الذكي والتخزين وإعادة الاسترجاع التراكمي المطور -->
     <script>
         let isUSD = true;
         let currentLang = 'ar'; // اللغة الافتراضية
@@ -669,23 +669,28 @@
                 activeTab = 'deals';
                 tabDeals.click();
                 
-                // تعبئة بيانات الصفقات الخاصة (مع حماية التوافق الخلفي للنسخ القديمة)
-                advancedTargetsToggle.checked = trade.advancedTargets !== undefined ? trade.advancedTargets : false;
+                // استخلاص نسب الأهداف بدقة بالاعتماد على الحساب التراجعي التلقائي
+                const inputValNum = parseFloat(trade.inputVal) || 0;
+                const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
                 
-                // استعادة نسب الأهداف من الحقل المسجل أو حسابها تلقائياً إن كانت مفقودة
-                if (advancedTargetsToggle.checked) {
-                    const inputValNum = parseFloat(trade.inputVal) || 0;
-                    const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
-                    
-                    let pTarget = trade.profitTarget;
-                    let lTarget = trade.lossTarget;
-                    
-                    // حساب النسبة تلقائياً للملفات القديمة
-                    if (dealVal > 0 && (!pTarget || !lTarget)) {
+                let pTarget = trade.profitTarget;
+                let lTarget = trade.lossTarget;
+                
+                // إذا لم تكن مسجلة في الذاكرة لكونها بطاقة قديمة، سنحسب النسبة الصحيحة مباشرة
+                if (dealVal > 0) {
+                    if (!pTarget || pTarget === '') {
                         pTarget = Math.round((trade.profit / dealVal) * 100);
+                    }
+                    if (!lTarget || lTarget === '') {
                         lTarget = Math.round((trade.loss / dealVal) * 100);
                     }
-                    
+                }
+
+                // تحديد ما إذا كان يجب تفعيل حقول الأهداف المنفصلة (إذا كانت تختلف عن 100%)
+                const hasAdvanced = (pTarget !== 100 || lTarget !== 100 || trade.advancedTargets === true);
+                advancedTargetsToggle.checked = hasAdvanced;
+                
+                if (hasAdvanced) {
                     profitTargetInput.value = pTarget || '';
                     lossTargetInput.value = lTarget || '';
                     advancedFields.classList.remove('hidden');
@@ -705,7 +710,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // استرجاع السجل المحفوظ وعرضه باللغة الحالية مع التوسيع والاستعادة والتوافق الرجعي المالي
+        // استرجاع السجل المحفوظ وعرضه باللغة الحالية مع الحساب العكسي التلقائي والدقيق للنسب القديمة
         function renderSavedLog() {
             const savedData = localStorage.getItem('trading_sessions_raw');
             const t = translations[currentLang];
@@ -766,28 +771,27 @@
                             </div>
                         `;
                     } else {
-                        // حسبة الصفقات العادية المعتادة بالتوسيع والاستعادة وحل مشكلة الـ 100% للتوافق الخلفي
+                        // حسبة الصفقات العادية المعتادة بالتوسيع والاستعادة والتصحيح العكسي الدقيق للنسب القديمة
                         logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 transition-all duration-300";
                         const typeText = trade.isPercent ? `${t.typePercent} (${trade.inputVal}%)` : t.typeFixed;
                         
-                        // احتساب النسب تلقائياً للملفات القديمة المخزنة سابقاً لتعرض القيمة الصحيحة عوضاً عن الـ 100%
-                        let displayProfitTarget = trade.profitTarget;
-                        let displayLossTarget = trade.lossTarget;
-                        
+                        // احتساب النسب تلقائياً للملفات القديمة المخزنة سابقاً لتعرض القيمة الحقيقية الصحيحة دائماً عوضاً عن الـ 100%
                         const inputValNum = parseFloat(trade.inputVal) || 0;
                         const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
                         
-                        if (trade.advancedTargets && (!displayProfitTarget || !displayLossTarget)) {
-                            if (dealVal > 0) {
+                        let displayProfitTarget = trade.profitTarget;
+                        let displayLossTarget = trade.lossTarget;
+                        
+                        if (dealVal > 0) {
+                            if (!displayProfitTarget || displayProfitTarget === '') {
                                 displayProfitTarget = Math.round((trade.profit / dealVal) * 100);
+                            }
+                            if (!displayLossTarget || displayLossTarget === '') {
                                 displayLossTarget = Math.round((trade.loss / dealVal) * 100);
                             }
-                        }
-                        
-                        // لو لم تكن أهداف منفصلة، النسبة الافتراضية هي 100% من حجم الصفقة
-                        if (trade.advancedTargets === false || trade.advancedTargets === undefined) {
-                            displayProfitTarget = '100';
-                            displayLossTarget = '100';
+                        } else {
+                            displayProfitTarget = displayProfitTarget || '100';
+                            displayLossTarget = displayLossTarget || '100';
                         }
 
                         logItem.innerHTML = `
