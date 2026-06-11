@@ -14,7 +14,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية</title>
+    
+    <!-- مكتبة Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- مكتبة تحويل الواجهة إلى PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
         
@@ -126,12 +132,11 @@
             </button>
         </div>
 
-        <!-- بطاقة المبلغ الكلي المحدثة لدعم الفواصل -->
+        <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="mb-2">
                 <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي (رأس المال)</span>
             </div>
-            <!-- تم تغيير النوع إلى text لدعم كتابة الفواصل أثناء الطباعة -->
             <input type="text" id="totalAmount" inputmode="decimal" placeholder="0.00" class="w-full bg-transparent text-2xl font-bold text-slate-100 placeholder-slate-600 focus:outline-none px-1" style="direction: ltr;">
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
@@ -284,7 +289,6 @@
                         </div>
                     </div>
 
-                    <!-- التبديل بين الأرباح الثابتة والمركبة في الخطة (تمت الإضافة) -->
                     <div class="flex items-center justify-between bg-slate-900/50 p-2.5 rounded-xl border border-slate-800 mt-2">
                         <span id="uiTableCompoundLabel" class="text-[11px] text-slate-300 font-medium">حساب تراكمي (أرباح مركبة)</span>
                         <label class="relative inline-flex items-center cursor-pointer tap-active">
@@ -299,15 +303,15 @@
                 </div>
             </div>
 
-            <!-- أزرار الحفظ والتصدير (تظهر بعد التوليد) -->
+            <!-- أزرار الحفظ والتصدير -->
             <div id="tableActionsContainer" class="grid grid-cols-2 gap-2 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span id="uiSaveTableBtn">حفظ للسجل</span>
                 </button>
-                <button id="exportTextBtn" class="tap-active bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-slate-200 font-bold py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
+                <button id="exportPdfBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span id="uiExportTextBtn">تحميل كملف نصي 📄</span>
+                    <span id="uiExportPdfBtn">تحميل كملف PDF 📄</span>
                 </button>
             </div>
 
@@ -317,7 +321,7 @@
             </div>
         </div>
 
-        <!-- سجل صفقات الجلسة (الآن يظهر في كل التبويبات) -->
+        <!-- سجل صفقات الجلسة -->
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
@@ -339,7 +343,6 @@
         const exchangeRate = 3.75;
         let expandedTradeIds = new Set();
         
-        // متغيرات للوصول لبيانات الجدول عند التصدير
         let currentTablePlanData = []; 
 
         const translations = {
@@ -408,7 +411,7 @@
                 tableBalanceSafe: "الرصيد في حال الخسارة:",
                 tableEndLabel: "الرصيد لو تحقق الهدف:",
                 tableSaveBtn: "حفظ للسجل",
-                tableExportBtn: "تحميل كملف نصي 📄",
+                tableExportBtn: "تحميل كملف PDF 📄",
                 logPlanType: "خطة جدول يومية",
                 planFileTitle: "خطة_التداول_الاحترافية"
             },
@@ -477,7 +480,7 @@
                 tableBalanceSafe: "Balance if hit Loss:",
                 tableEndLabel: "Balance if hit Target:",
                 tableSaveBtn: "Save Plan",
-                tableExportBtn: "Download as Text 📄",
+                tableExportBtn: "Download as PDF 📄",
                 logPlanType: "Daily Table Plan",
                 planFileTitle: "Trading_Plan"
             }
@@ -527,41 +530,29 @@
         const generatedTableContainer = document.getElementById('generatedTableContainer');
         const tableActionsContainer = document.getElementById('tableActionsContainer');
         const saveTablePlanBtn = document.getElementById('saveTablePlanBtn');
-        const exportTextBtn = document.getElementById('exportTextBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
 
-        // جلب رأس المال كقيمة رقمية صافية (لإزالة الفواصل)
         function getCapital() {
             return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0;
         }
 
-        // تنسيق الأرقام بفاصلة قراءة (للعرض)
         function formatNumber(num) {
             return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        // إجبار التنسيق الفوري وحسابات الريال/دولار على حقل المبلغ الكلي أثناء الطباعة
         totalAmountInput.addEventListener('input', function(e) {
-            // السماح فقط بالأرقام والنقطة العشرية
             let val = this.value.replace(/[^\d.]/g, '');
-            
-            // منع النقاط العشرية المتعددة
             const parts = val.split('.');
             if (parts.length > 2) {
                 val = parts[0] + '.' + parts.slice(1).join('');
             }
-            
-            // إضافة الفواصل للجزء الصحيح من الرقم
             if (parts[0]) {
                 parts[0] = parseInt(parts[0], 10).toLocaleString('en-US');
                 val = parts.join(parts.length > 1 ? '.' : '');
             }
-            
             this.value = val;
-            
-            // إجبار الحساب الفوري لتحديث نص (يساوي ر.س)
             calculate();
             
-            // تحديث الجدول إن كان مفتوحاً
             if (activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') {
                 generateDailyPlan();
             }
@@ -655,7 +646,7 @@
             document.getElementById('uiTableCompoundLabel').innerText = t.tableCompoundLabel;
             document.getElementById('generateTableBtn').innerText = t.tableGenerateBtn;
             document.getElementById('uiSaveTableBtn').innerText = t.tableSaveBtn;
-            document.getElementById('uiExportTextBtn').innerText = t.tableExportBtn;
+            document.getElementById('uiExportPdfBtn').innerText = t.tableExportBtn;
 
             updateMethodLabel();
             updateToggleStatusText();
@@ -702,7 +693,6 @@
             calculate();
         });
 
-        // محرك حساب الصفقات (يستدعى فورياً مع الكتابة)
         function calculate() {
             const total = getCapital();
             const inputVal = parseFloat(strategyInput.value) || 0;
@@ -712,18 +702,16 @@
             const currencyLabel = isUSD ? (currentLang === 'ar' ? 'دولار' : 'USD') : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const otherLabel = isUSD ? (currentLang === 'ar' ? 'ر.س' : 'SAR') : (currentLang === 'ar' ? 'USD' : 'USD');
 
-            // التحديث الفوري للرقم المحول
             const convertedAmountEl = document.getElementById('convertedAmount');
             if (isUSD) {
                 convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total * exchangeRate)} ${otherLabel}`;
             } else {
                 convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total / exchangeRate)} ${otherLabel}`;
             }
-            // إعطاء وميض سريع للتأكيد على التحديث (اختياري للجمالية)
             convertedAmountEl.style.color = '#10b981';
             setTimeout(() => convertedAmountEl.style.color = '', 200);
 
-            if(activeTab === 'table') return; // لا نطبق حسابات البطاقات السفلية إذا كنا في الخطة
+            if(activeTab === 'table') return;
 
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             let dealValue = 0;
@@ -774,7 +762,6 @@
             }
         }
 
-        // ================= محرك الخطة والجدول (يدعم التراكمي والثابت) =================
         function generateDailyPlan() {
             const initialCapital = getCapital();
             const targetRate = parseFloat(tableTargetInput.value) || 0;
@@ -792,25 +779,22 @@
             }
 
             generatedTableContainer.innerHTML = ''; 
-            currentTablePlanData = []; // إعادة تهيئة مصفوفة التصدير
+            currentTablePlanData = []; 
             
             let currentBalance = initialCapital;
             
-            // في حالة الربح الثابت، الأرباح تحسب دائماً من رأس المال الأول فقط
             const fixedProfitAmount = initialCapital * (targetRate / 100);
             const fixedLossAmount = initialCapital * (safetyRate / 100);
 
             for (let i = 1; i <= daysCount; i++) {
                 const startBalance = currentBalance;
                 
-                // تحديد المربح والخسارة بناء على نمط الخطة (مركب أم ثابت)
                 const profitAmount = isCompound ? (startBalance * (targetRate / 100)) : fixedProfitAmount;
                 const lossAmount = isCompound ? (startBalance * (safetyRate / 100)) : fixedLossAmount;
                 
                 const endBalanceHitTarget = startBalance + profitAmount;
                 const endBalanceHitSafety = startBalance - lossAmount;
 
-                // حفظ البيانات للتصدير لاحقاً
                 currentTablePlanData.push({
                     day: i,
                     start: startBalance,
@@ -850,7 +834,7 @@
             }
 
             generatedTableContainer.classList.remove('hidden');
-            tableActionsContainer.classList.remove('hidden'); // إظهار أزرار الحفظ والتصدير
+            tableActionsContainer.classList.remove('hidden');
         }
 
         generateTableBtn.addEventListener('click', generateDailyPlan);
@@ -858,10 +842,13 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= تصدير الجدول لملف نصي مرتب =================
-        exportTextBtn.addEventListener('click', () => {
+        // ================= تصدير الجدول كملف PDF =================
+        exportPdfBtn.addEventListener('click', () => {
             if (currentTablePlanData.length === 0) return;
             
+            const originalText = exportPdfBtn.innerHTML;
+            exportPdfBtn.innerHTML = `<span class="animate-pulse">${currentLang === 'ar' ? 'جاري التجهيز...' : 'Preparing...'}</span>`;
+
             const t = translations[currentLang];
             const initialCapital = getCapital();
             const targetRate = tableTargetInput.value;
@@ -870,32 +857,61 @@
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const patternTxt = isCompound ? (currentLang === 'ar' ? 'تراكمي (أرباح مركبة)' : 'Compound Interest') : (currentLang === 'ar' ? 'ثابت (غير تراكمي)' : 'Simple (Fixed)');
 
-            let textContent = `${t.appTitle} - ${t.appSubtitle}\n`;
-            textContent += `=====================================\n`;
-            textContent += `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit}\n`;
-            textContent += `${t.tableTargetLabel}: ${targetRate}%\n`;
-            textContent += `${t.tableSafetyLabel}: ${safetyRate}%\n`;
-            textContent += `${t.calcTypeLabel}: ${patternTxt}\n`;
-            textContent += `=====================================\n\n`;
+            // إنشاء حاوية مخفية مؤقتاً لتنسيق محتوى الـ PDF
+            const printContainer = document.createElement('div');
+            printContainer.className = `p-8 bg-slate-900 text-slate-200 ${currentLang === 'ar' ? 'lang-ar' : 'lang-en'}`;
+            printContainer.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            printContainer.style.width = '800px'; 
 
-            currentTablePlanData.forEach(day => {
-                textContent += `--- ${t.tableDayText} ${day.day} ---\n`;
-                textContent += `${t.tableStartLabel} ${formatNumber(day.start)} ${unit}\n`;
-                textContent += `${t.tableTargetCol}: +${formatNumber(day.profit)} ${unit}\n`;
-                textContent += `${t.tableSafetyCol}: -${formatNumber(day.loss)} ${unit} (${t.tableBalanceSafe} ${formatNumber(day.endSafety)} ${unit})\n`;
-                textContent += `>> ${t.tableEndLabel} ${formatNumber(day.endTarget)} ${unit}\n\n`;
+            // إضافة تفاصيل وترويسة الخطة
+            let html = `
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-black text-emerald-400 mb-2">${t.appTitle}</h1>
+                    <p class="text-slate-400">${t.appSubtitle}</p>
+                </div>
+                <div class="bg-slate-800/80 p-5 rounded-2xl mb-8 border border-slate-700">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><span class="text-slate-400 text-sm block mb-1">${t.detailsCapital}</span> <span class="font-bold text-white text-lg">${formatNumber(initialCapital)} ${unit}</span></div>
+                        <div><span class="text-slate-400 text-sm block mb-1">${t.calcTypeLabel}:</span> <span class="font-bold text-sky-400">${patternTxt}</span></div>
+                        <div><span class="text-slate-400 text-sm block mb-1">${t.tableTargetLabel}:</span> <span class="font-bold text-emerald-400">${targetRate}%</span></div>
+                        <div><span class="text-slate-400 text-sm block mb-1">${t.tableSafetyLabel}:</span> <span class="font-bold text-rose-400">${safetyRate}%</span></div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+            `;
+
+            // إضافة الجدول المولد إلى المحتوى
+            const tableContent = document.getElementById('generatedTableContainer').innerHTML;
+            html += tableContent;
+            html += `</div>`;
+
+            printContainer.innerHTML = html;
+            
+            // إضافة الحاوية للجسم مخفية ليتمكن html2canvas من معالجتها
+            printContainer.style.position = 'absolute';
+            printContainer.style.left = '-9999px';
+            printContainer.style.top = '0';
+            document.body.appendChild(printContainer);
+
+            // إعدادات مكتبة html2pdf
+            const opt = {
+                margin:       [10, 10, 10, 10], // هوامش بالمليمتر (فوق، يسار، تحت، يمين)
+                filename:     `${t.planFileTitle}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, backgroundColor: '#0f172a', useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // بناء وحفظ الـ PDF
+            html2pdf().set(opt).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer); // مسح العنصر المؤقت
+                exportPdfBtn.innerHTML = originalText;     // إعادة الزر لشكله الطبيعي
+            }).catch(err => {
+                console.error("خطأ أثناء استخراج PDF: ", err);
+                document.body.removeChild(printContainer);
+                exportPdfBtn.innerHTML = originalText;
+                alert('حدث خطأ أثناء تحميل ملف الـ PDF');
             });
-
-            // إنشاء وبدء تحميل الملف
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${t.planFileTitle}_${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         });
 
         // ================= حفظ خطة الجدول في السجل =================
@@ -905,7 +921,7 @@
 
             const trade = {
                 id: Date.now(),
-                isTablePlan: true, // علامة تميز أنه من قسم الجدول
+                isTablePlan: true, 
                 total: initialCapital,
                 targetRate: tableTargetInput.value,
                 safetyRate: tableSafetyInput.value,
@@ -916,7 +932,6 @@
             };
 
             saveRawTrade(trade);
-            // إشعار بسيط بصري للحفظ
             saveTablePlanBtn.classList.add('bg-sky-500', 'text-white');
             setTimeout(() => saveTablePlanBtn.classList.remove('bg-sky-500', 'text-white'), 300);
         });
@@ -933,7 +948,6 @@
             }
         });
 
-        // ================= دوال السجل =================
         function toggleExpandTrade(id) {
             if (expandedTradeIds.has(id)) expandedTradeIds.delete(id);
             else expandedTradeIds.add(id);
@@ -951,7 +965,6 @@
             isUSD = (trade.unit === '$' || trade.unit === 'USD');
             currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
 
-            // إرسال الرقم بدون فواصل، ثم محاكاة حدث الإدخال لتكوين الفواصل فوراً
             totalAmountInput.value = trade.total;
             totalAmountInput.dispatchEvent(new Event('input'));
 
@@ -1022,7 +1035,6 @@
                     const logItem = document.createElement('div');
                     
                     if (trade.isTablePlan) {
-                        // ستايل أزرق للتمييز أنه خطة جدول كاملة
                         logItem.className = "bg-slate-900/40 border border-sky-500/30 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 bg-gradient-to-l from-sky-500/10 to-transparent transition-all duration-300";
                         const compoundTxt = trade.isCompound ? t.statusCompound : t.statusSimple;
                         
@@ -1104,7 +1116,7 @@
             let trades = [];
             const savedData = localStorage.getItem('trading_sessions_raw');
             if (savedData) trades = JSON.parse(savedData);
-            trades.unshift(trade); // إضافة لأول القائمة
+            trades.unshift(trade);
             localStorage.setItem('trading_sessions_raw', JSON.stringify(trades));
             renderSavedLog();
         }
