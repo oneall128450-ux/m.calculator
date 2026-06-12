@@ -63,13 +63,18 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        /* تنسيقات الطباعة الأصلية (Native Print) للـ PDF - نمط داكن ومتعدد الصفحات */
+        /* تنسيقات الطباعة الأصلية (Native Print) للـ PDF */
         #printArea { display: none; }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0; /* إزالة الهوامش الافتراضية للتحكم الكامل */
+            }
             body > div:not(#printArea) { display: none !important; }
             body { 
                 background: #0f172a !important; 
-                color: #e2e8f0 !important; 
+                margin: 0;
+                padding: 0;
             }
             #printArea { 
                 display: block !important; 
@@ -78,13 +83,7 @@
                 top: 0; 
                 width: 100%; 
                 background: #0f172a; 
-                color: #e2e8f0; 
             }
-            /* قاعدة لتقسيم الصفحات للجدول عند امتلائها */
-            table { page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            thead { display: table-header-group; }
-            tfoot { display: table-footer-group; }
         }
     </style>
 </head>
@@ -824,7 +823,7 @@
                 row.endSafety = runningBalance - actualLoss;
 
                 if (row.status === 'profit') row.actualEnd = row.endTarget;
-                else if (row.status === 'loss') row.actualEnd = row.endSafety;
+                else if (row.status === 'loss') row.actualEnd = row.actualEnd = row.endSafety; // تصحيح الخطأ الإملائي هنا
                 else row.actualEnd = row.endTarget;
 
                 const card = document.createElement('div');
@@ -876,7 +875,7 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel المطور (ألوان وأعمدة حقيقية) =================
+        // ================= التصدير لملف Excel المطور (ألوان وحل مشكلة التلف) =================
         exportExcelBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -892,37 +891,32 @@
                 ["اليوم", "رصيد البداية", "الخسارة (الأمان)", "الهدف اليومي", "الرصيد الفعلي", "الحالة"] :
                 ["Day", "Start Balance", "Safety (Loss)", "Daily Target", "End Balance", "Status"];
 
-            // بناء HTML يحمل خصائص ووسوم (Tags) يفهمها تطبيق Excel كملف أصلي
+            // استخدام تنسيق HTML مبسط ومدعوم كلياً مع ترميز UTF-8
             let tableHTML = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <!DOCTYPE html>
+                <html lang="${currentLang}">
                 <head>
                     <meta charset="UTF-8">
-                    <!--[if gte mso 9]>
-                    <xml>
-                        <x:ExcelWorkbook>
-                            <x:ExcelWorksheets>
-                                <x:ExcelWorksheet>
-                                    <x:Name>${t.planFileTitle}</x:Name>
-                                    <x:WorksheetOptions>
-                                        <x:DisplayRightToLeft>${currentLang === 'ar' ? 'true' : 'false'}</x:DisplayRightToLeft>
-                                    </x:WorksheetOptions>
-                                </x:ExcelWorksheet>
-                            </x:ExcelWorksheets>
-                        </x:ExcelWorkbook>
-                    </xml>
-                    <![endif]-->
+                    <style>
+                        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+                        td, th { border: 1px solid #475569; padding: 10px; text-align: center; }
+                        .header { background-color: #0f172a; color: #10b981; font-size: 18px; font-weight: bold; }
+                        .info { background-color: #1e293b; color: #ffffff; font-weight: bold; }
+                        .col-titles { background-color: #1e293b; color: #ffffff; font-weight: bold; }
+                        .row-light { background-color: #ffffff; color: #000000; }
+                        .row-dark { background-color: #f1f5f9; color: #000000; }
+                        .loss { color: #ef4444; font-weight: bold; }
+                        .profit { color: #10b981; font-weight: bold; }
+                        .balance { font-weight: bold; color: #d97706; }
+                    </style>
                 </head>
-                <body dir="${dirAtt}" style="font-family: Arial, sans-serif;">
-                    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; text-align: center;">
-                        <!-- العنوان العريض -->
+                <body dir="${dirAtt}">
+                    <table>
                         <tr>
-                            <td colspan="6" style="background-color: #0f172a; color: #10b981; font-size: 20px; font-weight: bold; height: 40px;">
-                                ${t.appTitle}
-                            </td>
+                            <td colspan="6" class="header">${t.appTitle}</td>
                         </tr>
-                        <!-- معلومات الرصيد والنسب -->
                         <tr>
-                            <td colspan="6" style="background-color: #f8fafc; font-weight: bold; color: #333333; height: 30px;">
+                            <td colspan="6" class="info">
                                 ${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | 
                                 ${t.tableTargetLabel}: ${tableTargetInput.value}% | 
                                 ${t.tableSafetyLabel}: ${tableSafetyInput.value}%
@@ -930,31 +924,29 @@
                         </tr>
                         <tr><td colspan="6"></td></tr>
                         
-                        <!-- صف عناوين الأعمدة -->
-                        <tr style="background-color: #1e293b; color: #ffffff; font-weight: bold;">
+                        <tr class="col-titles">
             `;
 
             headers.forEach(h => {
-                tableHTML += `<td style="width: 120px;">${h}</td>`;
+                tableHTML += `<td>${h}</td>`;
             });
             tableHTML += `</tr>`;
 
-            // بناء الصفوف بالألوان
             currentTablePlanData.forEach(row => {
                 let statusText, statusColor;
                 if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
                 else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
-                else { statusText = t.statusPending; statusColor = '#94a3b8'; }
+                else { statusText = t.statusPending; statusColor = '#64748b'; }
 
-                let rowBg = row.day % 2 === 0 ? '#f8fafc' : '#ffffff';
+                let rowClass = row.day % 2 === 0 ? 'row-dark' : 'row-light';
 
                 tableHTML += `
-                    <tr style="background-color: ${rowBg};">
+                    <tr class="${rowClass}">
                         <td style="font-weight: bold;">${row.day}</td>
                         <td>${row.start.toFixed(2)}</td>
-                        <td style="color: #ef4444; font-weight: bold;">-${row.lossValue.toFixed(2)}</td>
-                        <td style="color: #10b981; font-weight: bold;">+${row.profitValue.toFixed(2)}</td>
-                        <td style="font-weight: bold; color: #d97706;">${row.actualEnd.toFixed(2)}</td>
+                        <td class="loss">-${row.lossValue.toFixed(2)}</td>
+                        <td class="profit">+${row.profitValue.toFixed(2)}</td>
+                        <td class="balance">${row.actualEnd.toFixed(2)}</td>
                         <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
                     </tr>
                 `;
@@ -962,8 +954,10 @@
 
             tableHTML += `</table></body></html>`;
 
-            // تحويل HTML لملف Excel حقيقي بالألوان
-            const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+            // إضافة BOM (Byte Order Mark) وهي السر الذي يحل مشكلة التلف والخطوط المعكوسة في الإكسل
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -975,7 +969,7 @@
             URL.revokeObjectURL(url);
         });
 
-        // ================= تصدير PDF أصلي ورسمي (داكن ومتعدد الصفحات) =================
+        // ================= تصدير PDF أصلي ورسمي (داكن ومقسّم بذكاء وتمدد للجدول) =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -995,69 +989,91 @@
                 document.body.appendChild(printArea);
             }
 
-            // تطبيق النمط الداكن المريح للعين في التصدير مع فواصل الصفحات الذكية
-            let tableHTML = `
-                <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #e2e8f0; padding: 20px; line-height: 1.6; background-color: #0f172a;">
-                    <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;">
-                        <h2 style="color: #10b981; margin-bottom: 5px;">${t.appTitle}</h2>
-                        <p style="color: #94a3b8; font-size: 14px; margin: 0;">${t.appSubtitle}</p>
-                        <p style="margin-top: 10px; font-weight: bold; background: #020617; display: inline-block; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
-                            ${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span> | 
-                            ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
-                            ${t.tableSafetyLabel}: <span style="color: #ef4444;">${tableSafetyInput.value}%</span>
-                        </p>
-                    </div>
-                    
-                    <!-- إضافة خاصية page-break للجدول لضمان تقسيمه بذكاء على الصفحات -->
-                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; page-break-inside: auto;">
-                        <thead style="display: table-header-group;">
-                            <tr style="background-color: #1e293b; border-bottom: 2px solid #475569;">
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${t.tableDayText}</th>
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                <th style="padding: 12px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+            // تقسيم الأيام إلى مصفوفات بحيث لا تتعدى 20 يوماً في الصفحة الواحدة
+            const chunkSize = 20;
+            const pages = [];
+            for (let i = 0; i < currentTablePlanData.length; i += chunkSize) {
+                pages.push(currentTablePlanData.slice(i, i + chunkSize));
+            }
 
-            currentTablePlanData.forEach(row => {
-                let statusText, statusColor;
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
-                else { statusText = t.statusPending; statusColor = '#94a3b8'; }
-                
-                let rowBg = row.day % 2 === 0 ? '#111827' : '#0f172a';
-                
-                // إضافة page-break-inside: avoid لمنع قص السطر الواحد بين صفحتين
-                tableHTML += `
-                    <tr style="background-color: ${rowBg}; page-break-inside: avoid;">
-                        <td style="padding: 12px; border: 1px solid #334155; font-weight: bold; color: #cbd5e1;">${row.day}</td>
-                        <td style="padding: 12px; border: 1px solid #334155; color: #e2e8f0;">${formatNumber(row.start)}</td>
-                        <td style="padding: 12px; border: 1px solid #334155; color: #ef4444; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
-                        <td style="padding: 12px; border: 1px solid #334155; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
-                        <td style="padding: 12px; border: 1px solid #334155; font-weight: bold; color: #fbbf24;">${formatNumber(row.actualEnd)}</td>
-                        <td style="padding: 12px; border: 1px solid #334155; color: ${statusColor}; font-weight: bold;">${statusText}</td>
-                    </tr>
+            let fullHTML = '';
+
+            pages.forEach((pageRows, pageIndex) => {
+                const isLastPage = pageIndex === pages.length - 1;
+                // استخدام flexbox وتحديد ارتفاع الصفحة بالكامل (297mm لمعيار A4) ليسمح بتمدد العناصر
+                fullHTML += `
+                    <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #ffffff; padding: 15mm; line-height: 1.6; background-color: #0f172a; height: 297mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                        
+                        <!-- عنوان الصفحة ومعلوماتها (تظهر في أعلى كل صفحة) -->
+                        <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 15px; flex-shrink: 0;">
+                            <h2 style="color: #10b981; margin-bottom: 5px;">${t.appTitle} ${pages.length > 1 ? `(${currentLang === 'ar' ? 'صفحة' : 'Page'} ${pageIndex + 1})` : ''}</h2>
+                            <p style="margin-top: 10px; font-weight: bold; color: #ffffff; background: #020617; display: inline-block; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
+                                ${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span> | 
+                                ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
+                                ${t.tableSafetyLabel}: <span style="color: #ef4444;">${tableSafetyInput.value}%</span>
+                            </p>
+                        </div>
+                        
+                        <!-- الجدول الممتد - خاصية flex-grow تجعله يتمدد ليعبئ مساحة الصفحة المتبقية -->
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; flex-grow: 1; height: 100%;">
+                            <thead>
+                                <tr style="background-color: #1e293b; height: 40px;">
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${t.tableDayText}</th>
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
+                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
+
+                pageRows.forEach(row => {
+                    let statusText, statusColor;
+                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
+                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
+                    else { statusText = t.statusPending; statusColor = '#ffffff'; }
+                    
+                    let rowBg = row.day % 2 === 0 ? '#111827' : '#0f172a';
+                    
+                    // تحويل النصوص الرمادية للون الأبيض الناصع #ffffff لضمان التباين العالي
+                    fullHTML += `
+                        <tr style="background-color: ${rowBg};">
+                            <td style="border: 1px solid #334155; font-weight: bold; color: #ffffff;">${row.day}</td>
+                            <td style="border: 1px solid #334155; color: #ffffff;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid #334155; color: #ef4444; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid #334155; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid #334155; font-weight: bold; color: #fbbf24;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                        </tr>
+                    `;
+                });
+
+                fullHTML += `
+                            </tbody>
+                        </table>
+                `;
+
+                // إضافة ملخص الأرباح فقط في الصفحة الأخيرة
+                if (isLastPage) {
+                    fullHTML += `
+                        <div style="margin-top: 15px; padding: 15px; border: 2px solid #334155; background: #020617; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 16px; font-weight: bold; flex-shrink: 0; border-radius: 8px;">
+                            <span style="color: #ffffff;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span> 
+                            <span style="color: #10b981; margin: 0 10px; font-size: 20px;">${formatNumber(netProfit)} ${unit}</span>
+                        </div>
+                    `;
+                }
+
+                fullHTML += `</div>`; // إغلاق حاوية الصفحة
             });
 
-            tableHTML += `
-                        </tbody>
-                    </table>
-                    
-                    <!-- تجنب قص ملخص الأرباح وإبقائه متصلاً -->
-                    <div style="margin-top: 25px; padding: 15px; border: 2px solid #334155; background: #020617; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 16px; font-weight: bold; page-break-inside: avoid; border-radius: 8px;">
-                        <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span> 
-                        <span style="color: #10b981; margin: 0 10px; font-size: 20px;">${formatNumber(netProfit)} ${unit}</span>
-                    </div>
-                </div>
-            `;
-
-            printArea.innerHTML = tableHTML;
-            window.print();
+            printArea.innerHTML = fullHTML;
+            
+            // إضافة مهلة بسيطة لضمان عرض المستعرض للكود قبل تشغيل الطباعة
+            setTimeout(() => {
+                window.print();
+            }, 300);
         });
 
         // ================= تصدير واستيراد البيانات كنسخة احتياطية JSON =================
