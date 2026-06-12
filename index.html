@@ -15,10 +15,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية</title>
     
-    <!-- مكتبة Tailwind CSS -->
+    <!-- مكتبات Tailwind و PDF -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- مكتبة تحويل الواجهة إلى PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -43,7 +41,7 @@
         }
         
         /* إخفاء أسهم حقول الأرقام الافتراضية واجبار الاتجاه */
-        input[type="number"] {
+        input[type="number"], input[type="text"] {
             -webkit-appearance: none;
             margin: 0;
             text-align: left;
@@ -234,7 +232,7 @@
                     <span id="uiDaysInputLabel" class="text-sm font-medium text-slate-300">عدد الأيام المستهدفة</span>
                 </div>
                 <div class="bg-slate-900/50 border border-emerald-950/40 rounded-xl p-3 flex items-center">
-                    <input type="number" id="daysCountInput" inputmode="numeric" placeholder="" class="w-full bg-transparent text-lg font-bold text-emerald-300 focus:outline-none" style="direction: ltr;">
+                    <input type="number" id="daysCountInput" inputmode="numeric" placeholder="0" class="w-full bg-transparent text-lg font-bold text-emerald-300 focus:outline-none" style="direction: ltr;">
                 </div>
             </div>
 
@@ -311,13 +309,12 @@
                 </button>
                 <button id="exportPdfBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span id="uiExportPdfBtn">تحميل كملف PDF 📄</span>
+                    <span id="uiExportPdfBtn">تحميل كجدول PDF 📄</span>
                 </button>
             </div>
 
-            <!-- مكان عرض الجدول المُنشأ -->
+            <!-- مكان عرض الجدول المُنشأ (للموبايل كبطاقات) -->
             <div id="generatedTableContainer" class="space-y-3 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 hidden">
-                <!-- البطاقات اليومية هنا -->
             </div>
         </div>
 
@@ -342,7 +339,6 @@
         let activeTab = 'deals';
         const exchangeRate = 3.75;
         let expandedTradeIds = new Set();
-        
         let currentTablePlanData = []; 
 
         const translations = {
@@ -397,7 +393,6 @@
                 detailsMethod: "طريقة تحديد الصفقة:",
                 detailsValue: "قيمة حجم الصفقة:",
                 detailsCompound: "مضاعفة الأرباح يومياً:",
-                
                 tableSetupTitle: "إعدادات خطة الجدول",
                 tableTargetLabel: "الهدف اليومي (التارجت) %",
                 tableSafetyLabel: "رصيد الأمان (الخسارة) %",
@@ -411,7 +406,7 @@
                 tableBalanceSafe: "الرصيد في حال الخسارة:",
                 tableEndLabel: "الرصيد لو تحقق الهدف:",
                 tableSaveBtn: "حفظ للسجل",
-                tableExportBtn: "تحميل كملف PDF 📄",
+                tableExportBtn: "تحميل كجدول PDF 📄",
                 logPlanType: "خطة جدول يومية",
                 planFileTitle: "خطة_التداول_الاحترافية"
             },
@@ -466,7 +461,6 @@
                 detailsMethod: "Sizing Method:",
                 detailsValue: "Size Value:",
                 detailsCompound: "Daily Compounding:",
-                
                 tableSetupTitle: "Table Plan Setup",
                 tableTargetLabel: "Daily Target %",
                 tableSafetyLabel: "Safety Balance (Loss) %",
@@ -492,21 +486,17 @@
         const daysCountInput = document.getElementById('daysCountInput');
         const profitTargetInput = document.getElementById('profitTargetInput');
         const lossTargetInput = document.getElementById('lossTargetInput');
-        
         const currencyToggle = document.getElementById('currencyToggle');
         const langToggle = document.getElementById('langToggle');
         const calcMethodToggle = document.getElementById('calcMethodToggle');
         const advancedTargetsToggle = document.getElementById('advancedTargetsToggle');
         const compoundToggle = document.getElementById('compoundToggle');
-        
         const convertedAmount = document.getElementById('convertedAmount');
         const methodLabel = document.getElementById('methodLabel');
         const inputUnit = document.getElementById('inputUnit');
         const dealValueOutput = document.getElementById('dealValueOutput');
-        
         const profitOutput = document.getElementById('profitOutput');
         const lossOutput = document.getElementById('lossOutput');
-        
         const advancedFields = document.getElementById('advancedFields');
         const saveSessionBtn = document.getElementById('saveSessionBtn');
         const saveDaysSessionBtn = document.getElementById('saveDaysSessionBtn');
@@ -516,12 +506,11 @@
         const tabDeals = document.getElementById('tabDeals');
         const tabDays = document.getElementById('tabDays');
         const tabTable = document.getElementById('tabTable');
-        
         const panelDeals = document.getElementById('panelDeals');
         const panelDays = document.getElementById('panelDays');
         const panelTable = document.getElementById('panelTable');
 
-        // متغيرات قسم الجدول
+        // Table Elements
         const tableTargetInput = document.getElementById('tableTargetInput');
         const tableSafetyInput = document.getElementById('tableSafetyInput');
         const tableDaysInput = document.getElementById('tableDaysInput');
@@ -543,9 +532,7 @@
         totalAmountInput.addEventListener('input', function(e) {
             let val = this.value.replace(/[^\d.]/g, '');
             const parts = val.split('.');
-            if (parts.length > 2) {
-                val = parts[0] + '.' + parts.slice(1).join('');
-            }
+            if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
             if (parts[0]) {
                 parts[0] = parseInt(parts[0], 10).toLocaleString('en-US');
                 val = parts.join(parts.length > 1 ? '.' : '');
@@ -568,7 +555,6 @@
 
         function switchTab(tabName) {
             activeTab = tabName;
-            
             const activeStyle = "tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50";
             const inactiveStyle = "tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-400";
             
@@ -661,11 +647,8 @@
         function updateMethodLabel() {
             const t = translations[currentLang];
             if (activeTab === 'deals' || activeTab === 'days') {
-                if (calcMethodToggle.checked) {
-                    methodLabel.innerText = activeTab === 'deals' ? t.methodFixed : t.methodFixedDays;
-                } else {
-                    methodLabel.innerText = activeTab === 'deals' ? t.methodPercent : t.methodPercentDays;
-                }
+                if (calcMethodToggle.checked) methodLabel.innerText = activeTab === 'deals' ? t.methodFixed : t.methodFixedDays;
+                else methodLabel.innerText = activeTab === 'deals' ? t.methodPercent : t.methodPercentDays;
             }
             updateResultLabels();
         }
@@ -699,15 +682,12 @@
             const t = translations[currentLang];
             const isPercentageMethod = !calcMethodToggle.checked;
             
-            const currencyLabel = isUSD ? (currentLang === 'ar' ? 'دولار' : 'USD') : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const otherLabel = isUSD ? (currentLang === 'ar' ? 'ر.س' : 'SAR') : (currentLang === 'ar' ? 'USD' : 'USD');
 
             const convertedAmountEl = document.getElementById('convertedAmount');
-            if (isUSD) {
-                convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total * exchangeRate)} ${otherLabel}`;
-            } else {
-                convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total / exchangeRate)} ${otherLabel}`;
-            }
+            if (isUSD) convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total * exchangeRate)} ${otherLabel}`;
+            else convertedAmountEl.innerText = `${currentLang === 'ar' ? 'يساوي:' : 'Equals:'} ${formatNumber(total / exchangeRate)} ${otherLabel}`;
+            
             convertedAmountEl.style.color = '#10b981';
             setTimeout(() => convertedAmountEl.style.color = '', 200);
 
@@ -762,8 +742,15 @@
             }
         }
 
+        // ================= توليد خطة الجدول للموبايل =================
         function generateDailyPlan() {
             const initialCapital = getCapital();
+            
+            if (initialCapital <= 0) {
+                alert(currentLang === 'ar' ? "يرجى إدخال مبلغ 'رأس المال' في أعلى الصفحة أولاً لإنشاء الجدول!" : "Please enter 'Total Capital' at the top first!");
+                return;
+            }
+
             const targetRate = parseFloat(tableTargetInput.value) || 0;
             const safetyRate = parseFloat(tableSafetyInput.value) || 0;
             const daysCount = parseInt(tableDaysInput.value) || 0;
@@ -771,7 +758,7 @@
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const t = translations[currentLang];
 
-            if (initialCapital <= 0 || targetRate <= 0 || safetyRate <= 0 || daysCount <= 0) {
+            if (targetRate <= 0 || safetyRate <= 0 || daysCount <= 0) {
                 generatedTableContainer.innerHTML = `<div class="text-center text-rose-400 py-4 font-bold text-sm bg-rose-500/10 rounded-xl border border-rose-500/20">${currentLang === 'ar' ? 'الرجاء تعبئة جميع الحقول بشكل صحيح.' : 'Please fill all fields correctly.'}</div>`;
                 generatedTableContainer.classList.remove('hidden');
                 tableActionsContainer.classList.add('hidden');
@@ -782,7 +769,6 @@
             currentTablePlanData = []; 
             
             let currentBalance = initialCapital;
-            
             const fixedProfitAmount = initialCapital * (targetRate / 100);
             const fixedLossAmount = initialCapital * (safetyRate / 100);
 
@@ -842,75 +828,86 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= تصدير الجدول كملف PDF =================
+        // ================= طباعة PDF بصيغة جدول كلاسيكي =================
         exportPdfBtn.addEventListener('click', () => {
-            if (currentTablePlanData.length === 0) return;
+            const initialCapital = getCapital();
+            if (currentTablePlanData.length === 0 || initialCapital <= 0) {
+                alert(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً عبر زر 'إنشاء الجدول الدقيق'." : "Please generate the table first.");
+                return;
+            }
             
             const originalText = exportPdfBtn.innerHTML;
-            exportPdfBtn.innerHTML = `<span class="animate-pulse">${currentLang === 'ar' ? 'جاري التجهيز...' : 'Preparing...'}</span>`;
+            exportPdfBtn.innerHTML = `<span class="animate-pulse">${currentLang === 'ar' ? 'جاري بناء الجدول...' : 'Generating PDF...'}</span>`;
 
-            const t = translations[currentLang];
-            const initialCapital = getCapital();
-            const targetRate = tableTargetInput.value;
-            const safetyRate = tableSafetyInput.value;
-            const isCompound = tableCompoundToggle.checked;
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const patternTxt = isCompound ? (currentLang === 'ar' ? 'تراكمي (أرباح مركبة)' : 'Compound Interest') : (currentLang === 'ar' ? 'ثابت (غير تراكمي)' : 'Simple (Fixed)');
+            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].endTarget - initialCapital;
+            const t = translations[currentLang];
 
-            // إنشاء حاوية مخفية مؤقتاً لتنسيق محتوى الـ PDF
+            // بناء الجدول بصيغة HTML بخلفية سوداء ليتطابق مع الصورة
             const printContainer = document.createElement('div');
-            printContainer.className = `p-8 bg-slate-900 text-slate-200 ${currentLang === 'ar' ? 'lang-ar' : 'lang-en'}`;
-            printContainer.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            printContainer.style.width = '800px'; 
+            const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
+            printContainer.style.cssText = `width: 900px; background-color: #000000; color: #ffffff; padding: 30px; font-family: 'Tajawal', 'Inter', sans-serif; direction: ${dirAtt};`;
+            
+            let tableHTML = `
+                <h2 style="text-align: center; color: #10b981; font-size: 24px; margin-bottom: 20px; font-weight: bold;">${t.appTitle} - ${t.appSubtitle}</h2>
+                <div style="text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px;">
+                    <span>${t.detailsCapital} ${formatNumber(initialCapital)} ${unit}</span> | 
+                    <span>${t.tableTargetLabel}: ${tableTargetInput.value}%</span> | 
+                    <span>${t.tableSafetyLabel}: ${tableSafetyInput.value}%</span>
+                </div>
 
-            // إضافة تفاصيل وترويسة الخطة
-            let html = `
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl font-black text-emerald-400 mb-2">${t.appTitle}</h1>
-                    <p class="text-slate-400">${t.appSubtitle}</p>
-                </div>
-                <div class="bg-slate-800/80 p-5 rounded-2xl mb-8 border border-slate-700">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><span class="text-slate-400 text-sm block mb-1">${t.detailsCapital}</span> <span class="font-bold text-white text-lg">${formatNumber(initialCapital)} ${unit}</span></div>
-                        <div><span class="text-slate-400 text-sm block mb-1">${t.calcTypeLabel}:</span> <span class="font-bold text-sky-400">${patternTxt}</span></div>
-                        <div><span class="text-slate-400 text-sm block mb-1">${t.tableTargetLabel}:</span> <span class="font-bold text-emerald-400">${targetRate}%</span></div>
-                        <div><span class="text-slate-400 text-sm block mb-1">${t.tableSafetyLabel}:</span> <span class="font-bold text-rose-400">${safetyRate}%</span></div>
-                    </div>
-                </div>
-                <div class="space-y-4">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
+                            <th style="padding: 15px 10px; font-weight: normal;">${t.tableDayText}</th>
+                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'رصيد بداية اليوم' : 'Start Balance'}</th>
+                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'أمان الطوارئ (لليوم)' : 'Safety (Loss)'}</th>
+                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'الهدف اليومي (التارجت)' : 'Daily Target'}</th>
+                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'رصيد نهاية اليوم' : 'End Balance'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
 
-            // إضافة الجدول المولد إلى المحتوى
-            const tableContent = document.getElementById('generatedTableContainer').innerHTML;
-            html += tableContent;
-            html += `</div>`;
+            currentTablePlanData.forEach(row => {
+                tableHTML += `
+                    <tr style="border-bottom: 1px solid #1e293b; page-break-inside: avoid;">
+                        <td style="padding: 12px 10px;">${t.tableDayText} ${row.day}</td>
+                        <td style="padding: 12px 10px;">${formatNumber(row.start)} ${unit}</td>
+                        <td style="padding: 12px 10px;">${formatNumber(row.loss)} ${unit}</td>
+                        <td style="padding: 12px 10px;">${formatNumber(row.profit)} ${unit}</td>
+                        <td style="padding: 12px 10px;">${formatNumber(row.endTarget)} ${unit}</td>
+                    </tr>
+                `;
+            });
 
-            printContainer.innerHTML = html;
-            
-            // إضافة الحاوية للجسم مخفية ليتمكن html2canvas من معالجتها
-            printContainer.style.position = 'absolute';
-            printContainer.style.left = '-9999px';
-            printContainer.style.top = '0';
+            tableHTML += `
+                    </tbody>
+                </table>
+                <div style="text-align: ${currentLang === 'ar' ? 'right' : 'left'}; margin-top: 30px; padding-top: 15px; font-size: 16px;">
+                    <span style="color: #94a3b8;">⚪ ${currentLang === 'ar' ? 'صافي الأرباح المتوقعة للفترة:' : 'Expected Net Profit:'}</span> 
+                    <strong style="color: #10b981;">${formatNumber(netProfit)} ${unit}</strong>
+                </div>
+            `;
+
+            printContainer.innerHTML = tableHTML;
             document.body.appendChild(printContainer);
 
-            // إعدادات مكتبة html2pdf
             const opt = {
-                margin:       [10, 10, 10, 10], // هوامش بالمليمتر (فوق، يسار، تحت، يمين)
-                filename:     `${t.planFileTitle}_${new Date().toISOString().split('T')[0]}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, backgroundColor: '#0f172a', useCORS: true },
+                margin:       [10, 10, 10, 10], 
+                filename:     `${t.planFileTitle}_جدول.pdf`,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: 900, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // بناء وحفظ الـ PDF
             html2pdf().set(opt).from(printContainer).save().then(() => {
-                document.body.removeChild(printContainer); // مسح العنصر المؤقت
-                exportPdfBtn.innerHTML = originalText;     // إعادة الزر لشكله الطبيعي
-            }).catch(err => {
-                console.error("خطأ أثناء استخراج PDF: ", err);
                 document.body.removeChild(printContainer);
                 exportPdfBtn.innerHTML = originalText;
-                alert('حدث خطأ أثناء تحميل ملف الـ PDF');
+            }).catch(err => {
+                console.error("PDF Error: ", err);
+                document.body.removeChild(printContainer);
+                exportPdfBtn.innerHTML = originalText;
             });
         });
 
