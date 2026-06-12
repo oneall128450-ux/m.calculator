@@ -906,14 +906,14 @@
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const t = translations[currentLang];
 
-            // بناء الجدول بهيكل CSS ثابت بعرض 800px ليناسب مقاس صفحة الـ PDF دون أي اقتصاص
+            // بناء الجدول بهيكل CSS ثابت بعرض 700px ليناسب مقاس صفحة الـ PDF دون أي اقتصاص
             const printContainer = document.createElement('div');
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
             printContainer.style.cssText = `
-                width: 800px; 
+                width: 700px; 
                 background-color: #000000; 
                 color: #ffffff; 
-                padding: 35px; 
+                padding: 30px; 
                 box-sizing: border-box;
                 font-family: 'Tajawal', 'Inter', sans-serif; 
                 direction: ${dirAtt};
@@ -921,23 +921,23 @@
             
             let tableHTML = `
                 <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #10b981; padding-bottom: 15px;">
-                    <h2 style="color: #10b981; font-size: 26px; margin: 0 0 10px 0; font-weight: 900;">${t.appTitle}</h2>
-                    <p style="color: #94a3b8; font-size: 13px; margin: 0 0 10px 0;">${t.appSubtitle}</p>
-                    <div style="color: #cbd5e1; font-size: 13px; font-weight: bold; margin-top: 10px;">
+                    <h2 style="color: #10b981; font-size: 24px; margin: 0 0 10px 0; font-weight: 900;">${t.appTitle}</h2>
+                    <p style="color: #94a3b8; font-size: 12px; margin: 0 0 10px 0;">${t.appSubtitle}</p>
+                    <div style="color: #cbd5e1; font-size: 12px; font-weight: bold; margin-top: 10px;">
                         <span>${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span></span> | 
                         <span>${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span></span> | 
                         <span>${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span></span>
                     </div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; table-layout: fixed;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px; table-layout: fixed;">
                     <thead>
                         <tr style="border-bottom: 2px solid #334155; color: #94a3b8; background-color: #111827;">
-                            <th style="padding: 12px 5px; width: 12%; text-align: center; font-weight: bold; font-size: 13px;">${t.tableDayText}</th>
-                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'رصيد بداية اليوم' : 'Start Balance'}</th>
-                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'أمان الطوارئ (لليوم)' : 'Safety (Loss)'}</th>
-                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'الهدف اليومي (التارجت)' : 'Daily Target'}</th>
-                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'رصيد نهاية اليوم' : 'End Balance'}</th>
+                            <th style="padding: 10px 5px; width: 14%; text-align: center; font-weight: bold; font-size: 12px;">${t.tableDayText}</th>
+                            <th style="padding: 10px 5px; width: 21%; text-align: center; font-weight: bold; font-size: 12px;">${currentLang === 'ar' ? 'رصيد بداية اليوم' : 'Start Balance'}</th>
+                            <th style="padding: 10px 5px; width: 21%; text-align: center; font-weight: bold; font-size: 12px;">${currentLang === 'ar' ? 'أمان الطوارئ (لليوم)' : 'Safety (Loss)'}</th>
+                            <th style="padding: 10px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 12px;">${currentLang === 'ar' ? 'الهدف اليومي (التارجت)' : 'Daily Target'}</th>
+                            <th style="padding: 10px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 12px;">${currentLang === 'ar' ? 'رصيد نهاية اليوم' : 'End Balance'}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -946,11 +946,11 @@
             currentTablePlanData.forEach(row => {
                 tableHTML += `
                     <tr style="border-bottom: 1px solid #1e293b; page-break-inside: avoid;">
-                        <td style="padding: 11px 5px; color: #94a3b8; font-weight: bold;">${t.tableDayText} ${row.day}</td>
-                        <td style="padding: 11px 5px; color: #ffffff;">${formatNumber(row.start)} ${unit}</td>
-                        <td style="padding: 11px 5px; color: #f43f5e; font-weight: bold;">${formatNumber(row.lossValue)} ${unit}</td>
-                        <td style="padding: 11px 5px; color: #10b981; font-weight: bold;">${formatNumber(row.profitValue)} ${unit}</td>
-                        <td style="padding: 11px 5px; color: #fbbf24; font-weight: bold;">${formatNumber(row.actualEnd)} ${unit}</td>
+                        <td style="padding: 10px 5px; color: #94a3b8; font-weight: bold;">${t.tableDayText} ${row.day}</td>
+                        <td style="padding: 10px 5px; color: #ffffff;">${formatNumber(row.start)} ${unit}</td>
+                        <td style="padding: 10px 5px; color: #f43f5e; font-weight: bold;">${formatNumber(row.lossValue)} ${unit}</td>
+                        <td style="padding: 10px 5px; color: #10b981; font-weight: bold;">${formatNumber(row.profitValue)} ${unit}</td>
+                        <td style="padding: 10px 5px; color: #fbbf24; font-weight: bold;">${formatNumber(row.actualEnd)} ${unit}</td>
                     </tr>
                 `;
             });
@@ -958,9 +958,9 @@
             tableHTML += `
                     </tbody>
                 </table>
-                <div style="text-align: ${currentLang === 'ar' ? 'right' : 'left'}; margin-top: 30px; padding-top: 15px; border-top: 2px solid #334155; font-size: 15px;">
+                <div style="text-align: ${currentLang === 'ar' ? 'right' : 'left'}; margin-top: 30px; padding-top: 15px; border-top: 2px solid #334155; font-size: 14px;">
                     <span style="color: #94a3b8;">⚪ ${currentLang === 'ar' ? 'صافي الأرباح المتوقعة للفترة:' : 'Expected Net Profit:'}</span> 
-                    <strong style="color: #10b981; font-size: 18px; margin-right: 10px; margin-left: 10px;">${formatNumber(netProfit)} ${unit}</strong>
+                    <strong style="color: #10b981; font-size: 17px; margin-right: 10px; margin-left: 10px;">${formatNumber(netProfit)} ${unit}</strong>
                 </div>
             `;
 
@@ -971,7 +971,14 @@
                 margin:       [10, 10, 10, 10], 
                 filename:     `${t.planFileTitle}_جدول.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: 800, useCORS: true },
+                html2canvas:  { 
+                    scale: 2, 
+                    backgroundColor: '#000000', 
+                    windowWidth: 700, 
+                    useCORS: true,
+                    scrollX: 0,
+                    scrollY: 0
+                },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
