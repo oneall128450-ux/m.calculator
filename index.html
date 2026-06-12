@@ -13,9 +13,9 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>حاسبة التداول الاحترافية</title>
+    <title>حاسبة التداول الاحترافية المتكاملة</title>
     
-    <!-- مكتبات Tailwind و PDF -->
+    <!-- مكتبات Tailwind و PDF المعتمدة -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -100,9 +100,19 @@
             <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
                 🌐 EN
             </button>
-            <button id="currencyToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700/60">
-                $ USD
-            </button>
+            <div class="flex gap-2">
+                <!-- أزرار استيراد وتصدير النسخة الاحتياطية -->
+                <button id="exportBackupBtn" class="tap-active bg-slate-800/80 text-[10px] font-bold px-2 py-1.5 rounded-lg text-slate-300 border border-slate-700/60 flex items-center gap-1" title="تصدير نسخة احتياطية">
+                    📥 تصدير
+                </button>
+                <button id="importBackupBtn" class="tap-active bg-slate-800/80 text-[10px] font-bold px-2 py-1.5 rounded-lg text-slate-300 border border-slate-700/60 flex items-center gap-1" title="استيراد نسخة احتياطية">
+                    📤 استيراد
+                </button>
+                <input type="file" id="importFile" class="hidden" accept=".json">
+                <button id="currencyToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-slate-300 border border-slate-700/60">
+                    $ USD
+                </button>
+            </div>
         </div>
 
         <!-- قسم الشعار -->
@@ -313,7 +323,7 @@
                 </button>
             </div>
 
-            <!-- مكان عرض الجدول المُنشأ (للموبايل كبطاقات) -->
+            <!-- مكان عرض الجدول المُنشأ (للموبايل كبطاقات تفاعلية) -->
             <div id="generatedTableContainer" class="space-y-3 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 hidden">
             </div>
         </div>
@@ -520,6 +530,11 @@
         const tableActionsContainer = document.getElementById('tableActionsContainer');
         const saveTablePlanBtn = document.getElementById('saveTablePlanBtn');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+        // استيراد وتصدير النسخة الاحتياطية
+        const exportBackupBtn = document.getElementById('exportBackupBtn');
+        const importBackupBtn = document.getElementById('importBackupBtn');
+        const importFile = document.getElementById('importFile');
 
         function getCapital() {
             return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0;
@@ -742,7 +757,7 @@
             }
         }
 
-        // ================= توليد خطة الجدول للموبايل =================
+        // ================= توليد خطة الجدول التفاعلية والذكية =================
         function generateDailyPlan() {
             const initialCapital = getCapital();
             
@@ -755,8 +770,6 @@
             const safetyRate = parseFloat(tableSafetyInput.value) || 0;
             const daysCount = parseInt(tableDaysInput.value) || 0;
             const isCompound = tableCompoundToggle.checked;
-            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const t = translations[currentLang];
 
             if (targetRate <= 0 || safetyRate <= 0 || daysCount <= 0) {
                 generatedTableContainer.innerHTML = `<div class="text-center text-rose-400 py-4 font-bold text-sm bg-rose-500/10 rounded-xl border border-rose-500/20">${currentLang === 'ar' ? 'الرجاء تعبئة جميع الحقول بشكل صحيح.' : 'Please fill all fields correctly.'}</div>`;
@@ -765,62 +778,112 @@
                 return;
             }
 
-            generatedTableContainer.innerHTML = ''; 
-            currentTablePlanData = []; 
-            
+            // تهيئة مصفوفة البيانات بمقاييس افتراضية معلقة (status: 'pending')
+            currentTablePlanData = [];
             let currentBalance = initialCapital;
             const fixedProfitAmount = initialCapital * (targetRate / 100);
             const fixedLossAmount = initialCapital * (safetyRate / 100);
 
             for (let i = 1; i <= daysCount; i++) {
-                const startBalance = currentBalance;
-                
-                const profitAmount = isCompound ? (startBalance * (targetRate / 100)) : fixedProfitAmount;
-                const lossAmount = isCompound ? (startBalance * (safetyRate / 100)) : fixedLossAmount;
-                
-                const endBalanceHitTarget = startBalance + profitAmount;
-                const endBalanceHitSafety = startBalance - lossAmount;
-
                 currentTablePlanData.push({
                     day: i,
-                    start: startBalance,
-                    profit: profitAmount,
-                    loss: lossAmount,
-                    endSafety: endBalanceHitSafety,
-                    endTarget: endBalanceHitTarget
+                    status: 'pending', // 'pending', 'profit', 'loss'
+                    start: currentBalance,
+                    profitRate: targetRate,
+                    safetyRate: safetyRate,
+                    fixedProfit: fixedProfitAmount,
+                    fixedLoss: fixedLossAmount
                 });
+            }
 
-                const card = document.createElement('div');
-                card.className = "bg-slate-900/60 border border-slate-700/80 rounded-xl p-3 shadow-md relative overflow-hidden";
+            rebuildInteractiveTable();
+            tableActionsContainer.classList.remove('hidden');
+        }
+
+        // تلوين وتحديث الجدول وإعادة حساب الأيام التالية فورياً بناءً على الحقيقة
+        function rebuildInteractiveTable() {
+            const initialCapital = getCapital();
+            const isCompound = tableCompoundToggle.checked;
+            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+            const t = translations[currentLang];
+
+            generatedTableContainer.innerHTML = ''; 
+            let runningBalance = initialCapital;
+
+            // تحديث الحسابات للجميع بالتسلسل
+            currentTablePlanData.forEach((row, index) => {
+                row.start = runningBalance;
                 
+                // حساب الفائدة المعتمدة (مركبة أو بسيطة)
+                const actualProfit = isCompound ? (runningBalance * (row.profitRate / 100)) : row.fixedProfit;
+                const actualLoss = isCompound ? (runningBalance * (row.safetyRate / 100)) : row.fixedLoss;
+
+                row.profitValue = actualProfit;
+                row.lossValue = actualLoss;
+
+                row.endTarget = runningBalance + actualProfit;
+                row.endSafety = runningBalance - actualLoss;
+
+                // تحديد رصيد النهاية الفعلي بناء على حالة اليوم
+                if (row.status === 'profit') {
+                    row.actualEnd = row.endTarget;
+                } else if (row.status === 'loss') {
+                    row.actualEnd = row.endSafety;
+                } else {
+                    row.actualEnd = row.endTarget; // افتراضياً لعرض التارجت
+                }
+
+                // بناء كارت اليوم التفاعلي
+                const card = document.createElement('div');
+                let statusBorderColor = "border-slate-700/80";
+                let statusBg = "bg-slate-900/60";
+                
+                if (row.status === 'profit') {
+                    statusBorderColor = "border-emerald-500/80";
+                    statusBg = "bg-emerald-950/20";
+                } else if (row.status === 'loss') {
+                    statusBorderColor = "border-rose-500/80";
+                    statusBg = "bg-rose-950/20";
+                }
+
+                card.className = `${statusBg} border ${statusBorderColor} rounded-xl p-3 shadow-md relative transition-all duration-300`;
                 card.innerHTML = `
-                    <div class="absolute top-0 bottom-0 ${currentLang === 'ar' ? 'right-0' : 'left-0'} w-1 bg-emerald-500"></div>
                     <div class="flex justify-between items-center mb-2.5 border-b border-slate-700/60 pb-1.5 px-2">
-                        <span class="font-bold text-emerald-400 text-sm">${t.tableDayText} ${i}</span>
-                        <span class="text-[11px] text-slate-400 font-medium">${t.tableStartLabel} <span class="text-slate-200">${formatNumber(startBalance)} ${unit}</span></span>
+                        <span class="font-bold text-emerald-400 text-sm">${t.tableDayText} ${row.day}</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="updateDayStatus(${index}, 'profit')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'profit' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-emerald-400 border border-emerald-500/20'} transition-all">${currentLang === 'ar' ? 'ربح 🟢' : 'Win'}</button>
+                            <button onclick="updateDayStatus(${index}, 'loss')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'loss' ? 'bg-rose-500 text-slate-950' : 'bg-slate-800 text-rose-400 border border-rose-500/20'} transition-all">${currentLang === 'ar' ? 'خسارة 🔴' : 'Loss'}</button>
+                            <button onclick="updateDayStatus(${index}, 'pending')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'pending' ? 'bg-slate-600 text-white' : 'bg-slate-800 text-slate-400'} transition-all">${currentLang === 'ar' ? 'معلق ⚪' : 'Reset'}</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 text-xs px-2">
-                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800">
-                            <div class="text-slate-400 mb-0.5">${t.tableTargetCol} (${targetRate}%):</div>
-                            <div class="font-bold text-emerald-400">+${formatNumber(profitAmount)} ${unit}</div>
+                        <div class="bg-slate-950/40 p-2 rounded-lg">
+                            <div class="text-slate-400 mb-0.5">${t.tableTargetCol}:</div>
+                            <div class="font-bold text-emerald-400">+${formatNumber(actualProfit)} ${unit}</div>
                         </div>
-                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800">
-                            <div class="text-slate-400 mb-0.5">${t.tableSafetyCol} (${safetyRate}%):</div>
-                            <div class="font-bold text-rose-400">-${formatNumber(lossAmount)} ${unit}</div>
-                            <div class="text-[9px] text-slate-500 mt-1">${t.tableBalanceSafe} ${formatNumber(endBalanceHitSafety)}</div>
+                        <div class="bg-slate-950/40 p-2 rounded-lg">
+                            <div class="text-slate-400 mb-0.5">${t.tableSafetyCol}:</div>
+                            <div class="font-bold text-rose-400">-${formatNumber(actualLoss)} ${unit}</div>
                         </div>
                     </div>
                     <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex justify-between items-end px-2">
-                        <span class="text-xs text-slate-300 font-medium">${t.tableEndLabel}</span>
-                        <span class="font-black text-yellow-400 text-lg tracking-wide">${formatNumber(endBalanceHitTarget)} <span class="text-xs font-normal">${unit}</span></span>
+                        <span class="text-xs text-slate-400">${t.tableStartLabel} <span class="text-slate-200">${formatNumber(row.start)}</span></span>
+                        <span class="font-black text-yellow-400 text-base tracking-wide">${formatNumber(row.actualEnd)} <span class="text-[10px] font-normal">${unit}</span></span>
                     </div>
                 `;
                 generatedTableContainer.appendChild(card);
-                currentBalance = endBalanceHitTarget;
-            }
+                
+                // تمرير الرصيد الفعلي لليوم التالي
+                runningBalance = row.actualEnd;
+            });
 
             generatedTableContainer.classList.remove('hidden');
-            tableActionsContainer.classList.remove('hidden');
+        }
+
+        // تحديث حالة اليوم (تم الضغط على تارجت أو وقف خسارة)
+        window.updateDayStatus = function(index, newStatus) {
+            currentTablePlanData[index].status = newStatus;
+            rebuildInteractiveTable();
         }
 
         generateTableBtn.addEventListener('click', generateDailyPlan);
@@ -828,7 +891,7 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= طباعة PDF بصيغة جدول كلاسيكي =================
+        // ================= طباعة PDF كلاسيكي مرتب 100% ومنسق لصفحات A4 بالكامل =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -837,33 +900,44 @@
             }
             
             const originalText = exportPdfBtn.innerHTML;
-            exportPdfBtn.innerHTML = `<span class="animate-pulse">${currentLang === 'ar' ? 'جاري بناء الجدول...' : 'Generating PDF...'}</span>`;
+            exportPdfBtn.innerHTML = `<span class="animate-pulse">${currentLang === 'ar' ? 'جاري بناء ملف PDF...' : 'Generating PDF...'}</span>`;
 
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].endTarget - initialCapital;
+            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const t = translations[currentLang];
 
-            // بناء الجدول بصيغة HTML بخلفية سوداء ليتطابق مع الصورة
+            // بناء الجدول بهيكل CSS ثابت بعرض 800px ليناسب مقاس صفحة الـ PDF دون أي اقتصاص
             const printContainer = document.createElement('div');
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
-            printContainer.style.cssText = `width: 900px; background-color: #000000; color: #ffffff; padding: 30px; font-family: 'Tajawal', 'Inter', sans-serif; direction: ${dirAtt};`;
+            printContainer.style.cssText = `
+                width: 800px; 
+                background-color: #000000; 
+                color: #ffffff; 
+                padding: 35px; 
+                box-sizing: border-box;
+                font-family: 'Tajawal', 'Inter', sans-serif; 
+                direction: ${dirAtt};
+            `;
             
             let tableHTML = `
-                <h2 style="text-align: center; color: #10b981; font-size: 24px; margin-bottom: 20px; font-weight: bold;">${t.appTitle} - ${t.appSubtitle}</h2>
-                <div style="text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px;">
-                    <span>${t.detailsCapital} ${formatNumber(initialCapital)} ${unit}</span> | 
-                    <span>${t.tableTargetLabel}: ${tableTargetInput.value}%</span> | 
-                    <span>${t.tableSafetyLabel}: ${tableSafetyInput.value}%</span>
+                <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #10b981; padding-bottom: 15px;">
+                    <h2 style="color: #10b981; font-size: 26px; margin: 0 0 10px 0; font-weight: 900;">${t.appTitle}</h2>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0 0 10px 0;">${t.appSubtitle}</p>
+                    <div style="color: #cbd5e1; font-size: 13px; font-weight: bold; margin-top: 10px;">
+                        <span>${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span></span> | 
+                        <span>${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span></span> | 
+                        <span>${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span></span>
+                    </div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; table-layout: fixed;">
                     <thead>
-                        <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
-                            <th style="padding: 15px 10px; font-weight: normal;">${t.tableDayText}</th>
-                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'رصيد بداية اليوم' : 'Start Balance'}</th>
-                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'أمان الطوارئ (لليوم)' : 'Safety (Loss)'}</th>
-                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'الهدف اليومي (التارجت)' : 'Daily Target'}</th>
-                            <th style="padding: 15px 10px; font-weight: normal;">${currentLang === 'ar' ? 'رصيد نهاية اليوم' : 'End Balance'}</th>
+                        <tr style="border-bottom: 2px solid #334155; color: #94a3b8; background-color: #111827;">
+                            <th style="padding: 12px 5px; width: 12%; text-align: center; font-weight: bold; font-size: 13px;">${t.tableDayText}</th>
+                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'رصيد بداية اليوم' : 'Start Balance'}</th>
+                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'أمان الطوارئ (لليوم)' : 'Safety (Loss)'}</th>
+                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'الهدف اليومي (التارجت)' : 'Daily Target'}</th>
+                            <th style="padding: 12px 5px; width: 22%; text-align: center; font-weight: bold; font-size: 13px;">${currentLang === 'ar' ? 'رصيد نهاية اليوم' : 'End Balance'}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -872,11 +946,11 @@
             currentTablePlanData.forEach(row => {
                 tableHTML += `
                     <tr style="border-bottom: 1px solid #1e293b; page-break-inside: avoid;">
-                        <td style="padding: 12px 10px;">${t.tableDayText} ${row.day}</td>
-                        <td style="padding: 12px 10px;">${formatNumber(row.start)} ${unit}</td>
-                        <td style="padding: 12px 10px;">${formatNumber(row.loss)} ${unit}</td>
-                        <td style="padding: 12px 10px;">${formatNumber(row.profit)} ${unit}</td>
-                        <td style="padding: 12px 10px;">${formatNumber(row.endTarget)} ${unit}</td>
+                        <td style="padding: 11px 5px; color: #94a3b8; font-weight: bold;">${t.tableDayText} ${row.day}</td>
+                        <td style="padding: 11px 5px; color: #ffffff;">${formatNumber(row.start)} ${unit}</td>
+                        <td style="padding: 11px 5px; color: #f43f5e; font-weight: bold;">${formatNumber(row.lossValue)} ${unit}</td>
+                        <td style="padding: 11px 5px; color: #10b981; font-weight: bold;">${formatNumber(row.profitValue)} ${unit}</td>
+                        <td style="padding: 11px 5px; color: #fbbf24; font-weight: bold;">${formatNumber(row.actualEnd)} ${unit}</td>
                     </tr>
                 `;
             });
@@ -884,9 +958,9 @@
             tableHTML += `
                     </tbody>
                 </table>
-                <div style="text-align: ${currentLang === 'ar' ? 'right' : 'left'}; margin-top: 30px; padding-top: 15px; font-size: 16px;">
+                <div style="text-align: ${currentLang === 'ar' ? 'right' : 'left'}; margin-top: 30px; padding-top: 15px; border-top: 2px solid #334155; font-size: 15px;">
                     <span style="color: #94a3b8;">⚪ ${currentLang === 'ar' ? 'صافي الأرباح المتوقعة للفترة:' : 'Expected Net Profit:'}</span> 
-                    <strong style="color: #10b981;">${formatNumber(netProfit)} ${unit}</strong>
+                    <strong style="color: #10b981; font-size: 18px; margin-right: 10px; margin-left: 10px;">${formatNumber(netProfit)} ${unit}</strong>
                 </div>
             `;
 
@@ -897,7 +971,7 @@
                 margin:       [10, 10, 10, 10], 
                 filename:     `${t.planFileTitle}_جدول.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: 900, useCORS: true },
+                html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: 800, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -909,6 +983,44 @@
                 document.body.removeChild(printContainer);
                 exportPdfBtn.innerHTML = originalText;
             });
+        });
+
+        // ================= تصدير واستيراد البيانات كنسخة احتياطية JSON =================
+        exportBackupBtn.addEventListener('click', () => {
+            const rawSessions = localStorage.getItem('trading_sessions_raw') || '[]';
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(rawSessions);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `trading_calculator_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        importBackupBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (Array.isArray(parsed)) {
+                        localStorage.setItem('trading_sessions_raw', JSON.stringify(parsed));
+                        alert(currentLang === 'ar' ? "تم استيراد النسخة الاحتياطية بنجاح!" : "Backup imported successfully!");
+                        renderSavedLog();
+                    } else {
+                        alert(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.");
+                    }
+                } catch (error) {
+                    alert(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.");
+                }
+            };
+            reader.readAsText(file);
         });
 
         // ================= حفظ خطة الجدول في السجل =================
@@ -924,7 +1036,7 @@
                 safetyRate: tableSafetyInput.value,
                 days: tableDaysInput.value,
                 isCompound: tableCompoundToggle.checked,
-                final: currentTablePlanData[currentTablePlanData.length - 1].endTarget,
+                final: currentTablePlanData[currentTablePlanData.length - 1].actualEnd,
                 unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR')
             };
 
