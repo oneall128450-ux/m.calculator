@@ -14,8 +14,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية المتكاملة</title>
     
-    <!-- مكتبة Tailwind فقط -->
+    <!-- مكتبة Tailwind للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- مكتبة ExcelJS لصناعة ملفات إكسل حقيقية وملونة تعمل على جميع الأجهزة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
@@ -72,9 +75,11 @@
             }
             body > div:not(#printArea) { display: none !important; }
             body { 
-                background: #0f172a !important; 
+                background: #ffffff !important; 
                 margin: 0;
                 padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             #printArea { 
                 display: block !important; 
@@ -82,7 +87,7 @@
                 left: 0; 
                 top: 0; 
                 width: 100%; 
-                background: #0f172a; 
+                background: #ffffff; 
             }
         }
     </style>
@@ -341,7 +346,7 @@
         </div>
     </div>
 
-    <!-- منطقة خفية تستخدم للطباعة الأصلية (Native PDF) المخصصة للتصميم الداكن المتعدد الصفحات -->
+    <!-- منطقة خفية تستخدم للطباعة الأصلية (Native PDF)  -->
     <div id="printArea"></div>
 
     <script>
@@ -823,7 +828,7 @@
                 row.endSafety = runningBalance - actualLoss;
 
                 if (row.status === 'profit') row.actualEnd = row.endTarget;
-                else if (row.status === 'loss') row.actualEnd = row.actualEnd = row.endSafety; // تصحيح الخطأ الإملائي هنا
+                else if (row.status === 'loss') row.actualEnd = row.endSafety;
                 else row.actualEnd = row.endTarget;
 
                 const card = document.createElement('div');
@@ -875,101 +880,110 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel المطور (ألوان وحل مشكلة التلف) =================
-        exportExcelBtn.addEventListener('click', () => {
+        // ================= التصدير لملف Excel احترافي (.xlsx) يحل مشكلة الملف التالف تماماً =================
+        exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
                 alert(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.");
                 return;
             }
 
-            const t = translations[currentLang];
-            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
+            try {
+                const t = translations[currentLang];
+                const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+                
+                // استخدام ExcelJS لصنع ملف حقيقي
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Trading Calculator';
+                
+                const sheet = workbook.addWorksheet(t.planFileTitle);
+                
+                // دعم اللغة العربية للجدول (من اليمين لليسار)
+                sheet.views = [{ rightToLeft: currentLang === 'ar' }];
 
-            const headers = currentLang === 'ar' ? 
-                ["اليوم", "رصيد البداية", "الخسارة (الأمان)", "الهدف اليومي", "الرصيد الفعلي", "الحالة"] :
-                ["Day", "Start Balance", "Safety (Loss)", "Daily Target", "End Balance", "Status"];
+                // تحديد عناوين الأعمدة وعرضها
+                sheet.columns = [
+                    { header: currentLang === 'ar' ? 'اليوم' : 'Day', key: 'day', width: 10 },
+                    { header: currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance', key: 'start', width: 20 },
+                    { header: currentLang === 'ar' ? 'الخسارة (الأمان)' : 'Safety (Loss)', key: 'safety', width: 20 },
+                    { header: currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target', key: 'target', width: 20 },
+                    { header: currentLang === 'ar' ? 'الرصيد الفعلي' : 'End Balance', key: 'end', width: 20 },
+                    { header: currentLang === 'ar' ? 'الحالة' : 'Status', key: 'status', width: 15 }
+                ];
 
-            // استخدام تنسيق HTML مبسط ومدعوم كلياً مع ترميز UTF-8
-            let tableHTML = `
-                <!DOCTYPE html>
-                <html lang="${currentLang}">
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
-                        td, th { border: 1px solid #475569; padding: 10px; text-align: center; }
-                        .header { background-color: #0f172a; color: #10b981; font-size: 18px; font-weight: bold; }
-                        .info { background-color: #1e293b; color: #ffffff; font-weight: bold; }
-                        .col-titles { background-color: #1e293b; color: #ffffff; font-weight: bold; }
-                        .row-light { background-color: #ffffff; color: #000000; }
-                        .row-dark { background-color: #f1f5f9; color: #000000; }
-                        .loss { color: #ef4444; font-weight: bold; }
-                        .profit { color: #10b981; font-weight: bold; }
-                        .balance { font-weight: bold; color: #d97706; }
-                    </style>
-                </head>
-                <body dir="${dirAtt}">
-                    <table>
-                        <tr>
-                            <td colspan="6" class="header">${t.appTitle}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="6" class="info">
-                                ${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | 
-                                ${t.tableTargetLabel}: ${tableTargetInput.value}% | 
-                                ${t.tableSafetyLabel}: ${tableSafetyInput.value}%
-                            </td>
-                        </tr>
-                        <tr><td colspan="6"></td></tr>
-                        
-                        <tr class="col-titles">
-            `;
+                // تنسيق صف العناوين الأول
+                const headerRow = sheet.getRow(1);
+                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+                headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+                headerRow.height = 25;
 
-            headers.forEach(h => {
-                tableHTML += `<td>${h}</td>`;
-            });
-            tableHTML += `</tr>`;
+                // إضافة البيانات وتلوينها
+                currentTablePlanData.forEach(row => {
+                    let statusText = '';
+                    if (row.status === 'profit') statusText = t.statusWin;
+                    else if (row.status === 'loss') statusText = t.statusLoss;
+                    else statusText = t.statusPending;
 
-            currentTablePlanData.forEach(row => {
-                let statusText, statusColor;
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
-                else { statusText = t.statusPending; statusColor = '#64748b'; }
+                    const newRow = sheet.addRow({
+                        day: row.day,
+                        start: row.start.toFixed(2),
+                        safety: `-${row.lossValue.toFixed(2)}`,
+                        target: `+${row.profitValue.toFixed(2)}`,
+                        end: row.actualEnd.toFixed(2),
+                        status: statusText
+                    });
 
-                let rowClass = row.day % 2 === 0 ? 'row-dark' : 'row-light';
+                    newRow.alignment = { horizontal: 'center', vertical: 'middle' };
 
-                tableHTML += `
-                    <tr class="${rowClass}">
-                        <td style="font-weight: bold;">${row.day}</td>
-                        <td>${row.start.toFixed(2)}</td>
-                        <td class="loss">-${row.lossValue.toFixed(2)}</td>
-                        <td class="profit">+${row.profitValue.toFixed(2)}</td>
-                        <td class="balance">${row.actualEnd.toFixed(2)}</td>
-                        <td style="color: ${statusColor}; font-weight: bold;">${statusText}</td>
-                    </tr>
-                `;
-            });
+                    // تلوين الخلايا
+                    newRow.getCell('safety').font = { color: { argb: 'FFEF4444' }, bold: true }; // أحمر
+                    newRow.getCell('target').font = { color: { argb: 'FF10B981' }, bold: true }; // أخضر
+                    newRow.getCell('end').font = { color: { argb: 'FFD97706' }, bold: true };    // برتقالي
 
-            tableHTML += `</table></body></html>`;
+                    if (row.status === 'profit') {
+                        newRow.getCell('status').font = { color: { argb: 'FF10B981' }, bold: true };
+                    } else if (row.status === 'loss') {
+                        newRow.getCell('status').font = { color: { argb: 'FFEF4444' }, bold: true };
+                    } else {
+                        newRow.getCell('status').font = { color: { argb: 'FF64748B' } };
+                    }
 
-            // إضافة BOM (Byte Order Mark) وهي السر الذي يحل مشكلة التلف والخطوط المعكوسة في الإكسل
-            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            const blob = new Blob([bom, tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const dateStr = new Date().toISOString().split('T')[0];
-            a.download = `${t.planFileTitle}_${dateStr}.xls`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+                    // تلوين خلفية الصفوف بشكل متبادل لتسهيل القراءة
+                    if (row.day % 2 === 0) {
+                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    }
+                });
+
+                // إضافة صف سفلي للمعلومات
+                sheet.addRow([]);
+                const infoRow = sheet.addRow([`${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`]);
+                sheet.mergeCells(`A${infoRow.number}:F${infoRow.number}`);
+                infoRow.font = { bold: true, color: { argb: 'FF334155' } };
+                infoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                infoRow.alignment = { horizontal: 'center' };
+
+                // تصدير الملف كـ Blob وإجباره على التحميل
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const dateStr = new Date().toISOString().split('T')[0];
+                a.download = `${t.planFileTitle}_${dateStr}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error("Excel Export Error: ", error);
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.');
+            }
         });
 
-        // ================= تصدير PDF أصلي ورسمي (داكن ومقسّم بذكاء وتمدد للجدول) =================
+        // ================= تصدير PDF مخصص للطباعة (ثيم أبيض فاتح مع ألوان عالية التباين) =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1000,30 +1014,31 @@
 
             pages.forEach((pageRows, pageIndex) => {
                 const isLastPage = pageIndex === pages.length - 1;
-                // استخدام flexbox وتحديد ارتفاع الصفحة بالكامل (297mm لمعيار A4) ليسمح بتمدد العناصر
+                
+                // تم تغيير الألوان إلى النمط الفاتح (Light Theme) ليناسب الطباعة في الجوالات بشكل مثالي
                 fullHTML += `
-                    <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #ffffff; padding: 15mm; line-height: 1.6; background-color: #0f172a; height: 297mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                    <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #0f172a; padding: 15mm; background-color: #ffffff; height: 297mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                         
-                        <!-- عنوان الصفحة ومعلوماتها (تظهر في أعلى كل صفحة) -->
+                        <!-- عنوان الصفحة -->
                         <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 15px; flex-shrink: 0;">
                             <h2 style="color: #10b981; margin-bottom: 5px;">${t.appTitle} ${pages.length > 1 ? `(${currentLang === 'ar' ? 'صفحة' : 'Page'} ${pageIndex + 1})` : ''}</h2>
-                            <p style="margin-top: 10px; font-weight: bold; color: #ffffff; background: #020617; display: inline-block; padding: 10px; border-radius: 8px; border: 1px solid #1e293b;">
-                                ${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span> | 
+                            <p style="margin-top: 10px; font-weight: bold; color: #334155; background: #f8fafc; display: inline-block; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                                ${t.detailsCapital} <span style="color: #d97706;">${formatNumber(initialCapital)} ${unit}</span> | 
                                 ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
                                 ${t.tableSafetyLabel}: <span style="color: #ef4444;">${tableSafetyInput.value}%</span>
                             </p>
                         </div>
                         
-                        <!-- الجدول الممتد - خاصية flex-grow تجعله يتمدد ليعبئ مساحة الصفحة المتبقية -->
+                        <!-- الجدول -->
                         <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; flex-grow: 1; height: 100%;">
                             <thead>
-                                <tr style="background-color: #1e293b; height: 40px;">
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${t.tableDayText}</th>
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                    <th style="border: 1px solid #334155; color: #ffffff;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <tr style="background-color: #f1f5f9; height: 40px;">
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${t.tableDayText}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1033,19 +1048,19 @@
                     let statusText, statusColor;
                     if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
                     else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
-                    else { statusText = t.statusPending; statusColor = '#ffffff'; }
+                    else { statusText = t.statusPending; statusColor = '#64748b'; }
                     
-                    let rowBg = row.day % 2 === 0 ? '#111827' : '#0f172a';
+                    let rowBg = row.day % 2 === 0 ? '#f8fafc' : '#ffffff';
                     
-                    // تحويل النصوص الرمادية للون الأبيض الناصع #ffffff لضمان التباين العالي
+                    // ألوان الخطوط داكنة (أسود/رمادي غامق) لتكون مرئية بقوة على الخلفية البيضاء
                     fullHTML += `
                         <tr style="background-color: ${rowBg};">
-                            <td style="border: 1px solid #334155; font-weight: bold; color: #ffffff;">${row.day}</td>
-                            <td style="border: 1px solid #334155; color: #ffffff;">${formatNumber(row.start)}</td>
-                            <td style="border: 1px solid #334155; color: #ef4444; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
-                            <td style="border: 1px solid #334155; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
-                            <td style="border: 1px solid #334155; font-weight: bold; color: #fbbf24;">${formatNumber(row.actualEnd)}</td>
-                            <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                            <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">${row.day}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #334155;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #ef4444; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #d97706;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: ${statusColor}; font-weight: bold;">${statusText}</td>
                         </tr>
                     `;
                 });
@@ -1058,14 +1073,14 @@
                 // إضافة ملخص الأرباح فقط في الصفحة الأخيرة
                 if (isLastPage) {
                     fullHTML += `
-                        <div style="margin-top: 15px; padding: 15px; border: 2px solid #334155; background: #020617; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 16px; font-weight: bold; flex-shrink: 0; border-radius: 8px;">
-                            <span style="color: #ffffff;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span> 
+                        <div style="margin-top: 15px; padding: 15px; border: 2px solid #cbd5e1; background: #f8fafc; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 16px; font-weight: bold; flex-shrink: 0; border-radius: 8px;">
+                            <span style="color: #334155;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span> 
                             <span style="color: #10b981; margin: 0 10px; font-size: 20px;">${formatNumber(netProfit)} ${unit}</span>
                         </div>
                     `;
                 }
 
-                fullHTML += `</div>`; // إغلاق حاوية الصفحة
+                fullHTML += `</div>`;
             });
 
             printArea.innerHTML = fullHTML;
