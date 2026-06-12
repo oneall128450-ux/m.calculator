@@ -1059,7 +1059,7 @@
                 inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             }
             calculate();
-            if(activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') {
+            if(activeTab === 'table' && {generatedTableContainer}.innerHTML.trim() !== '') {
                 generateDailyPlan(); 
             }
         });
