@@ -90,24 +90,9 @@
                 background: #0f172a !important; 
             }
         }
-
-        /* أنيميشن لتنبيه الـ Toast */
-        @keyframes slideInUp {
-            from { transform: translate(-50%, 100px); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        .toast-animate {
-            animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
-
-    <!-- نافذة إشعارات ذكية مخصصة بديلة عن الـ alert الافتراضي -->
-    <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
-        <span id="toastIcon">✨</span>
-        <span id="toastText" class="text-xs font-bold text-slate-100"></span>
-    </div>
 
     <div id="mainAppContent" class="max-w-md mx-auto px-4 pt-6">
         
@@ -564,22 +549,6 @@
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        // نظام إشعارات Toast
-        function showToast(text, icon = '✨') {
-            const toastBox = document.getElementById('toastBox');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastText = document.getElementById('toastText');
-            
-            toastIcon.innerText = icon;
-            toastText.innerText = text;
-            
-            toastBox.classList.remove('hidden');
-            
-            setTimeout(() => {
-                toastBox.classList.add('hidden');
-            }, 3000);
-        }
-
         function getCapital() {
             return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0;
         }
@@ -806,7 +775,7 @@
             const initialCapital = getCapital();
             
             if (initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إدخال مبلغ 'رأس المال' في أعلى الصفحة أولاً لإنشاء الجدول!" : "Please enter 'Total Capital' at the top first!", '⚠️');
+                alert(currentLang === 'ar' ? "يرجى إدخال مبلغ 'رأس المال' في أعلى الصفحة أولاً لإنشاء الجدول!" : "Please enter 'Total Capital' at the top first!");
                 return;
             }
 
@@ -911,11 +880,11 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel احترافي (.xlsx) - تم حل مشكلة التمدد اللانهائي =================
+        // ================= التصدير لملف Excel احترافي (.xlsx) يحل مشكلة الأسطر الزائدة والترتيب =================
         exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
+                alert(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.");
                 return;
             }
 
@@ -923,12 +892,16 @@
                 const t = translations[currentLang];
                 const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
                 
+                // استخدام ExcelJS لصنع ملف حقيقي ومنظم
                 const workbook = new ExcelJS.Workbook();
                 workbook.creator = 'Trading Calculator';
                 
                 const sheet = workbook.addWorksheet(t.planFileTitle);
-                sheet.views = [{ rightToLeft: currentLang === 'ar' }];
+                
+                // دعم اتجاه اليمين لليسار في اللغة العربية للجدول
+                sheet.views = [{ rightToLeft: currentLang === 'ar', showGridLines: true }];
 
+                // تحديد الأعمدة الفردية (العرض والمفتاح) بدقة بالغة
                 sheet.columns = [
                     { header: currentLang === 'ar' ? 'اليوم' : 'Day', key: 'day', width: 12 },
                     { header: currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance', key: 'start', width: 22 },
@@ -938,12 +911,26 @@
                     { header: currentLang === 'ar' ? 'الحالة' : 'Status', key: 'status', width: 18 }
                 ];
 
-                const headerRow = sheet.getRow(1);
-                headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
-                headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-                headerRow.height = 28;
+                // تعريف الحدود الرقيقة للأعمدة (Thin Borders)
+                const cellBorder = {
+                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                };
 
+                // تنسيق صف العناوين الأول يدوياً (تجنب الإزاحة الكلية التي تسبب 20 ألف سطر!)
+                const headerRow = sheet.getRow(1);
+                headerRow.height = 30;
+                for (let i = 1; i <= 6; i++) {
+                    const cell = headerRow.getCell(i);
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Arial' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // اللون الداكن الكحلي المماثل لتصميمك
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = cellBorder;
+                }
+
+                // إضافة البيانات وتلوينها خلية بخلية بدقة لمنع التمدد اللانهائي للأسطر
                 currentTablePlanData.forEach(row => {
                     let statusText = '';
                     if (row.status === 'profit') statusText = t.statusWin;
@@ -959,45 +946,66 @@
                         status: statusText
                     });
 
-                    newRow.alignment = { horizontal: 'center', vertical: 'middle' };
-                    newRow.height = 22;
+                    newRow.height = 24;
 
-                    newRow.getCell('start').numFmt = '#,##0.00';
-                    newRow.getCell('safety').numFmt = '#,##0.00';
-                    newRow.getCell('target').numFmt = '#,##0.00';
-                    newRow.getCell('end').numFmt = '#,##0.00';
+                    // تلوين الخلفية بشكل تبادلي (زيبرا) لتسهيل القراءة
+                    const zebraColor = row.day % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF';
 
-                    newRow.getCell('safety').font = { color: { argb: 'FFEF4444' }, bold: true }; 
-                    newRow.getCell('target').font = { color: { argb: 'FF10B981' }, bold: true }; 
-                    newRow.getCell('end').font = { color: { argb: 'FFD97706' }, bold: true };    
+                    for (let i = 1; i <= 6; i++) {
+                        const cell = newRow.getCell(i);
+                        cell.border = cellBorder;
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
+                        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
 
-                    if (row.status === 'profit') {
-                        newRow.getCell('status').font = { color: { argb: 'FF10B981' }, bold: true };
-                    } else if (row.status === 'loss') {
-                        newRow.getCell('status').font = { color: { argb: 'FFEF4444' }, bold: true };
-                    } else {
-                        newRow.getCell('status').font = { color: { argb: 'FF64748B' } };
+                        // ضبط تنسيق الأرقام والعملة
+                        if (i >= 2 && i <= 5) {
+                            cell.numFmt = '#,##0.00';
+                        }
                     }
 
-                    if (row.day % 2 === 0) {
-                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    // ألوان الخطوط عالية التباين للنسب المالية
+                    newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; // أحمر
+                    newRow.getCell(4).font = { color: { argb: 'FF10B981' }, bold: true, name: 'Arial', size: 10 }; // أخضر
+                    newRow.getCell(5).font = { color: { argb: 'FFD97706' }, bold: true, name: 'Arial', size: 10 }; // برتقالي ذهبي
+
+                    // تلوين مربع الحالة (بايدج مميز ملون للربح والخسارة)
+                    const statusCell = newRow.getCell(6);
+                    if (row.status === 'profit') {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }; // أخضر فاتح جداً
+                        statusCell.font = { color: { argb: 'FF065F46' }, bold: true, name: 'Arial', size: 10 };
+                    } else if (row.status === 'loss') {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; // أحمر فاتح جداً
+                        statusCell.font = { color: { argb: 'FF991B1B' }, bold: true, name: 'Arial', size: 10 };
+                    } else {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }; // رمادي فاتح جداً
+                        statusCell.font = { color: { argb: 'FF475569' }, name: 'Arial', size: 10 };
                     }
                 });
 
-                // إضافة صف معلومات مدمج ديناميكياً لتجنب تمدد ورقة العمل
-                const emptyRow = sheet.addRow([]);
-                emptyRow.height = 15;
-                
-                const infoRowNumber = sheet.lastRow.number + 1;
-                sheet.mergeCells(infoRowNumber, 1, infoRowNumber, 6);
-                
-                const infoRow = sheet.getRow(infoRowNumber);
-                infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
-                infoRow.font = { bold: true, color: { argb: 'FF334155' }, size: 11 };
-                infoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                infoRow.alignment = { horizontal: 'center', vertical: 'middle' };
+                // سطر فارغ فاصل للمظهر الجمالي
+                const spaceRow = sheet.addRow([]);
+                spaceRow.height = 15;
+
+                // صف سفلي للمعلومات والتحليل الإجمالي ليكون ملفاً متكاملاً واحترافياً
+                const infoRow = sheet.addRow([
+                    `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`
+                ]);
                 infoRow.height = 30;
 
+                // دمج صف الخلايا السفلي يدوياً وحصرها في حدود الجدول (A إلى F) لمنع التمدد
+                sheet.mergeCells(`A${infoRow.number}:F${infoRow.number}`);
+                const infoCell = infoRow.getCell(1);
+                infoCell.font = { bold: true, color: { argb: 'FF334155' }, size: 11, name: 'Arial' };
+                infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+
+                // وضع حدود لصف المعلومات المدمج
+                for (let i = 1; i <= 6; i++) {
+                    infoRow.getCell(i).border = cellBorder;
+                }
+
+                // تصدير الملف كـ Blob وإجباره على التحميل بأحجام صغيرة جداً ودقيقة
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 
@@ -1010,19 +1018,18 @@
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
-                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح!" : "Excel exported successfully!", '📊');
                 
             } catch (error) {
                 console.error("Excel Export Error: ", error);
-                showToast(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.', '❌');
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.');
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة بالثيم الداكن الفخم الاحترافي =================
+        // ================= تصدير PDF مخصص للطباعة (ثيم أبيض فاتح مع ألوان عالية التباين) =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
+                alert(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.");
                 return;
             }
 
@@ -1038,7 +1045,8 @@
                 document.body.appendChild(printArea);
             }
 
-            const chunkSize = 22;
+            // تقسيم الأيام إلى مصفوفات بحيث لا تتعدى 20 يوماً في الصفحة الواحدة للطباعة
+            const chunkSize = 20;
             const pages = [];
             for (let i = 0; i < currentTablePlanData.length; i += chunkSize) {
                 pages.push(currentTablePlanData.slice(i, i + chunkSize));
@@ -1050,50 +1058,49 @@
                 const isLastPage = pageIndex === pages.length - 1;
                 
                 fullHTML += `
-                    <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #cbd5e1; padding: 15mm; background-color: #0f172a; height: 297mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                    <div dir="${dirAtt}" style="font-family: Arial, sans-serif; color: #0f172a; padding: 15mm; background-color: #ffffff; height: 297mm; display: flex; flex-direction: column; box-sizing: border-box; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                         
-                        <!-- عنوان الصفحة والترويسة بنمط داكن مذهل -->
-                        <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 12px; margin-bottom: 18px; flex-shrink: 0;">
-                            <h2 style="color: #10b981; margin: 0 0 8px 0; font-size: 24px; font-weight: 900;">${t.appTitle} ${pages.length > 1 ? `(${currentLang === 'ar' ? 'صفحة' : 'Page'} ${pageIndex + 1})` : ''}</h2>
-                            <p style="margin: 5px 0 0 0; font-weight: bold; color: #e2e8f0; background: #1e293b; display: inline-block; padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); font-size: 13px;">
-                                ${t.detailsCapital} <span style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</span> | 
+                        <!-- عنوان الصفحة -->
+                        <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 15px; flex-shrink: 0;">
+                            <h2 style="color: #10b981; margin-bottom: 5px;">${t.appTitle} ${pages.length > 1 ? `(${currentLang === 'ar' ? 'صفحة' : 'Page'} ${pageIndex + 1})` : ''}</h2>
+                            <p style="margin-top: 10px; font-weight: bold; color: #334155; background: #f8fafc; display: inline-block; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                                ${t.detailsCapital} <span style="color: #d97706;">${formatNumber(initialCapital)} ${unit}</span> | 
                                 ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span>
+                                ${t.tableSafetyLabel}: <span style="color: #ef4444;">${tableSafetyInput.value}%</span>
                             </p>
                         </div>
                         
-                        <!-- جدول الثيم الداكن -->
-                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; flex-grow: 1;">
+                        <!-- الجدول -->
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; flex-grow: 1; height: 100%;">
                             <thead>
-                                <tr style="background-color: #1e293b; height: 42px; border-bottom: 2px solid #334155;">
-                                    <th style="border: 1px solid #334155; color: #f8fafc; font-weight: 700;">${t.tableDayText}</th>
-                                    <th style="border: 1px solid #334155; color: #f8fafc; font-weight: 700;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                    <th style="border: 1px solid #334155; color: #f43f5e; font-weight: 700;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                    <th style="border: 1px solid #334155; color: #10b981; font-weight: 700;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                    <th style="border: 1px solid #334155; color: #f59e0b; font-weight: 700;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                    <th style="border: 1px solid #334155; color: #f8fafc; font-weight: 700;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <tr style="background-color: #f1f5f9; height: 40px;">
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${t.tableDayText}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
+                                    <th style="border: 1px solid #cbd5e1; color: #0f172a;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 </tr>
                             </thead>
                             <tbody>
                 `;
 
                 pageRows.forEach(row => {
-                    let statusText, statusColor, rowBgStyle = '';
-                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.04);'; }
-                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.04);'; }
-                    else { statusText = t.statusPending; statusColor = '#94a3b8'; }
+                    let statusText, statusColor;
+                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; }
+                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#ef4444'; }
+                    else { statusText = t.statusPending; statusColor = '#64748b'; }
                     
-                    let baseBg = row.day % 2 === 0 ? 'background-color: #111c30;' : 'background-color: #0f172a;';
-                    let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
+                    let rowBg = row.day % 2 === 0 ? '#f8fafc' : '#ffffff';
                     
                     fullHTML += `
-                        <tr style="${finalStyle} height: 32px; border-bottom: 1px solid #1e293b;">
-                            <td style="border: 1px solid #1e293b; font-weight: bold; color: #38bdf8;">${row.day}</td>
-                            <td style="border: 1px solid #1e293b; color: #cbd5e1;">${formatNumber(row.start)}</td>
-                            <td style="border: 1px solid #1e293b; color: #f43f5e; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
-                            <td style="border: 1px solid #1e293b; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
-                            <td style="border: 1px solid #1e293b; font-900; color: #f59e0b;">${formatNumber(row.actualEnd)}</td>
-                            <td style="border: 1px solid #1e293b; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                        <tr style="background-color: ${rowBg};">
+                            <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">${row.day}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #334155;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #ef4444; font-weight: bold;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: #10b981; font-weight: bold;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid #cbd5e1; font-weight: bold; color: #d97706;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid #cbd5e1; color: ${statusColor}; font-weight: bold;">${statusText}</td>
                         </tr>
                     `;
                 });
@@ -1105,9 +1112,9 @@
 
                 if (isLastPage) {
                     fullHTML += `
-                        <div style="margin-top: 20px; padding: 18px; border: 1px solid #10b981; background: #1e293b; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 15px; font-weight: bold; flex-shrink: 0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
-                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة:' : 'Expected Net Profit:'}</span> 
-                            <span style="color: #10b981; margin: 0 12px; font-size: 22px; font-weight: 900; letter-spacing: 0.5px;">${formatNumber(netProfit)} ${unit}</span>
+                        <div style="margin-top: 15px; padding: 15px; border: 2px solid #cbd5e1; background: #f8fafc; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 16px; font-weight: bold; flex-shrink: 0; border-radius: 8px;">
+                            <span style="color: #334155;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span> 
+                            <span style="color: #10b981; margin: 0 10px; font-size: 20px;">${formatNumber(netProfit)} ${unit}</span>
                         </div>
                     `;
                 }
@@ -1132,7 +1139,6 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
-            showToast(currentLang === 'ar' ? "تم تصدير النسخة الاحتياطية بنجاح!" : "Backup exported successfully!", '📥');
         });
 
         importBackupBtn.addEventListener('click', () => {
@@ -1149,13 +1155,13 @@
                     const parsed = JSON.parse(evt.target.result);
                     if (Array.isArray(parsed)) {
                         localStorage.setItem('trading_sessions_raw', JSON.stringify(parsed));
-                        showToast(currentLang === 'ar' ? "تم استيراد النسخة الاحتياطية بنجاح!" : "Backup imported successfully!", '📤');
+                        alert(currentLang === 'ar' ? "تم استيراد النسخة الاحتياطية بنجاح!" : "Backup imported successfully!");
                         renderSavedLog();
                     } else {
-                        showToast(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.", '❌');
+                        alert(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.");
                     }
                 } catch (error) {
-                    showToast(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.", '❌');
+                    alert(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.");
                 }
             };
             reader.readAsText(file);
@@ -1181,7 +1187,6 @@
             saveRawTrade(trade);
             saveTablePlanBtn.classList.add('bg-sky-500', 'text-white');
             setTimeout(() => saveTablePlanBtn.classList.remove('bg-sky-500', 'text-white'), 300);
-            showToast(currentLang === 'ar' ? "تم حفظ خطة الجدول في سجل الجلسة!" : "Table plan saved to session log!", '💾');
         });
 
         currencyToggle.addEventListener('click', () => {
@@ -1264,7 +1269,6 @@
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            showToast(currentLang === 'ar' ? "تمت استعادة البيانات بنجاح!" : "Data restored successfully!", '↺');
         }
 
         function renderSavedLog() {
@@ -1431,7 +1435,6 @@
                 profitTarget: profitTargetInput.value || '',
                 lossTarget: lossTargetInput.value || ''
             });
-            showToast(currentLang === 'ar' ? "تم حفظ الصفقة في السجل مؤقتاً!" : "Trade saved to temporary session log!", '💾');
         });
 
         saveDaysSessionBtn.addEventListener('click', () => {
@@ -1464,13 +1467,11 @@
                 unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'),
                 isGrowth: true
             });
-            showToast(currentLang === 'ar' ? "تم حفظ النمو في السجل!" : "Growth saved to session log!", '📈');
         });
 
         clearLogBtn.addEventListener('click', () => {
             localStorage.removeItem('trading_sessions_raw');
             renderSavedLog();
-            showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared completely!", '🗑️');
         });
 
         function updateResultLabels() {
