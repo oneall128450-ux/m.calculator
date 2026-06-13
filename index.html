@@ -71,7 +71,7 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0; /* إزالة الهوامش الافتراضية للتحكم الكامل */
+                margin: 0; 
             }
             body > div:not(#printArea) { display: none !important; }
             body { 
@@ -326,7 +326,7 @@
                 </div>
             </div>
 
-            <!-- أزرار الحفظ والتصدير والنسخ السريع -->
+            <!-- أزرار الحفظ والتصدير والنسخ السريع للتقرير النصي المنسق -->
             <div id="tableActionsContainer" class="grid grid-cols-2 gap-1.5 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -340,7 +340,7 @@
                     <span>📊</span>
                     <span id="uiExportExcelBtn">تصدير Excel</span>
                 </button>
-                <!-- الوسيلة الثالثة والمبتكرة لمشاركة الخطط كتقرير نصي منسق وجميل -->
+                <!-- الوسيلة الثالثة لمشاركه التقارير المنسقه بنقرة زر -->
                 <button id="copyTextReportBtn" class="tap-active bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <span>📋</span>
                     <span id="uiCopyTextReportBtn">نسخ التقرير النصي</span>
@@ -361,7 +361,7 @@
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                <!-- صفقات الجلسة المحفوظة -->
+                <!-- الصفقات المضافة -->
             </div>
         </div>
     </div>
@@ -572,7 +572,7 @@
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        // نظام إشعارات Toast الاحترافي
+        // نظام إشعارات Toast الاحترافي المتناسق
         function showToast(text, icon = '✨') {
             const toastBox = document.getElementById('toastBox');
             const toastIcon = document.getElementById('toastIcon');
@@ -611,6 +611,14 @@
                 generateDailyPlan();
             }
         });
+
+        const logoImg = document.getElementById('logoImg');
+        if (logoImg) {
+            logoImg.addEventListener('contextmenu', (e) => e.preventDefault());
+            logoImg.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
+        }
 
         function switchTab(tabName) {
             activeTab = tabName;
@@ -1053,7 +1061,7 @@
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة بالثيم الداكن الفخم الاحترافي والترجمة الديناميكية =================
+        // ================= تصدير PDF مخصص للطباعة بالثيم الداكن الفخم وتجنب مشكلة الشاشة السوداء في الملاحظات =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1066,12 +1074,12 @@
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            // إنشاء جدول مخصص للطباعة بأسلوب الثيم الداكن الفخم المتكامل
+            // إنشاء جدول مخصص للطباعة بأسلوب الثيم الداكن الفخم المتكامل ودون قيود الارتفاع اللانهائية التي تسبب سواد الصفحة
             let tableRowsHtml = '';
             currentTablePlanData.forEach(row => {
                 let statusText, statusColor, rowBgStyle = '';
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.05);'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.05);'; }
+                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.08);'; }
+                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.08);'; }
                 else { statusText = t.statusPending; statusColor = '#94a3b8'; }
                 
                 let baseBg = row.day % 2 === 0 ? 'background-color: #111c30;' : 'background-color: #0f172a;';
@@ -1089,6 +1097,7 @@
                 `;
             });
 
+            // تم إزالة قيود الارتفاع 297mm و 100% تماماً لحل مشكلة السواد في التطبيقات والملاحظات على الجوال
             const printDocumentHtml = `
                 <!DOCTYPE html>
                 <html dir="${dirAtt}">
@@ -1098,7 +1107,7 @@
                     <style>
                         body { 
                             font-family: Arial, sans-serif; 
-                            margin: 20px; 
+                            margin: 10px; 
                             color: #cbd5e1; 
                             background-color: #0f172a; 
                             -webkit-print-color-adjust: exact !important;
@@ -1130,7 +1139,7 @@
                             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
                         }
                         @media print {
-                            @page { size: A4 portrait; margin: 1.5cm; }
+                            @page { size: A4 portrait; margin: 1cm; }
                             body { margin: 0; background-color: #0f172a !important; }
                         }
                     </style>
@@ -1188,7 +1197,7 @@
             }, 500);
         });
 
-        // ================= الوسيلة الثالثة والمبتكرة: تصدير ومشاركة الخطة كتقرير نصي فخم جداً ومنظم =================
+        // ================= التصدير والمشاركة كتقرير نصي فخم جداً ومنظم =================
         copyTextReportBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1583,7 +1592,7 @@
                 profitTarget: profitTargetInput.value || '',
                 lossTarget: lossTargetInput.value || ''
             });
-            showToast(currentLang === 'ar' ? "تم حفظ الصفقة في سجل الجلسة!" : "Trade saved to session log!", '💾');
+            showToast(currentLang === 'ar' ? "تم حفظ الصفقة في السجل!" : "Trade saved to session log!", '💾');
         });
 
         saveDaysSessionBtn.addEventListener('click', () => {
@@ -1616,13 +1625,13 @@
                 unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'),
                 isGrowth: true
             });
-            showToast(currentLang === 'ar' ? "تم حفظ حسبة النمو في سجل الجلسة!" : "Growth saved to session log!", '📈');
+            showToast(currentLang === 'ar' ? "تم حفظ النمو في السجل!" : "Growth saved to session log!", '📈');
         });
 
         clearLogBtn.addEventListener('click', () => {
             localStorage.removeItem('trading_sessions_raw');
             renderSavedLog();
-            showToast(currentLang === 'ar' ? "تم مسح سجل الجلسة بالكامل!" : "Log cleared!", '🗑️');
+            showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared!", '🗑️');
         });
 
         function updateResultLabels() {
