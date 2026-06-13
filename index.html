@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="appHtml">
 <head>
-    <!-- إعدادات مظهر التطبيق المستقل للجوال -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
@@ -14,10 +13,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية المتكاملة</title>
     
-    <!-- مكتبة Tailwind للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
-<!-- استدعاء مكتبة الإكسل محلياً للأوفلاين -->
-<script src="exceljs.min.js"></script>
+
+    <script src="exceljs.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
@@ -102,7 +100,6 @@
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
 
-    <!-- نافذة إشعارات ذكية مخصصة بديلة عن الـ alert الافتراضي -->
     <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
         <span id="toastIcon">✨</span>
         <span id="toastText" class="text-xs font-bold text-slate-100"></span>
@@ -110,7 +107,6 @@
 
     <div id="mainAppContent" class="max-w-md mx-auto px-4 pt-6">
         
-        <!-- أزرار التحكم باللغة والعملة في الأعلى -->
         <div class="flex justify-between items-center mb-4 px-1">
             <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
                 🌐 EN
@@ -129,7 +125,6 @@
             </div>
         </div>
 
-        <!-- قسم الشعار -->
         <div class="text-center mb-5 space-y-3">
             <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5 select-none no-select" oncontextmenu="return false;">
                 <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl no-select pointer-events-none select-none" ondragstart="return false;" oncontextmenu="return false;" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
@@ -141,7 +136,6 @@
             </div>
         </div>
 
-        <!-- أزرار التبويبات الثلاثة -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800 rounded-xl mb-4">
             <button id="tabDeals" class="tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50">
                 حاسبة الصفقات
@@ -154,7 +148,6 @@
             </button>
         </div>
 
-        <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="mb-2">
                 <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي (رأس المال)</span>
@@ -163,7 +156,6 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
 
-        <!-- بطاقة استراتيجية الحساب (الصفقات والنمو فقط) -->
         <div id="strategyCard" class="glass-card rounded-2xl p-4 mb-4 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -188,7 +180,6 @@
             <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
         </div>
 
-        <!-- ================= 1. واجهة الصفقات ================= -->
         <div id="panelDeals" class="space-y-4">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -235,7 +226,6 @@
             </button>
         </div>
 
-        <!-- ================= 2. واجهة نمو الأيام ================= -->
         <div id="panelDays" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -278,7 +268,6 @@
             </button>
         </div>
 
-        <!-- ================= 3. خطة الجدول ================= -->
         <div id="panelTable" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <h3 id="uiTableSetupTitle" class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
@@ -325,7 +314,6 @@
                 </div>
             </div>
 
-            <!-- أزرار الحفظ والتصدير -->
             <div id="tableActionsContainer" class="grid grid-cols-2 gap-1.5 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -349,7 +337,6 @@
             </div>
         </div>
 
-        <!-- سجل صفقات الجلسة -->
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
@@ -359,128 +346,13 @@
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                <!-- الصفقات المضافة -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- منطقة خفية تستخدم للطباعة الأصلية (Native PDF)  -->
     <div id="printArea"></div>
 
     <script>
-        // ================= مكتبة MiniExcel الذكية والمتوافقة 100% مع الجوالات والـ XML =================
-        const MiniExcel = {
-            export(headers, rows, options = {}) {
-                const isDark = options.theme === 'dark';
-                const filename = options.filename || 'Trading_Plan';
-
-                // بناء التنسيقات المتوافقة برمجياً مع برنامج Excel على كافة الأجهزة (الألوان الخمسة الأساسية)
-                const styles = `
-                    <Style ss:ID="Default" ss:Name="Normal">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Color="${isDark ? '#cbd5e1' : '#1e293b'}"/>
-                        <Interior ss:Color="${isDark ? '#0f172a' : '#ffffff'}" ss:Pattern="Solid"/>
-                        <Borders>
-                            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
-                            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
-                            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
-                            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
-                        </Borders>
-                    </Style>
-                    <Style ss:ID="header">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1" ss:Color="#ffffff"/>
-                        <Interior ss:Color="${isDark ? '#1e293b' : '#334155'}" ss:Pattern="Solid"/>
-                    </Style>
-                    <Style ss:ID="green">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
-                        <Interior ss:Color="#22c55e" ss:Pattern="Solid"/>
-                    </Style>
-                    <Style ss:ID="red">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
-                        <Interior ss:Color="#ef4444" ss:Pattern="Solid"/>
-                    </Style>
-                    <Style ss:ID="yellow">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
-                        <Interior ss:Color="#eab308" ss:Pattern="Solid"/>
-                    </Style>
-                    <Style ss:ID="black">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
-                        <Interior ss:Color="#000000" ss:Pattern="Solid"/>
-                    </Style>
-                    <Style ss:ID="white">
-                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
-                        <Interior ss:Color="#ffffff" ss:Pattern="Solid"/>
-                    </Style>
-                `;
-
-                // بناء هيكل البيانات الموجهة
-                let rowsXml = '';
-
-                // صف العناوين الأول
-                rowsXml += '      <Row ss:Height="25">\n';
-                headers.forEach(h => {
-                    rowsXml += `        <Cell ss:StyleID="header"><Data ss:Type="String">${h}</Data></Cell>\n`;
-                });
-                rowsXml += '      </Row>\n';
-
-                // صفوف البيانات وتحليلها
-                rows.forEach(row => {
-                    rowsXml += '      <Row ss:Height="22">\n';
-                    row.forEach(cell => {
-                        const isObj = typeof cell === 'object' && cell !== null;
-                        const val = isObj ? (cell.value ?? '') : cell;
-                        const styleId = (isObj && cell.color) ? cell.color : 'Default';
-                        
-                        // تنقية الأرقام لضمان تخزينها وتلوينها كأرقام وليست نصوص
-                        const cleanVal = String(val).replace(/[^0-9.-]/g, '');
-                        const isNum = !isNaN(parseFloat(cleanVal)) && isFinite(cleanVal) && !String(val).includes('%') && !String(val).includes(':') && !String(val).startsWith('+') && !String(val).startsWith('-');
-                        
-                        if (isNum) {
-                            rowsXml += `        <Cell ss:StyleID="${styleId}"><Data ss:Type="Number">${parseFloat(cleanVal)}</Data></Cell>\n`;
-                        } else {
-                            rowsXml += `        <Cell ss:StyleID="${styleId}"><Data ss:Type="String">${val}</Data></Cell>\n`;
-                        }
-                    });
-                    rowsXml += '      </Row>\n';
-                });
-
-                // تجميع القالب المتوافق مع SpreadsheetML 2003
-                const xmlTemplate = `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
-  <Styles>
-    ${styles}
-  </Styles>
-  <Worksheet ss:Name="Trading Plan">
-    <Table>
-${rowsXml}
-    </Table>
-  </Worksheet>
-</Workbook>`;
-
-                // توليد ملف الـ Blob المتوافق وتحميله
-                const blob = new Blob([xmlTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${filename}.xls`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        };
-
         let isUSD = true;
         let currentLang = 'ar';
         let activeTab = 'deals';
@@ -683,7 +555,6 @@ ${rowsXml}
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        // نظام إشعارات Toast
         function showToast(text, icon = '✨') {
             const toastBox = document.getElementById('toastBox');
             const toastIcon = document.getElementById('toastIcon');
@@ -1031,7 +902,7 @@ ${rowsXml}
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel محلي ومستقل بالكامل بدون روابط خارجية =================
+        // ================= التصدير لملف Excel حقيقي (xlsx) ويدعم الأوفلاين =================
         exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1040,57 +911,138 @@ ${rowsXml}
             }
 
             try {
+                // التأكد من أن مكتبة ExcelJS تعمل
+                if (typeof ExcelJS === 'undefined') {
+                    alert(currentLang === 'ar' ? "ملف exceljs.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html." : "exceljs.min.js is missing.");
+                    return;
+                }
+
                 const t = translations[currentLang];
                 const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
                 
-                // تحديد عناوين أعمدة الإكسل
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Trading Calculator';
+                
+                const sheet = workbook.addWorksheet(t.planFileTitle);
+                
+                // تحديد اتجاه الصفحة
+                sheet.views = [{ rightToLeft: currentLang === 'ar', showGridLines: true }];
+
                 const headers = currentLang === 'ar' ? 
                     ['اليوم', 'رصيد البداية', 'الخسارة (الأمان)', 'الهدف اليومي', 'الرصيد الفعلي', 'الحالة'] : 
                     ['Day', 'Start Balance', 'Safety (Loss)', 'Daily Target', 'End Balance', 'Status'];
 
-                // تجهيز وترتيب الصفوف مع تطبيق الألوان الخاصة بها
-                const rows = currentTablePlanData.map(row => {
+                sheet.columns = [
+                    { header: headers[0], key: 'day', width: 12 },
+                    { header: headers[1], key: 'start', width: 22 },
+                    { header: headers[2], key: 'safety', width: 22 },
+                    { header: headers[3], key: 'target', width: 22 },
+                    { header: headers[4], key: 'end', width: 22 },
+                    { header: headers[5], key: 'status', width: 18 }
+                ];
+
+                const cellBorder = {
+                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                };
+
+                const headerRow = sheet.getRow(1);
+                headerRow.height = 30;
+                for (let i = 1; i <= 6; i++) {
+                    const cell = headerRow.getCell(i);
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Arial' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = cellBorder;
+                }
+
+                currentTablePlanData.forEach(row => {
                     let statusText = '';
-                    let colorName = 'white';
-                    
-                    if (row.status === 'profit') {
-                        statusText = t.statusWin;
-                        colorName = 'green';
-                    } else if (row.status === 'loss') {
-                        statusText = t.statusLoss;
-                        colorName = 'red';
-                    } else {
-                        statusText = t.statusPending;
-                        colorName = 'yellow';
+                    if (row.status === 'profit') statusText = t.statusWin;
+                    else if (row.status === 'loss') statusText = t.statusLoss;
+                    else statusText = t.statusPending;
+
+                    const newRow = sheet.addRow({
+                        day: row.day,
+                        start: parseFloat(row.start.toFixed(2)),
+                        safety: parseFloat((-row.lossValue).toFixed(2)),
+                        target: parseFloat(row.profitValue.toFixed(2)),
+                        end: parseFloat(row.actualEnd.toFixed(2)),
+                        status: statusText
+                    });
+
+                    newRow.height = 24;
+                    const zebraColor = row.day % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+
+                    for (let i = 1; i <= 6; i++) {
+                        const cell = newRow.getCell(i);
+                        cell.border = cellBorder;
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
+                        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
+                        if (i >= 2 && i <= 5) cell.numFmt = '#,##0.00';
                     }
 
-                    return [
-                        row.day,
-                        row.start,
-                        { value: -row.lossValue, color: 'red' },
-                        { value: row.profitValue, color: 'green' },
-                        row.actualEnd,
-                        { value: statusText, color: colorName }
-                    ];
+                    newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; 
+                    newRow.getCell(4).font = { color: { argb: 'FF10B981' }, bold: true, name: 'Arial', size: 10 }; 
+                    newRow.getCell(5).font = { color: { argb: 'FFD97706' }, bold: true, name: 'Arial', size: 10 }; 
+
+                    const statusCell = newRow.getCell(6);
+                    if (row.status === 'profit') {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+                        statusCell.font = { color: { argb: 'FF065F46' }, bold: true, name: 'Arial', size: 10 };
+                    } else if (row.status === 'loss') {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+                        statusCell.font = { color: { argb: 'FF991B1B' }, bold: true, name: 'Arial', size: 10 };
+                    } else {
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                        statusCell.font = { color: { argb: 'FF475569' }, name: 'Arial', size: 10 };
+                    }
                 });
 
-                // التحقق من تفعيل الثيم الداكن في التطبيق لمطابقة مظهر ملف الإكسل
-                const isAppDark = true;
+                const spaceRow = sheet.addRow([]);
+                spaceRow.height = 15;
 
-                // تصدير ملف الإكسل الفوري بالثيم المناسب ومكافحة التلف 100%
-                MiniExcel.export(headers, rows, {
-                    theme: isAppDark ? 'dark' : 'light',
-                    filename: currentLang === 'ar' ? 'خطة_التداول_الاحترافية' : 'Trading_Plan'
-                });
+                const lastRowNumber = sheet.lastRow.number + 1;
+                sheet.mergeCells(lastRowNumber, 1, lastRowNumber, 6);
+                
+                const infoRow = sheet.getRow(lastRowNumber);
+                infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
+                infoRow.height = 32;
 
-                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح!" : "Excel exported successfully!", '📊');
+                const infoCell = infoRow.getCell(1);
+                infoCell.font = { bold: true, color: { argb: 'FF334155' }, size: 11, name: 'Arial' };
+                infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+
+                for (let i = 1; i <= 6; i++) {
+                    infoRow.getCell(i).border = cellBorder;
+                }
+
+                // إنشاء ملف xlsx الحقيقي والتحميل
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const dateStr = new Date().toISOString().split('T')[0];
+                a.download = `${t.planFileTitle}_${dateStr}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح وجرى تنظيمه!" : "Excel exported successfully!", '📊');
+                
             } catch (error) {
                 console.error("Excel Export Error: ", error);
                 showToast(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.', '❌');
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة الداكنة (Dark Mode Fix) =================
+        // ================= تصدير PDF مخصص للطباعة =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1103,11 +1055,9 @@ ${rowsXml}
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            // تصميم الجدول للوضع الداكن
             let tableRowsHtml = '';
             currentTablePlanData.forEach(row => {
                 let statusText, statusColor, rowBgStyle = '';
-                // ألوان نيون متناسبة مع الوضع الداكن
                 if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
                 else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
                 else { statusText = t.statusPending; statusColor = '#94a3b8'; }
@@ -1127,8 +1077,6 @@ ${rowsXml}
                 `;
             });
 
-            // خدعة ذكية: جعلنا الخلفية الأساسية (body) بيضاء أو شفافة لمنع الحجب، 
-            // وبنينا بداخلها حاوية (page-wrapper) تحمل الثيم الداكن الذي تريده.
             const printDocumentHtml = `
                 <!DOCTYPE html>
                 <html dir="${dirAtt}">
@@ -1136,7 +1084,6 @@ ${rowsXml}
                     <meta charset="UTF-8">
                     <title>${t.planFileTitle}</title>
                     <style>
-                        /* تأمين البودي ليكون عادياً حتى لا يظهر كشاشة سوداء مطمسة في الجوال */
                         body { 
                             margin: 0; 
                             padding: 0;
@@ -1144,8 +1091,6 @@ ${rowsXml}
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
-                        
-                        /* هذه هي الحاوية التي ستأخذ اللون الداكن الفخم */
                         .page-wrapper {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
                             background-color: #0f172a !important; 
@@ -1153,7 +1098,6 @@ ${rowsXml}
                             padding: 20px;
                             min-height: 100vh;
                         }
-
                         .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
                         .header h1 { color: #10b981; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
                         .meta-box { 
@@ -1180,7 +1124,6 @@ ${rowsXml}
                         }
                         @media print {
                             @page { size: A4 portrait; margin: 1cm; }
-                            /* نضمن أن حاوية الصفحة تظل داكنة عند الطباعة / حفظ الـ PDF */
                             .page-wrapper { 
                                 background-color: #0f172a !important; 
                                 color: #cbd5e1 !important; 
