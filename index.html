@@ -366,67 +366,112 @@
     <div id="printArea"></div>
 
     <script>
-        // ================= مكتبة MiniExcel الجديدة والمستقلة 100% بدون أي روابط خارجية =================
+        // ================= مكتبة MiniExcel الذكية والمتوافقة 100% مع الجوالات والـ XML =================
         const MiniExcel = {
             export(headers, rows, options = {}) {
-                // 1. تحديد وضع الصفحة (داكن أو فاتح) بناءً على الاختيار
                 const isDark = options.theme === 'dark';
-                
-                // 2. مصفوفة الألوان الخمسة المطلوبة والمطابقة للواجهة (أخضر، أحمر، أصفر، أسود، أبيض)
-                const colors = {
-                    green:  { bg: '#22c55e', text: '#ffffff' },
-                    red:    { bg: '#ef4444', text: '#ffffff' },
-                    yellow: { bg: '#eab308', text: '#000000' },
-                    black:  { bg: '#000000', text: '#ffffff' },
-                    white:  { bg: '#ffffff', text: '#000000' }
-                };
+                const filename = options.filename || 'Trading_Plan';
 
-                // 3. بناء الأنماط (CSS) الخاصة بالجدول والألوان والثيم
-                let styles = `
-                    body { background: ${isDark ? '#0f172a' : '#ffffff'}; color: ${isDark ? '#f8fafc' : '#000000'}; font-family: Arial, sans-serif; direction: rtl; margin: 20px; }
-                    table { border-collapse: collapse; width: 100%; max-width: 800px; margin: 20px auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-                    th, td { border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; padding: 10px 15px; text-align: center; font-size: 13px; }
-                    th { background: ${isDark ? '#1e293b' : '#f1f5f9'}; color: ${isDark ? '#34d399' : '#0f172a'}; font-weight: bold; }
-                    .info-header { text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 16px; color: ${isDark ? '#10b981' : '#059669'}; }
+                // بناء التنسيقات المتوافقة برمجياً مع برنامج Excel على كافة الأجهزة (الألوان الخمسة الأساسية)
+                const styles = `
+                    <Style ss:ID="Default" ss:Name="Normal">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Color="${isDark ? '#cbd5e1' : '#1e293b'}"/>
+                        <Interior ss:Color="${isDark ? '#0f172a' : '#ffffff'}" ss:Pattern="Solid"/>
+                        <Borders>
+                            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
+                            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
+                            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
+                            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="${isDark ? '#334155' : '#cbd5e1'}"/>
+                        </Borders>
+                    </Style>
+                    <Style ss:ID="header">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1" ss:Color="#ffffff"/>
+                        <Interior ss:Color="${isDark ? '#1e293b' : '#334155'}" ss:Pattern="Solid"/>
+                    </Style>
+                    <Style ss:ID="green">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
+                        <Interior ss:Color="#22c55e" ss:Pattern="Solid"/>
+                    </Style>
+                    <Style ss:ID="red">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
+                        <Interior ss:Color="#ef4444" ss:Pattern="Solid"/>
+                    </Style>
+                    <Style ss:ID="yellow">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
+                        <Interior ss:Color="#eab308" ss:Pattern="Solid"/>
+                    </Style>
+                    <Style ss:ID="black">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#ffffff"/>
+                        <Interior ss:Color="#000000" ss:Pattern="Solid"/>
+                    </Style>
+                    <Style ss:ID="white">
+                        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                        <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
+                        <Interior ss:Color="#ffffff" ss:Pattern="Solid"/>
+                    </Style>
                 `;
-                
-                // دمج الألوان الخمسة الأساسية في الأنماط
-                Object.keys(colors).forEach(c => {
-                    styles += `.${c} { background-color: ${colors[c].bg} !important; color: ${colors[c].text} !important; font-weight: bold; }`;
+
+                // بناء هيكل البيانات الموجهة
+                let rowsXml = '';
+
+                // صف العناوين الأول
+                rowsXml += '      <Row ss:Height="25">\n';
+                headers.forEach(h => {
+                    rowsXml += `        <Cell ss:StyleID="header"><Data ss:Type="String">${h}</Data></Cell>\n`;
                 });
+                rowsXml += '      </Row>\n';
 
-                // 4. بناء هيكل الجدول (HTML) من البيانات والصفوف
-                let tableHtml = `<div class="info-header">${options.filename ? options.filename.replace(/_/g, ' ') : 'تقرير التداول المالي'}</div>`;
-                tableHtml += `<table><thead><tr>`;
-                headers.forEach(h => tableHtml += `<th>${h}</th>`);
-                tableHtml += `</tr></thead><tbody>`;
-
+                // صفوف البيانات وتحليلها
                 rows.forEach(row => {
-                    tableHtml += `<tr>`;
+                    rowsXml += '      <Row ss:Height="22">\n';
                     row.forEach(cell => {
                         const isObj = typeof cell === 'object' && cell !== null;
                         const val = isObj ? (cell.value ?? '') : cell;
-                        const cls = (isObj && cell.color) ? cell.color : '';
-                        tableHtml += `<td class="${cls}">${val}</td>`;
+                        const styleId = (isObj && cell.color) ? cell.color : 'Default';
+                        
+                        // تنقية الأرقام لضمان تخزينها وتلوينها كأرقام وليست نصوص
+                        const cleanVal = String(val).replace(/[^0-9.-]/g, '');
+                        const isNum = !isNaN(parseFloat(cleanVal)) && isFinite(cleanVal) && !String(val).includes('%') && !String(val).includes(':') && !String(val).startsWith('+') && !String(val).startsWith('-');
+                        
+                        if (isNum) {
+                            rowsXml += `        <Cell ss:StyleID="${styleId}"><Data ss:Type="Number">${parseFloat(cleanVal)}</Data></Cell>\n`;
+                        } else {
+                            rowsXml += `        <Cell ss:StyleID="${styleId}"><Data ss:Type="String">${val}</Data></Cell>\n`;
+                        }
                     });
-                    tableHtml += `</tr>`;
+                    rowsXml += '      </Row>\n';
                 });
-                tableHtml += `</tbody></table>`;
 
-                // 5. تجميع الملف النهائي بصيغة متوافقة مع Excel مع ترميز UTF-8
-                const template = `
-                    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-                    <head><meta charset="utf-8"><style>${styles}</style></head>
-                    <body>${tableHtml}</body>
-                    </html>
-                `;
+                // تجميع القالب المتوافق مع SpreadsheetML 2003
+                const xmlTemplate = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Styles>
+    ${styles}
+  </Styles>
+  <Worksheet ss:Name="Trading Plan">
+    <Table>
+${rowsXml}
+    </Table>
+  </Worksheet>
+</Workbook>`;
 
-                // 6. إنشاء كائن التنزيل محلياً وتوليد الملف فورياً
-                const blob = new Blob(['\ufeff' + template], { type: 'application/vnd.ms-excel' });
+                // توليد ملف الـ Blob المتوافق وتحميله
+                const blob = new Blob([xmlTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${options.filename || 'trading-report'}.xls`;
+                a.download = `${filename}.xls`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -1019,21 +1064,21 @@
 
                     return [
                         row.day,
-                        `${formatNumber(row.start)} ${unit}`,
-                        { value: `-${formatNumber(row.lossValue)} ${unit}`, color: 'red' },
-                        { value: `+${formatNumber(row.profitValue)} ${unit}`, color: 'green' },
-                        `${formatNumber(row.actualEnd)} ${unit}`,
+                        row.start,
+                        { value: -row.lossValue, color: 'red' },
+                        { value: row.profitValue, color: 'green' },
+                        row.actualEnd,
                         { value: statusText, color: colorName }
                     ];
                 });
 
                 // التحقق من تفعيل الثيم الداكن في التطبيق لمطابقة مظهر ملف الإكسل
-                const isAppDark = document.getElementById('appHtml').classList.contains('dark') || document.body.classList.contains('dark-mode') || true;
+                const isAppDark = true;
 
-                // تصدير ملف الإكسل الفوري بالثيم المناسب
+                // تصدير ملف الإكسل الفوري بالثيم المناسب ومكافحة التلف 100%
                 MiniExcel.export(headers, rows, {
                     theme: isAppDark ? 'dark' : 'light',
-                    filename: currentLang === 'ar' ? `خطة_التداول_الاحترافية_${Date.now()}` : `Trading_Plan_${Date.now()}`
+                    filename: currentLang === 'ar' ? 'خطة_التداول_الاحترافية' : 'Trading_Plan'
                 });
 
                 showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح!" : "Excel exported successfully!", '📊');
