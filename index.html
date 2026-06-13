@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="appHtml">
 <head>
-    <!-- إعدادات مظهر التطبيق المستقل للجوال -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
@@ -14,15 +13,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية المتكاملة</title>
     
-    <!-- مكتبة Tailwind للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- مكتبة ExcelJS (تم تعديل المسار ليكون محلياً ليعمل بدون نت على موقعك) -->
-    <!-- تأكد من رفع ملف exceljs.min.js بجانب هذا الملف في GitHub -->
     <script src="exceljs.min.js"></script>
-    <!-- إذا لم تقم برفع الملف بعد، يمكنك إزالة التعليق عن السطر أدناه مؤقتاً للعمل بالإنترنت -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script> -->
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
         
@@ -69,7 +62,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        /* أنيميشن لتنبيه الـ Toast */
         @keyframes slideInUp {
             from { transform: translate(-50%, 100px); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
@@ -81,7 +73,6 @@
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
 
-    <!-- نافذة إشعارات ذكية -->
     <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
         <span id="toastIcon">✨</span>
         <span id="toastText" class="text-xs font-bold text-slate-100"></span>
@@ -89,7 +80,6 @@
 
     <div id="mainAppContent" class="max-w-md mx-auto px-4 pt-6">
         
-        <!-- أزرار التحكم باللغة والعملة في الأعلى -->
         <div class="flex justify-between items-center mb-4 px-1">
             <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
                 🌐 EN
@@ -108,7 +98,6 @@
             </div>
         </div>
 
-        <!-- قسم الشعار -->
         <div class="text-center mb-5 space-y-3">
             <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5 select-none no-select" oncontextmenu="return false;">
                 <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl no-select pointer-events-none select-none" ondragstart="return false;" oncontextmenu="return false;" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
@@ -120,7 +109,6 @@
             </div>
         </div>
 
-        <!-- أزرار التبويبات الثلاثة -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800 rounded-xl mb-4">
             <button id="tabDeals" class="tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50">
                 حاسبة الصفقات
@@ -133,7 +121,6 @@
             </button>
         </div>
 
-        <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="mb-2">
                 <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي (رأس المال)</span>
@@ -142,7 +129,6 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
 
-        <!-- بطاقة استراتيجية الحساب (الصفقات والنمو فقط) -->
         <div id="strategyCard" class="glass-card rounded-2xl p-4 mb-4 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -167,7 +153,6 @@
             <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
         </div>
 
-        <!-- ================= 1. واجهة الصفقات ================= -->
         <div id="panelDeals" class="space-y-4">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -194,6 +179,10 @@
                             </div>
                         </div>
                     </div>
+                    <div id="rrrContainer" class="flex justify-between items-center bg-slate-950/30 p-2 rounded-xl border border-slate-800 text-xs">
+                        <span id="uiRrrLabel" class="text-slate-400">نسبة العائد إلى المخاطرة (R:R):</span>
+                        <span id="rrrOutput" class="font-black text-sky-400">1 : 1.00</span>
+                    </div>
                 </div>
             </div>
 
@@ -214,7 +203,6 @@
             </button>
         </div>
 
-        <!-- ================= 2. واجهة نمو الأيام ================= -->
         <div id="panelDays" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -257,7 +245,6 @@
             </button>
         </div>
 
-        <!-- ================= 3. خطة الجدول ================= -->
         <div id="panelTable" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <h3 id="uiTableSetupTitle" class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
@@ -304,7 +291,6 @@
                 </div>
             </div>
 
-            <!-- أزرار الحفظ والتصدير -->
             <div id="tableActionsContainer" class="grid grid-cols-2 gap-1.5 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -328,7 +314,6 @@
             </div>
         </div>
 
-        <!-- سجل صفقات الجلسة -->
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
@@ -338,12 +323,10 @@
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                <!-- الصفقات المضافة -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- منطقة خفية تستخدم للطباعة الأصلية (Native PDF)  -->
     <div id="printArea"></div>
 
     <script>
@@ -426,7 +409,8 @@
                 planFileTitle: "خطة_التداول_الاحترافية",
                 statusWin: "تحقق الهدف",
                 statusLoss: "ضرب الخسارة",
-                statusPending: "معلق"
+                statusPending: "معلق",
+                rrrLabel: "نسبة العائد إلى المخاطرة (R:R):"
             },
             en: {
                 appTitle: "Trading Calculator",
@@ -499,7 +483,8 @@
                 planFileTitle: "Trading_Plan",
                 statusWin: "Target Met",
                 statusLoss: "Stop Loss Hit",
-                statusPending: "Pending"
+                statusPending: "Pending",
+                rrrLabel: "Risk-to-Reward Ratio (R:R):"
             }
         };
 
@@ -549,7 +534,6 @@
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        // نظام إشعارات Toast
         function showToast(text, icon = '✨') {
             const toastBox = document.getElementById('toastBox');
             const toastIcon = document.getElementById('toastIcon');
@@ -657,6 +641,7 @@
             document.getElementById('uiSaveDaysBtn').innerText = t.saveDaysBtn;
             document.getElementById('uiSessionLogHeader').innerText = t.logHeader;
             document.getElementById('clearLogBtn').innerText = t.clearLog;
+            document.getElementById('uiRrrLabel').innerText = t.rrrLabel;
 
             tabDeals.innerText = t.tabDeals;
             tabDays.innerText = t.tabDays;
@@ -760,9 +745,18 @@
                     const lTarget = parseFloat(lossTargetInput.value) || 0;
                     finalProfit = dealValue * (pTarget / 100);
                     finalLoss = dealValue * (lTarget / 100);
+                    
+                    // حساب نسبة العائد للمخاطرة التلقائي RRR
+                    const rrrOutputEl = document.getElementById('rrrOutput');
+                    if (lTarget > 0) {
+                        rrrOutputEl.innerText = `1 : ${(pTarget / lTarget).toFixed(2)}`;
+                    } else {
+                        rrrOutputEl.innerText = `1 : 0.00`;
+                    }
                 } else {
                     finalProfit = dealValue;
                     finalLoss = dealValue;
+                    document.getElementById('rrrOutput').innerText = "1 : 1.00";
                 }
 
                 profitOutput.innerText = `${formatNumber(finalProfit)} ${unit}`;
@@ -1028,7 +1022,7 @@
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة الداكنة (Dark Mode Fix) =================
+        // ================= التصدير لـ PDF =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1041,11 +1035,9 @@
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            // تصميم الجدول للوضع الداكن
             let tableRowsHtml = '';
             currentTablePlanData.forEach(row => {
                 let statusText, statusColor, rowBgStyle = '';
-                // ألوان نيون متناسبة مع الوضع الداكن
                 if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
                 else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
                 else { statusText = t.statusPending; statusColor = '#94a3b8'; }
@@ -1065,8 +1057,6 @@
                 `;
             });
 
-            // خدعة ذكية: جعلنا الخلفية الأساسية (body) بيضاء أو شفافة لمنع الحجب، 
-            // وبنينا بداخلها حاوية (page-wrapper) تحمل الثيم الداكن الذي تريده.
             const printDocumentHtml = `
                 <!DOCTYPE html>
                 <html dir="${dirAtt}">
@@ -1074,7 +1064,6 @@
                     <meta charset="UTF-8">
                     <title>${t.planFileTitle}</title>
                     <style>
-                        /* تأمين البودي ليكون عادياً حتى لا يظهر كشاشة سوداء مطمسة في الجوال */
                         body { 
                             margin: 0; 
                             padding: 0;
@@ -1082,8 +1071,6 @@
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
-                        
-                        /* هذه هي الحاوية التي ستأخذ اللون الداكن الفخم */
                         .page-wrapper {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
                             background-color: #0f172a !important; 
@@ -1091,7 +1078,6 @@
                             padding: 20px;
                             min-height: 100vh;
                         }
-
                         .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
                         .header h1 { color: #10b981; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
                         .meta-box { 
@@ -1118,7 +1104,6 @@
                         }
                         @media print {
                             @page { size: A4 portrait; margin: 1cm; }
-                            /* نضمن أن حاوية الصفحة تظل داكنة عند الطباعة / حفظ الـ PDF */
                             .page-wrapper { 
                                 background-color: #0f172a !important; 
                                 color: #cbd5e1 !important; 
@@ -1181,7 +1166,7 @@
             }, 500);
         });
 
-        // ================= التصدير والمشاركة كتقرير نصي =================
+        // ================= نسخ التقرير النصي =================
         copyTextReportBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1265,7 +1250,7 @@
             document.body.removeChild(tempTextArea);
         });
 
-        // ================= تصدير واستيراد البيانات كنسخة احتياطية JSON =================
+        // ================= النسخ الاحتياطي JSON =================
         exportBackupBtn.addEventListener('click', () => {
             const rawSessions = localStorage.getItem('trading_sessions_raw') || '[]';
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(rawSessions);
@@ -1304,7 +1289,7 @@
             reader.readAsText(file);
         });
 
-        // ================= حفظ خطة الجدول في السجل =================
+        // ================= حفظ الخطة للسجل =================
         saveTablePlanBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (initialCapital <= 0 || currentTablePlanData.length === 0) return;
