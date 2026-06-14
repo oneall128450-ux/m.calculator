@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="appHtml">
 <head>
+    <!-- إعدادات مظهر التطبيق المستقل للجوال -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
 
+    <!-- ربط التطبيق بملف الإعدادات والأيقونة المرفوعة مسبقاً -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
@@ -13,8 +15,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حاسبة التداول الاحترافية المتكاملة</title>
     
+    <!-- مكتبة Tailwind للتصميم السريع -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- مكتبة ExcelJS لتوليد ملفات إكسيل منسقة وحقيقية -->
     <script src="exceljs.min.js"></script>
 
     <style>
@@ -36,12 +40,14 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
+        /* إخفاء أسهم حقول الأرقام الافتراضية واجبار الاتجاه */
         input[type="number"], input[type="text"] {
             -webkit-appearance: none;
             margin: 0;
             text-align: left;
         }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
@@ -49,27 +55,41 @@
             border-color: #10b981;
             box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
         }
-        .toggle-dot { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .toggle-bg { transition: background-color 0.3s ease; }
-        .tap-active:active { opacity: 0.7; transform: scale(0.98); }
+        .toggle-dot {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toggle-bg {
+            transition: background-color 0.3s ease;
+        }
+        .tap-active:active {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
 
+        /* منع التحديد واللمس الطويل على اللوجو لمنع القائمة المنبثقة */
         .no-select {
             -webkit-touch-callout: none !important;
             -webkit-user-select: none !important;
             user-select: none !important;
+            -webkit-user-drag: none !important;
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        /* تنسيقات شريط التمرير للجدول */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 4px;
+        }
 
-        /* تنسيقات الطباعة الأصلية (Native Print) للـ PDF */
+        /* ================= تنسيقات الطباعة الأصلية (Native Print) للـ PDF ================= */
         #printArea { display: none; }
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0; 
-            }
             body > div:not(#printArea) { display: none !important; }
             body { 
                 background: #0f172a !important; 
@@ -90,28 +110,25 @@
 
         /* أنيميشن لتنبيه الـ Toast */
         @keyframes slideInUp {
-            from { transform: translate(-50%, 100px); opacity: 0; }
+            from { transform: translate(-50%, 100%); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
         }
-        .toast-animate {
+        .animate-toast {
             animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
 
-    <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
-        <span id="toastIcon">✨</span>
-        <span id="toastText" class="text-xs font-bold text-slate-100"></span>
-    </div>
-
-    <div id="mainAppContent" class="max-w-md mx-auto px-4 pt-6">
+    <div class="max-w-md mx-auto px-4 pt-6">
         
+        <!-- أزرار التحكم باللغة والعملة في الأعلى -->
         <div class="flex justify-between items-center mb-4 px-1">
             <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
                 🌐 EN
             </button>
             <div class="flex gap-2">
+                <!-- أزرار استيراد وتصدير النسخة الاحتياطية -->
                 <button id="exportBackupBtn" class="tap-active bg-slate-800/80 text-[10px] font-bold px-2 py-1.5 rounded-lg text-slate-300 border border-slate-700/60 flex items-center gap-1" title="تصدير نسخة احتياطية">
                     📥 تصدير
                 </button>
@@ -125,8 +142,10 @@
             </div>
         </div>
 
+        <!-- قسم الشعار واللوجو المدمج V -->
         <div class="text-center mb-5 space-y-3">
             <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5 select-none no-select" oncontextmenu="return false;">
+                <!-- منع حفظ الصورة أو قائمة الخيارات الطويلة -->
                 <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl no-select pointer-events-none select-none" ondragstart="return false;" oncontextmenu="return false;" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
                 <div id="fallbackLogo" class="hidden text-emerald-400 font-black text-3xl select-none no-select">V</div>
             </div>
@@ -136,6 +155,7 @@
             </div>
         </div>
 
+        <!-- أزرار التبويبات الثلاثة -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800 rounded-xl mb-4">
             <button id="tabDeals" class="tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50">
                 حاسبة الصفقات
@@ -148,6 +168,7 @@
             </button>
         </div>
 
+        <!-- بطاقة المبلغ الكلي -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="mb-2">
                 <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي (رأس المال)</span>
@@ -156,6 +177,7 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
 
+        <!-- بطاقة استراتيجية الحساب (تظهر فقط في الصفقات والأيام) -->
         <div id="strategyCard" class="glass-card rounded-2xl p-4 mb-4 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -165,11 +187,13 @@
                 </label>
             </div>
 
+            <!-- حقل إدخال النسبة أو المبلغ المباشر -->
             <div id="inputFieldContainer" class="focus-ring border border-slate-800 bg-slate-900/50 rounded-xl p-3 flex items-center mb-3">
                 <span id="inputUnit" class="text-slate-500 font-bold ml-2">%</span>
                 <input type="number" id="strategyInput" inputmode="decimal" placeholder="0" class="w-full bg-transparent text-lg font-bold text-slate-200 placeholder-slate-600 focus:outline-none" style="direction: ltr;">
             </div>
 
+            <!-- أزرار النسبة السريعة -->
             <div id="quickRatios" class="grid grid-cols-4 gap-2">
                 <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="1">1%</button>
                 <button class="ratio-btn tap-active bg-slate-800/60 hover:bg-slate-800 py-2 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50" data-value="2">2%</button>
@@ -180,7 +204,9 @@
             <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
         </div>
 
+        <!-- ================= 1. واجهة الصفقات الاعتيادية ================= -->
         <div id="panelDeals" class="space-y-4">
+            <!-- خيار أهداف منفصلة للربح والخسارة -->
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
                     <span id="uiSeparateTargets" class="text-sm font-medium text-slate-300">أهداف منفصلة للربح والخسارة</span>
@@ -189,6 +215,8 @@
                         <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-dot peer-checked:bg-emerald-500 toggle-bg"></div>
                     </label>
                 </div>
+
+                <!-- الحقول المتقدمة المنبثقة -->
                 <div id="advancedFields" class="mt-4 pt-3 border-t border-slate-800/60 hidden space-y-3">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -209,6 +237,7 @@
                 </div>
             </div>
 
+            <!-- بطاقة النتائج المباشرة للربح والخسارة -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="glass-card rounded-2xl p-4 text-center border-l-2 border-emerald-500/50">
                     <span id="label-plus" class="text-xs font-medium text-slate-400 block mb-1">الربح (من النسبة) (+)</span>
@@ -220,27 +249,32 @@
                 </div>
             </div>
 
+            <!-- زر حفظ الحسبة الحالي في السجل -->
             <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span id="uiSaveTradeBtn">حفظ الحسبة الحالية في سجل الجلسة</span>
             </button>
         </div>
 
+        <!-- ================= 2. واجهة حساب الأيام والتراكم ================= -->
         <div id="panelDays" class="space-y-4 hidden">
+            <!-- خيارات إضافية لحساب الأيام -->
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
                     <div class="flex flex-col">
                         <span id="uiCalculationTypeLabel" class="text-sm font-medium text-slate-300">نمط الفائدة والحساب</span>
                         <span id="uiCalculationTypeSub" class="text-[11px] text-slate-500 mt-0.5">تبديل بين الفائدة الثابتة والمُركّبة</span>
                     </div>
+                    <!-- زر التبديل الأسود (النمط الثابت / التراكمي المركب) -->
                     <label class="relative inline-flex items-center cursor-pointer tap-active">
                         <input type="checkbox" id="compoundToggle" class="sr-only peer" checked>
-                        <div class="w-14 h-7 bg-slate-900 border border-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-emerald-500 after:content-[''] after:absolute after:top-[3px] after:start-[3px] after:bg-emerald-400 after:border-emerald-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all toggle-dot peer-checked:bg-emerald-950 peer-checked:border-emerald-500/40"></div>
+                        <div class="w-14 h-7 bg-slate-900 border border-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-emerald-500 after:content-[''] after:absolute after:top-[3px] after:start-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all toggle-dot peer-checked:bg-emerald-500 toggle-bg"></div>
                     </label>
                 </div>
                 <div class="text-[11px] font-bold text-right text-emerald-400 mt-2" id="uiStatusText">نمط الحساب: تراكمي (مركب)</div>
             </div>
 
+            <!-- بطاقة إدخال الأيام -->
             <div class="glass-card rounded-2xl p-4 border border-emerald-500/30 focus-ring transition-all duration-300">
                 <div class="mb-2">
                     <span id="uiDaysInputLabel" class="text-sm font-medium text-slate-300">عدد الأيام المستهدفة</span>
@@ -250,6 +284,7 @@
                 </div>
             </div>
 
+            <!-- بطاقة النتيجة النهائية الذهبية -->
             <div class="glass-card rounded-2xl p-5 border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-transparent">
                 <div class="text-center space-y-2">
                     <span id="uiFinalBalanceLabel" class="text-xs font-semibold text-yellow-500 tracking-wider uppercase block">المبلغ الإجمالي النهائي</span>
@@ -262,12 +297,14 @@
                 </div>
             </div>
 
+            <!-- زر جديد لحفظ حسبة الأيام في سجل الجلسة -->
             <button id="saveDaysSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
                 <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span id="uiSaveDaysBtn">حفظ حسبة النمو في سجل الجلسة</span>
             </button>
         </div>
 
+        <!-- ================= 3. خطة الجدول المحدثة ================= -->
         <div id="panelTable" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <h3 id="uiTableSetupTitle" class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
@@ -314,29 +351,28 @@
                 </div>
             </div>
 
-            <div id="tableActionsContainer" class="grid grid-cols-2 gap-1.5 hidden">
-                <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <!-- أزرار الحفظ والتصدير الثلاثية (سجل، PDF، و Excel) -->
+            <div id="tableActionsContainer" class="grid grid-cols-3 gap-1.5 hidden">
+                <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span id="uiSaveTableBtn">حفظ للسجل</span>
                 </button>
-                <button id="exportPdfBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <button id="exportPdfBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span id="uiExportPdfBtn">طباعة / PDF 📄</span>
                 </button>
-                <button id="exportExcelBtn" class="tap-active bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-emerald-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
+                <button id="exportExcelBtn" class="tap-active bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-emerald-400 font-bold py-2 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <span>📊</span>
                     <span id="uiExportExcelBtn">تصدير Excel</span>
                 </button>
-                <button id="copyTextReportBtn" class="tap-active bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
-                    <span>📋</span>
-                    <span id="uiCopyTextReportBtn">نسخ التقرير النصي</span>
-                </button>
             </div>
 
+            <!-- مكان عرض الجدول المُنشأ (للموبايل كبطاقات تفاعلية) -->
             <div id="generatedTableContainer" class="space-y-3 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 hidden">
             </div>
         </div>
 
+        <!-- سجل صفقات الجلسة المؤقت (يظهر في الحالتين لمراجعة التاريخ) -->
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
@@ -346,10 +382,12 @@
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                </div>
+                <!-- صفقات مضافة تظهر هنا -->
+            </div>
         </div>
     </div>
 
+    <!-- منطقة خفية تستخدم لرسم الـ PDF وطباعتها بالشكل المظلم الفاخر المنسق -->
     <div id="printArea"></div>
 
     <script>
@@ -425,9 +463,8 @@
                 tableBalanceSafe: "الرصيد في حال الخسارة:",
                 tableEndLabel: "الرصيد لو تحقق الهدف:",
                 tableSaveBtn: "حفظ للسجل",
-                tableExportBtn: "طباعة / PDF 📄",
+                tableExportBtn: "تصدير PDF 📄",
                 tableExcelBtn: "تصدير Excel 📊",
-                copyTextBtn: "نسخ التقرير النصي 📋",
                 logPlanType: "خطة جدول يومية",
                 planFileTitle: "خطة_التداول_الاحترافية",
                 statusWin: "تحقق الهدف",
@@ -481,7 +518,7 @@
                 detailsHeader: "Detailed Data:",
                 detailsCapital: "Initial Capital:",
                 detailsProfitRate: "Profit Rate:",
-                detailsLossRate: "Loss Rate:",
+                detailsLossRate: "Stop Loss Rate:",
                 detailsMethod: "Sizing Method:",
                 detailsValue: "Size Value:",
                 detailsCompound: "Daily Compounding:",
@@ -500,7 +537,6 @@
                 tableSaveBtn: "Save Plan",
                 tableExportBtn: "Print / PDF 📄",
                 tableExcelBtn: "Export Excel 📊",
-                copyTextBtn: "Copy Text Report 📋",
                 logPlanType: "Daily Table Plan",
                 planFileTitle: "Trading_Plan",
                 statusWin: "Target Met",
@@ -539,6 +575,7 @@
         const panelDays = document.getElementById('panelDays');
         const panelTable = document.getElementById('panelTable');
 
+        // عناصر خطة الجدول التفاعلية
         const tableTargetInput = document.getElementById('tableTargetInput');
         const tableSafetyInput = document.getElementById('tableSafetyInput');
         const tableDaysInput = document.getElementById('tableDaysInput');
@@ -549,25 +586,32 @@
         const saveTablePlanBtn = document.getElementById('saveTablePlanBtn');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
         const exportExcelBtn = document.getElementById('exportExcelBtn');
-        const copyTextReportBtn = document.getElementById('copyTextReportBtn');
 
+        // عناصر النسخ الاحتياطي
         const exportBackupBtn = document.getElementById('exportBackupBtn');
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        function showToast(text, icon = '✨') {
-            const toastBox = document.getElementById('toastBox');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastText = document.getElementById('toastText');
+        // دالة التنبيهات المانعة للتراكم (Anti-Spam Toast) لضمان تجربة مستخدم نظيفة
+        function showToast(message, icon = '🔔') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
             
-            toastIcon.innerText = icon;
-            toastText.innerText = text;
+            // تصفير التنبيهات السابقة فوراً قبل ظهور الجديد
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = "bg-slate-800 text-slate-100 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 pointer-events-auto transition-all duration-300 animate-toast";
+            toast.innerHTML = `<span class="text-lg">${icon}</span><span class="font-medium font-tajawal text-xs sm:text-sm">${message}</span>`;
             
-            toastBox.classList.remove('hidden');
-            
+            container.appendChild(toast);
+
             setTimeout(() => {
-                toastBox.classList.add('hidden');
-            }, 3000);
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
         }
 
         function getCapital() {
@@ -593,14 +637,6 @@
                 generateDailyPlan();
             }
         });
-
-        const logoImg = document.getElementById('logoImg');
-        if (logoImg) {
-            logoImg.addEventListener('contextmenu', (e) => e.preventDefault());
-            logoImg.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 1) e.preventDefault();
-            }, { passive: false });
-        }
 
         function switchTab(tabName) {
             activeTab = tabName;
@@ -683,7 +719,6 @@
             document.getElementById('uiSaveTableBtn').innerText = t.tableSaveBtn;
             document.getElementById('uiExportPdfBtn').innerText = t.tableExportBtn;
             document.getElementById('uiExportExcelBtn').innerText = t.tableExcelBtn;
-            document.getElementById('uiCopyTextReportBtn').innerText = t.copyTextBtn;
 
             updateMethodLabel();
             updateToggleStatusText();
@@ -793,11 +828,12 @@
             }
         }
 
+        // ================= توليد خطة الجدول التفاعلية والذكية =================
         function generateDailyPlan() {
             const initialCapital = getCapital();
             
             if (initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إدخال رأس المال أولاً!" : "Please enter Total Capital first!", '⚠️');
+                showToast(currentLang === 'ar' ? "يرجى إدخال مبلغ 'رأس المال' أولاً!" : "Please enter 'Total Capital' first!", '💰');
                 return;
             }
 
@@ -841,6 +877,7 @@
             currentTablePlanData.forEach((row, index) => {
                 row.start = runningBalance;
                 
+                // حساب الفائدة المعتمدة (مركبة أو بسيطة)
                 const actualProfit = isCompound ? (runningBalance * (row.profitRate / 100)) : (initialCapital * (row.profitRate / 100));
                 const actualLoss = isCompound ? (runningBalance * (row.safetyRate / 100)) : (initialCapital * (row.safetyRate / 100));
 
@@ -902,7 +939,7 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel حقيقي (xlsx) ويدعم الأوفلاين =================
+        // ================= التصدير لملف Excel المطور (أرقام قابلة للجمع والحساب ومضمونة ضد التلف على الجوال) =================
         exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -942,86 +979,80 @@
                 ];
 
                 const cellBorder = {
-                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                    top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                    left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                    bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                    right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
                 };
 
-                const headerRow = sheet.getRow(1);
-                headerRow.height = 30;
-                for (let i = 1; i <= 6; i++) {
-                    const cell = headerRow.getCell(i);
-                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Arial' };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
+                // تنسيقات الهيدر الرئيسي
+                sheet.getRow(1).height = 30;
+                sheet.getRow(1).eachCell(cell => {
+                    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
                     cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                    cell.border = cellBorder;
-                }
+                });
 
-                currentTablePlanData.forEach(row => {
-                    let statusText = '';
-                    if (row.status === 'profit') statusText = t.statusWin;
-                    else if (row.status === 'loss') statusText = t.statusLoss;
-                    else statusText = t.statusPending;
+                // تنسيق الترقيم المالي للـ Excel
+                const excelFormat = isUSD ? '$#,##0.00' : '#,##0.00" ر.س"';
 
-                    const newRow = sheet.addRow({
-                        day: row.day,
-                        start: parseFloat(row.start.toFixed(2)),
-                        safety: parseFloat((-row.lossValue).toFixed(2)),
-                        target: parseFloat(row.profitValue.toFixed(2)),
-                        end: parseFloat(row.actualEnd.toFixed(2)),
+                currentTablePlanData.forEach(r => {
+                    let statusText, statusColor;
+                    if (r.status === 'profit') { statusText = t.statusWin; statusColor = 'FF10B981'; } 
+                    else if (r.status === 'loss') { statusText = t.statusLoss; statusColor = 'FFEF4444'; } 
+                    else { statusText = t.statusPending; statusColor = 'FF94A3B8'; }
+
+                    const row = sheet.addRow({
+                        day: `${t.tableDayText} ${r.day}`,
+                        start: Number(r.start),        // رقم صافي لتمكين الجمع الرياضي بالإكسل
+                        safety: Number(r.lossValue),    // رقم صافي لتمكين الجمع الرياضي بالإكسل
+                        target: Number(r.profitValue),  // رقم صافي لتمكين الجمع الرياضي بالإكسل
+                        end: Number(r.actualEnd),       // رقم صافي لتمكين الجمع الرياضي بالإكسل
                         status: statusText
                     });
 
-                    newRow.height = 24;
-                    const zebraColor = row.day % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+                    row.height = 22;
+                    const isEven = r.day % 2 === 0;
+                    const rowBgColor = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
 
-                    for (let i = 1; i <= 6; i++) {
-                        const cell = newRow.getCell(i);
-                        cell.border = cellBorder;
+                    row.eachCell((cell, colNumber) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBgColor } };
                         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
-                        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
-                        if (i >= 2 && i <= 5) cell.numFmt = '#,##0.00';
-                    }
+                        cell.border = cellBorder;
 
-                    newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; 
-                    newRow.getCell(4).font = { color: { argb: 'FF10B981' }, bold: true, name: 'Arial', size: 10 }; 
-                    newRow.getCell(5).font = { color: { argb: 'FFD97706' }, bold: true, name: 'Arial', size: 10 }; 
-
-                    const statusCell = newRow.getCell(6);
-                    if (row.status === 'profit') {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
-                        statusCell.font = { color: { argb: 'FF065F46' }, bold: true, name: 'Arial', size: 10 };
-                    } else if (row.status === 'loss') {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
-                        statusCell.font = { color: { argb: 'FF991B1B' }, bold: true, name: 'Arial', size: 10 };
-                    } else {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                        statusCell.font = { color: { argb: 'FF475569' }, name: 'Arial', size: 10 };
-                    }
+                        if (colNumber >= 2 && colNumber <= 5) {
+                            cell.numFmt = excelFormat;
+                        }
+                        if (colNumber === 3) cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFEF4444' } };
+                        if (colNumber === 4) cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF10B981' } };
+                        if (colNumber === 5) cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFD97706' } };
+                        if (colNumber === 6) cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: statusColor } };
+                    });
                 });
 
-                const spaceRow = sheet.addRow([]);
-                spaceRow.height = 15;
+                // صف إضافي فارغ
+                sheet.addRow([]);
 
-                const lastRowNumber = sheet.lastRow.number + 1;
-                sheet.mergeCells(lastRowNumber, 1, lastRowNumber, 6);
-                
-                const infoRow = sheet.getRow(lastRowNumber);
-                infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
-                infoRow.height = 32;
+                // إضافة خلية معلومات الرصيد الإجمالية في الأسفل بشكل أنيق جداً
+                const infoRow = sheet.addRow([
+                    `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit}`, 
+                    "", 
+                    `${t.tableTargetLabel}: ${tableTargetInput.value}%`, 
+                    "", 
+                    `${t.tableSafetyLabel}: ${tableSafetyInput.value}%`
+                ]);
+                sheet.mergeCells(`A${infoRow.number}:B${infoRow.number}`);
+                sheet.mergeCells(`C${infoRow.number}:D${infoRow.number}`);
+                sheet.mergeCells(`E${infoRow.number}:F${infoRow.number}`);
+                infoRow.height = 25;
+                infoRow.eachCell(cell => {
+                    cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF334155' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = cellBorder;
+                });
 
-                const infoCell = infoRow.getCell(1);
-                infoCell.font = { bold: true, color: { argb: 'FF334155' }, size: 11, name: 'Arial' };
-                infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
-                infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-
-                for (let i = 1; i <= 6; i++) {
-                    infoRow.getCell(i).border = cellBorder;
-                }
-
-                // إنشاء ملف xlsx الحقيقي والتحميل
+                // تصدير كـ ArrayBuffer حقيقي متوافق كلياً مع الجوالات لتجنب "تلف الملف"
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 
@@ -1034,15 +1065,15 @@
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
-                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح وجرى تنظيمه!" : "Excel exported successfully!", '📊');
-                
+
+                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel ملون بنجاح!" : "Colored Excel file exported!", '📊');
             } catch (error) {
-                console.error("Excel Export Error: ", error);
-                showToast(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.', '❌');
+                console.error(error);
+                showToast(currentLang === 'ar' ? "حدث خطأ أثناء تصدير ملف Excel." : "Error exporting Excel file.", '⚠️');
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة =================
+        // ================= تصدير PDF مخصص للطباعة بوضع ليلي فاخر (Slate Dark) وتقسيم ذكي كل 20 يوم =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1055,219 +1086,143 @@
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            let tableRowsHtml = '';
-            currentTablePlanData.forEach(row => {
-                let statusText, statusColor, rowBgStyle = '';
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
-                else { statusText = t.statusPending; statusColor = '#94a3b8'; }
-                
-                let baseBg = row.day % 2 === 0 ? 'background-color: #1e293b;' : 'background-color: #0f172a;';
-                let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
-                
-                tableRowsHtml += `
-                    <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #334155;">
-                        <td style="border: 1px solid #334155; font-weight: bold; color: #38bdf8; padding: 8px;">${row.day}</td>
-                        <td style="border: 1px solid #334155; color: #cbd5e1; padding: 8px;">${formatNumber(row.start)}</td>
-                        <td style="border: 1px solid #334155; color: #f43f5e; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
-                        <td style="border: 1px solid #334155; color: #10b981; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
-                        <td style="border: 1px solid #334155; font-weight: 900; color: #f59e0b; padding: 8px;">${formatNumber(row.actualEnd)}</td>
-                        <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
-                    </tr>
-                `;
-            });
+            // 1. حساب وتقسيم الأيام بذكاء إلى مصفوفة تحتوي على صفحات (كل صفحة تحتوي على 20 يوم كحد أقصى لمنع السحق والتداخل)
+            const daysPerPage = 20;
+            let pagesHtml = '';
 
-            const printDocumentHtml = `
-                <!DOCTYPE html>
-                <html dir="${dirAtt}">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${t.planFileTitle}</title>
-                    <style>
-                        body { 
-                            margin: 0; 
-                            padding: 0;
-                            background-color: transparent !important;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        .page-wrapper {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
-                            background-color: #0f172a !important; 
-                            color: #cbd5e1 !important;
-                            padding: 20px;
-                            min-height: 100vh;
-                        }
-                        .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
-                        .header h1 { color: #10b981; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
-                        .meta-box { 
-                            background: #1e293b !important; 
-                            border: 1px solid #334155; 
-                            padding: 12px 20px; 
-                            border-radius: 8px; 
-                            font-weight: bold; 
-                            font-size: 15px; 
-                            display: inline-block; 
-                            color: #f8fafc !important;
-                        }
-                        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; margin-top: 15px; }
-                        th { background-color: #1e293b !important; color: #f8fafc !important; padding: 12px; font-weight: bold; border: 1px solid #334155; }
-                        .summary { 
-                            margin-top: 25px; 
-                            padding: 15px; 
-                            border: 2px solid #10b981; 
-                            background: rgba(16, 185, 129, 0.05) !important; 
-                            text-align: ${currentLang === 'ar' ? 'right' : 'left'}; 
-                            font-size: 16px; 
-                            font-weight: bold; 
-                            border-radius: 8px; 
-                        }
-                        @media print {
-                            @page { size: A4 portrait; margin: 1cm; }
-                            .page-wrapper { 
-                                background-color: #0f172a !important; 
-                                color: #cbd5e1 !important; 
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="page-wrapper">
-                        <div class="header">
-                            <h1>${t.appTitle} - ${t.logPlanType}</h1>
-                            <div class="meta-box">
-                                ${t.detailsCapital} <span style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</span> | 
+            for (let p = 0; p < currentTablePlanData.length; p += daysPerPage) {
+                const pageData = currentTablePlanData.slice(p, p + daysPerPage);
+                let tableRowsHtml = '';
+
+                pageData.forEach(row => {
+                    let statusText, statusColor, rowBgStyle = '';
+                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
+                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
+                    else { statusText = t.statusPending; statusColor = '#94a3b8'; }
+                    
+                    let baseBg = row.day % 2 === 0 ? 'background-color: #1e293b;' : 'background-color: #0f172a;';
+                    let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
+                    
+                    tableRowsHtml += `
+                        <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #334155;">
+                            <td style="border: 1px solid #334155; font-weight: bold; color: #38bdf8; padding: 8px;">${row.day}</td>
+                            <td style="border: 1px solid #334155; color: #cbd5e1; padding: 8px;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid #334155; color: #f43f5e; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid #334155; color: #10b981; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid #334155; font-weight: bold; color: #fbbf24; padding: 8px;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
+                        </tr>
+                    `;
+                });
+
+                // بناء صفحة مستقلة بتصميم الوضع الليلي الاحترافي المقاوم لمشاكل الطباعة
+                pagesHtml += `
+                    <div class="pdf-page" style="box-sizing: border-box; padding: 25px; background-color: #0f172a; color: #f8fafc; font-family: 'Tajawal', sans-serif; position: relative; width: 100%; min-height: 100%;">
+                        <div style="text-align: center; border-bottom: 2px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;">
+                            <h2 style="color: #10b981; margin: 0 0 5px 0; font-size: 22px; font-weight: bold;">${t.appTitle}</h2>
+                            <p style="color: #94a3b8; font-size: 13px; margin: 0;">${t.appSubtitle}</p>
+                            <p style="margin-top: 10px; font-weight: bold; background: #1e293b; display: inline-block; padding: 8px 15px; border-radius: 8px; border: 1px solid #334155; font-size: 12px; color: #f8fafc;">
+                                ${t.detailsCapital} <span style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</span> | 
                                 ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span>
-                            </div>
+                                ${t.tableSafetyLabel}: <span style="color: #ef4444;">${tableSafetyInput.value}%</span>
+                            </p>
                         </div>
-                        <table>
+                        
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; color: #f8fafc; border: 1px solid #334155;">
                             <thead>
-                                <tr>
-                                    <th>${t.tableDayText}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                    <th>${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <tr style="background-color: #1e293b; border-bottom: 2px solid #475569;">
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${t.tableDayText}</th>
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
+                                    <th style="padding: 10px; border: 1px solid #334155; color: #f8fafc;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${tableRowsHtml}
                             </tbody>
                         </table>
-                        <div class="summary">
-                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
-                            <span style="color: #10b981; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
+                `;
+
+                // إذا كانت هذه هي الصفحة الأخيرة، نعرض ملخص الأرباح النهائي
+                if (p + daysPerPage >= currentTablePlanData.length) {
+                    pagesHtml += `
+                        <div style="margin-top: 20px; padding: 15px; border: 2px solid #334155; background: #020617; text-align: ${currentLang === 'ar' ? 'left' : 'right'}; font-size: 15px; font-weight: bold; border-radius: 8px;">
+                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة للفترة:' : 'Expected Net Profit:'}</span> 
+                            <span style="color: #10b981; margin: 0 10px; font-size: 18px;">${formatNumber(netProfit)} ${unit}</span>
+                        </div>
+                    `;
+                }
+
+                pagesHtml += `
+                        <div style="text-align: center; color: #475569; font-size: 10px; margin-top: 15px;">
+                            ${currentLang === 'ar' ? 'صفحة' : 'Page'} ${Math.floor(p / daysPerPage) + 1} / ${Math.ceil(currentTablePlanData.length / daysPerPage)}
                         </div>
                     </div>
-                </body>
-                </html>
-            `;
+                `;
+            }
 
+            // 2. استخدام iframe كـ Sandbox لرسم الـ PDF لحمايته من أي ستايلات خارجية مسببة للسواد
             const iframe = document.createElement('iframe');
-            iframe.style.position = 'fixed';
-            iframe.style.bottom = '0';
-            iframe.style.right = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
+            iframe.style.position = 'absolute';
+            iframe.style.width = '800px';  // حجم عرض ثابت للتقاط مثالي
+            iframe.style.height = '1000px';
             iframe.style.border = 'none';
+            iframe.style.visibility = 'hidden';
             document.body.appendChild(iframe);
 
             const doc = iframe.contentWindow.document;
             doc.open();
-            doc.write(printDocumentHtml);
+            doc.write(`
+                <!DOCTYPE html>
+                <html lang="${currentLang}" dir="${dirAtt}">
+                <head>
+                    <meta charset="UTF-8">
+                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+                    <style>
+                        body { margin: 0; padding: 0; background-color: #0f172a !important; }
+                        /* كود إجبار الألوان في الطباعة بدقة */
+                        .pdf-page {
+                            background-color: #0f172a !important;
+                            color: #f8fafc !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        tr, th, td {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${pagesHtml}
+                </body>
+                </html>
+            `);
             doc.close();
 
-            iframe.contentWindow.focus();
+            // الانتظار ثانية واحدة للتأكد من تحميل الخط ثم استخدام html2pdf للالتقاط بملامح داكنة أصلية ومترابطة
             setTimeout(() => {
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 1000);
-            }, 500);
-        });
+                const opt = {
+                    margin: 0,
+                    filename: `${t.planFileTitle}_جدول.pdf`,
+                    image: { type: 'jpeg', quality: 1.0 },
+                    html2canvas: { 
+                        scale: 2.0, 
+                        useCORS: true, 
+                        backgroundColor: '#0f172a',
+                        width: 800,
+                        windowWidth: 800
+                    },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
 
-        // ================= التصدير والمشاركة كتقرير نصي =================
-        copyTextReportBtn.addEventListener('click', () => {
-            const initialCapital = getCapital();
-            if (currentTablePlanData.length === 0 || initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
-                return;
-            }
-
-            const t = translations[currentLang];
-            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
-
-            let reportText = "";
-            if (currentLang === 'ar') {
-                reportText += `📊 *تقرير خطة التداول الاحترافية*\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += `💰 رأس المال الأصلي: ${formatNumber(initialCapital)} ${unit}\n`;
-                reportText += `🎯 الهدف اليومي: ${tableTargetInput.value}%\n`;
-                reportText += `🛡️ رصيد الأمان (الخسارة): ${tableSafetyInput.value}%\n`;
-                reportText += `📅 مدة الخطة: ${tableDaysInput.value} أيام\n`;
-                reportText += `⚙️ نوع الحساب: ${tableCompoundToggle.checked ? 'أرباح مركبة (تراكمي)' : 'أرباح ثابتة (بسيط)'}\n`;
-                reportText += `───────────────────────────────\n\n`;
-                reportText += `| اليوم | البداية | الخسارة | الهدف | النهاية | الحالة |\n`;
-                reportText += `├─────┼────────┼────────┼───────┼────────┼────────┤\n`;
-                
-                currentTablePlanData.forEach(row => {
-                    let statusTxt = ' معلق ⚪';
-                    if (row.status === 'profit') statusTxt = ' ربح 🟢';
-                    else if (row.status === 'loss') statusTxt = ' خسارة 🔴';
-
-                    reportText += `|  ${row.day.toString().padEnd(2, ' ')} | ${formatNumber(row.start).padEnd(6, ' ')} | -${formatNumber(row.lossValue).padEnd(5, ' ')} | +${formatNumber(row.profitValue).padEnd(5, ' ')} | ${formatNumber(row.actualEnd).padEnd(6, ' ')} |${statusTxt} |\n`;
+                html2pdf().set(opt).from(doc.body).save().then(() => {
+                    document.body.removeChild(iframe);
+                    showToast(currentLang === 'ar' ? "تم تصدير ملف PDF بنجاح!" : "PDF exported successfully!", '📄');
                 });
-                
-                reportText += `\n───────────────────────────────\n`;
-                reportText += `📈 صافي الأرباح المتوقعة: ${formatNumber(netProfit)} ${unit}\n`;
-                reportText += `💵 الرصيد الإجمالي النهائي: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += ` تم التوليد بواسطة حاسبة التداول الذكية`;
-            } else {
-                reportText += `📊 *Professional Trading Plan Report*\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += `💰 Initial Capital: ${formatNumber(initialCapital)} ${unit}\n`;
-                reportText += `🎯 Daily Target: ${tableTargetInput.value}%\n`;
-                reportText += `🛡️ Safety Balance (Loss): ${tableSafetyInput.value}%\n`;
-                reportText += `📅 Plan Duration: ${tableDaysInput.value} Days\n`;
-                reportText += `⚙️ Type: ${tableCompoundToggle.checked ? 'Compound' : 'Simple'}\n`;
-                reportText += `───────────────────────────────\n\n`;
-                reportText += `| Day | Start | Loss | Target | End | Status |\n`;
-                reportText += `├─────┼───────┼──────┼────────┼─────┼────────┤\n`;
-                
-                currentTablePlanData.forEach(row => {
-                    let statusTxt = ' Pending ⚪';
-                    if (row.status === 'profit') statusTxt = ' Win 🟢';
-                    else if (row.status === 'loss') statusTxt = ' Loss 🔴';
-
-                    reportText += `|  ${row.day.toString().padEnd(2, ' ')} | ${formatNumber(row.start).padEnd(5, ' ')} | -${formatNumber(row.lossValue).padEnd(4, ' ')} | +${formatNumber(row.profitValue).padEnd(4, ' ')} | ${formatNumber(row.actualEnd).padEnd(5, ' ')} |${statusTxt} |\n`;
-                });
-                
-                reportText += `\n───────────────────────────────\n`;
-                reportText += `📈 Expected Net Profit: ${formatNumber(netProfit)} ${unit}\n`;
-                reportText += `💵 Final Balance: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += ` Generated by Trading Calculator App`;
-            }
-
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = reportText;
-            tempTextArea.setAttribute('readonly', '');
-            tempTextArea.style.position = 'absolute';
-            tempTextArea.style.left = '-9999px';
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            tempTextArea.setSelectionRange(0, 99999);
-            
-            try {
-                document.execCommand('copy');
-                showToast(currentLang === 'ar' ? "تم نسخ التقرير النصي إلى الحافظة! جاهز للصق." : "Formatted text report copied to clipboard!", '📋');
-            } catch (err) {
-                console.error('Failed to copy', err);
-                showToast(currentLang === 'ar' ? "فشل النسخ التلقائي." : "Copy failed.", '❌');
-            }
-            document.body.removeChild(tempTextArea);
+            }, 1000);
         });
 
         // ================= تصدير واستيراد البيانات كنسخة احتياطية JSON =================
@@ -1280,7 +1235,7 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
-            showToast(currentLang === 'ar' ? "تم تصدير نسخة احتياطية!" : "Backup exported!", '📥');
+            showToast(currentLang === 'ar' ? "تم تصدير نسخة احتياطية بنجاح!" : "Backup exported successfully!", '📥');
         });
 
         importBackupBtn.addEventListener('click', () => {
@@ -1300,10 +1255,10 @@
                         showToast(currentLang === 'ar' ? "تم استيراد النسخة الاحتياطية بنجاح!" : "Backup imported successfully!", '📤');
                         renderSavedLog();
                     } else {
-                        showToast(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.", '❌');
+                        showToast(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.", '⚠️');
                     }
                 } catch (error) {
-                    showToast(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.", '❌');
+                    showToast(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.", '⚠️');
                 }
             };
             reader.readAsText(file);
@@ -1327,9 +1282,7 @@
             };
 
             saveRawTrade(trade);
-            saveTablePlanBtn.classList.add('bg-sky-500', 'text-white');
-            setTimeout(() => saveTablePlanBtn.classList.remove('bg-sky-500', 'text-white'), 300);
-            showToast(currentLang === 'ar' ? "تم الحفظ بنجاح!" : "Saved successfully!", '💾');
+            showToast(currentLang === 'ar' ? "تم حفظ خطة الجدول في السجل بنجاح!" : "Table plan saved successfully!", '📝');
         });
 
         currencyToggle.addEventListener('click', () => {
@@ -1412,7 +1365,7 @@
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            showToast(currentLang === 'ar' ? "تم استعادة الحسبة للآلة!" : "Calculator restored!", '↺');
+            showToast(currentLang === 'ar' ? "تم استرجاع الحسبة بالكامل للماضي!" : "Calculation successfully restored!", '↺');
         }
 
         function renderSavedLog() {
