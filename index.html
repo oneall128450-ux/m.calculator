@@ -63,6 +63,31 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
+        /* تنسيقات الطباعة الأصلية (Native Print) للـ PDF */
+        #printArea { display: none; }
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0; 
+            }
+            body > div:not(#printArea) { display: none !important; }
+            body { 
+                background: #0f172a !important; 
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            #printArea { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                background: #0f172a !important; 
+            }
+        }
+
         /* أنيميشن لتنبيه الـ Toast */
         @keyframes slideInUp {
             from { transform: translate(-50%, 100px); opacity: 0; }
@@ -324,6 +349,8 @@
                 </div>
         </div>
     </div>
+
+    <div id="printArea"></div>
 
     <script>
         let isUSD = true;
@@ -604,6 +631,10 @@
             }
         }
 
+        tabDeals.addEventListener('click', () => switchTab('deals'));
+        tabDays.addEventListener('click', () => switchTab('days'));
+        tabTable.addEventListener('click', () => switchTab('table'));
+
         function updateLanguageUI() {
             const t = translations[currentLang];
             const htmlEl = document.getElementById('appHtml');
@@ -871,7 +902,7 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= تصدير لملف Excel حقيقي بالأرقام الإنجليزية بدون أسطر فارغة =================
+        // ================= التصدير لملف Excel حقيقي (xlsx) ويدعم الأوفلاين =================
         exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -880,15 +911,18 @@
             }
 
             try {
+                // التأكد من أن مكتبة ExcelJS تعمل
                 if (typeof ExcelJS === 'undefined') {
                     alert(currentLang === 'ar' ? "ملف exceljs.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html." : "exceljs.min.js is missing.");
                     return;
                 }
 
                 const t = translations[currentLang];
+                const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
                 
                 const workbook = new ExcelJS.Workbook();
                 workbook.creator = 'Trading Calculator';
+                
                 const sheet = workbook.addWorksheet(t.planFileTitle);
                 
                 // تحديد اتجاه الصفحة
@@ -924,22 +958,18 @@
                     cell.border = cellBorder;
                 }
 
-                // إضافة الأسطر، واستخدام Number() مع [$-en-US] لضمان الأرقام الإنجليزية
                 currentTablePlanData.forEach(row => {
-                    // شرط يمنع إضافة أسطر فارغة إضافية
-                    if (!row || !row.day) return;
-
                     let statusText = '';
                     if (row.status === 'profit') statusText = t.statusWin;
                     else if (row.status === 'loss') statusText = t.statusLoss;
                     else statusText = t.statusPending;
 
                     const newRow = sheet.addRow({
-                        day: Number(row.day),
-                        start: Number(row.start.toFixed(2)),
-                        safety: Number(Math.abs(row.lossValue).toFixed(2)), // أرقام موجبة أو سالبة حسب رغبتك
-                        target: Number(row.profitValue.toFixed(2)),
-                        end: Number(row.actualEnd.toFixed(2)),
+                        day: row.day,
+                        start: parseFloat(row.start.toFixed(2)),
+                        safety: parseFloat((-row.lossValue).toFixed(2)),
+                        target: parseFloat(row.profitValue.toFixed(2)),
+                        end: parseFloat(row.actualEnd.toFixed(2)),
                         status: statusText
                     });
 
@@ -952,10 +982,7 @@
                         cell.alignment = { horizontal: 'center', vertical: 'middle' };
                         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
                         cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
-                        
-                        // إجبار الخلية على إظهار أرقام إنجليزية فقط في أي لغة
-                        if (i >= 2 && i <= 5) cell.numFmt = '[$-en-US]#,##0.00';
-                        if (i === 1) cell.numFmt = '[$-en-US]0';
+                        if (i >= 2 && i <= 5) cell.numFmt = '#,##0.00';
                     }
 
                     newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; 
@@ -975,7 +1002,6 @@
                     }
                 });
 
-                // سطر العناوين أو المعلومات أسفل الجدول
                 const spaceRow = sheet.addRow([]);
                 spaceRow.height = 15;
 
@@ -983,7 +1009,6 @@
                 sheet.mergeCells(lastRowNumber, 1, lastRowNumber, 6);
                 
                 const infoRow = sheet.getRow(lastRowNumber);
-                const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
                 infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
                 infoRow.height = 32;
 
@@ -996,7 +1021,7 @@
                     infoRow.getCell(i).border = cellBorder;
                 }
 
-                // إنشاء ملف xlsx وتحميله
+                // إنشاء ملف xlsx الحقيقي والتحميل
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 
@@ -1017,7 +1042,7 @@
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة (بدون شاشة سوداء ومقسم بالصفحات) =================
+        // ================= تصدير PDF مخصص للطباعة =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1030,86 +1055,28 @@
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            // نظام التقسيم (حزم) كل 20 يوم بصفحة مستقلة وتكبير حجم الصفوف بناءً على الأيام
-            const CHUNK_SIZE = 20;
-            let pagesHtml = '';
-
-            for (let i = 0; i < currentTablePlanData.length; i += CHUNK_SIZE) {
-                const chunk = currentTablePlanData.slice(i, i + CHUNK_SIZE);
+            let tableRowsHtml = '';
+            currentTablePlanData.forEach(row => {
+                let statusText, statusColor, rowBgStyle = '';
+                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
+                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
+                else { statusText = t.statusPending; statusColor = '#94a3b8'; }
                 
-                // تحديد الارتفاع (Padding) لتعبئة الورقة
-                let padding = '8px';
-                if (chunk.length <= 5) padding = '35px';
-                else if (chunk.length <= 10) padding = '20px';
-                else if (chunk.length <= 15) padding = '12px';
-
-                let rowsHtml = '';
-                chunk.forEach(row => {
-                    let statusText, statusColor, rowBgStyle = '';
-                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
-                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
-                    else { statusText = t.statusPending; statusColor = '#94a3b8'; }
-                    
-                    let baseBg = row.day % 2 === 0 ? 'background-color: #1e293b;' : 'background-color: #0f172a;';
-                    let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
-
-                    rowsHtml += `
-                        <tr style="${finalStyle} border-bottom: 1px solid #334155;">
-                            <td style="border: 1px solid #334155; font-weight: bold; color: #38bdf8; padding: ${padding};">${Number(row.day)}</td>
-                            <td style="border: 1px solid #334155; color: #cbd5e1; padding: ${padding};">${formatNumber(row.start)}</td>
-                            <td style="border: 1px solid #334155; color: #f43f5e; font-weight: bold; padding: ${padding};">-${formatNumber(row.lossValue)}</td>
-                            <td style="border: 1px solid #334155; color: #10b981; font-weight: bold; padding: ${padding};">+${formatNumber(row.profitValue)}</td>
-                            <td style="border: 1px solid #334155; font-weight: 900; color: #f59e0b; padding: ${padding};">${formatNumber(row.actualEnd)}</td>
-                            <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold; padding: ${padding};">${statusText}</td>
-                        </tr>
-                    `;
-                });
-
-                // فصل الصفحات (إلا في حال كانت الصفحة هي الأخيرة)
-                let pageBreak = (i + CHUNK_SIZE < currentTablePlanData.length) ? 'page-break-after: always;' : '';
-
-                // إذا كانت آخر صفحة نضيف الملخص في نهايتها
-                let summaryHtml = '';
-                if (i + CHUNK_SIZE >= currentTablePlanData.length) {
-                    summaryHtml = `
-                        <div class="summary">
-                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
-                            <span style="color: #10b981; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
-                        </div>
-                    `;
-                }
-
-                pagesHtml += `
-                    <div class="page-wrapper" style="${pageBreak} min-height: 100vh; padding: 20px; box-sizing: border-box; background-color: #0f172a;">
-                        <div class="header">
-                            <h1>${t.appTitle} - ${t.logPlanType} (Page ${(i / CHUNK_SIZE) + 1})</h1>
-                            <div class="meta-box">
-                                ${t.detailsCapital} <span style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</span> | 
-                                ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span>
-                            </div>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>${t.tableDayText}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                    <th>${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                        ${summaryHtml}
-                    </div>
+                let baseBg = row.day % 2 === 0 ? 'background-color: #1e293b;' : 'background-color: #0f172a;';
+                let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
+                
+                tableRowsHtml += `
+                    <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #334155;">
+                        <td style="border: 1px solid #334155; font-weight: bold; color: #38bdf8; padding: 8px;">${row.day}</td>
+                        <td style="border: 1px solid #334155; color: #cbd5e1; padding: 8px;">${formatNumber(row.start)}</td>
+                        <td style="border: 1px solid #334155; color: #f43f5e; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
+                        <td style="border: 1px solid #334155; color: #10b981; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
+                        <td style="border: 1px solid #334155; font-weight: 900; color: #f59e0b; padding: 8px;">${formatNumber(row.actualEnd)}</td>
+                        <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
+                    </tr>
                 `;
-            }
+            });
 
-            // إعداد كود الـ HTML المتين للطباعة وتجنب الشاشة السوداء
             const printDocumentHtml = `
                 <!DOCTYPE html>
                 <html dir="${dirAtt}">
@@ -1120,13 +1087,16 @@
                         body { 
                             margin: 0; 
                             padding: 0;
-                            background-color: #0f172a !important;
+                            background-color: transparent !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
                         .page-wrapper {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
+                            background-color: #0f172a !important; 
                             color: #cbd5e1 !important;
+                            padding: 20px;
+                            min-height: 100vh;
                         }
                         .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
                         .header h1 { color: #10b981; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
@@ -1153,14 +1123,44 @@
                             border-radius: 8px; 
                         }
                         @media print {
-                            @page { size: A4 portrait; margin: 0.5cm; }
-                            body { background-color: #0f172a !important; }
-                            .page-wrapper { box-shadow: none; border: none; margin: 0; }
+                            @page { size: A4 portrait; margin: 1cm; }
+                            .page-wrapper { 
+                                background-color: #0f172a !important; 
+                                color: #cbd5e1 !important; 
+                            }
                         }
                     </style>
                 </head>
                 <body>
-                    ${pagesHtml}
+                    <div class="page-wrapper">
+                        <div class="header">
+                            <h1>${t.appTitle} - ${t.logPlanType}</h1>
+                            <div class="meta-box">
+                                ${t.detailsCapital} <span style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</span> | 
+                                ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
+                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>${t.tableDayText}</th>
+                                    <th>${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
+                                    <th>${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
+                                    <th>${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
+                                    <th>${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
+                                    <th>${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                        <div class="summary">
+                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
+                            <span style="color: #10b981; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
+                        </div>
+                    </div>
                 </body>
                 </html>
             `;
@@ -1604,4 +1604,42 @@
                 id: Date.now(),
                 total: total,
                 days: days,
-                isPercent:
+                isPercent: isPercentageMethod,
+                inputVal: strategyInput.value || '0',
+                profit: finalBalance - total,
+                final: finalBalance,
+                isCompound: isCompound,
+                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'),
+                isGrowth: true
+            });
+            showToast(currentLang === 'ar' ? "تم حفظ النمو في السجل!" : "Growth saved to session log!", '📈');
+        });
+
+        clearLogBtn.addEventListener('click', () => {
+            localStorage.removeItem('trading_sessions_raw');
+            renderSavedLog();
+            showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared!", '🗑️');
+        });
+
+        function updateResultLabels() {
+            const t = translations[currentLang];
+            const isBaseCalculated = !calcMethodToggle.checked;
+            const labelPlus = document.getElementById('label-plus');
+            const labelMinus = document.getElementById('label-minus');
+            if (isBaseCalculated) {
+                labelPlus.innerText = t.profitRatioLabel;
+                labelMinus.innerText = t.lossRatioLabel;
+            } else {
+                labelPlus.innerText = t.profitTotalLabel;
+                labelMinus.innerText = t.lossTotalLabel;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            const savedLang = localStorage.getItem('app_lang');
+            if (savedLang) currentLang = savedLang;
+            updateLanguageUI();
+        });
+    </script>
+</body>
+</html>
