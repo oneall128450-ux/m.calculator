@@ -15,7 +15,9 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- استدعاء مكاتب الأوفلاين المحلية -->
     <script src="exceljs.min.js"></script>
+    <script src="html2canvas.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;600;700;900&display=swap');
@@ -63,16 +65,17 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        /* تنسيقات الطباعة الأصلية (Native Print) للـ PDF */
+        /* حماية الطباعة وتنسيق PDF صارم وواضح (عالي التباين - خلفية بيضاء) لمنع مشاكل المساحات السوداء بالكامل على الجوال */
         #printArea { display: none; }
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0; 
+                margin: 1.5cm; 
             }
             body > div:not(#printArea) { display: none !important; }
             body { 
-                background: #0f172a !important; 
+                background: #ffffff !important; 
+                color: #000000 !important;
                 margin: 0;
                 padding: 0;
                 -webkit-print-color-adjust: exact !important;
@@ -84,7 +87,8 @@
                 left: 0; 
                 top: 0; 
                 width: 100%; 
-                background: #0f172a !important; 
+                background: #ffffff !important; 
+                color: #000000 !important;
             }
         }
 
@@ -314,7 +318,8 @@
                 </div>
             </div>
 
-            <div id="tableActionsContainer" class="grid grid-cols-2 gap-1.5 hidden">
+            <!-- أزرار الإجراءات للجدول (محدثة بميزة التصدير كصورة للنوته) -->
+            <div id="tableActionsContainer" class="grid grid-cols-2 gap-2 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span id="uiSaveTableBtn">حفظ للسجل</span>
@@ -330,6 +335,11 @@
                 <button id="copyTextReportBtn" class="tap-active bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <span>📋</span>
                     <span id="uiCopyTextReportBtn">نسخ التقرير النصي</span>
+                </button>
+                <!-- الزر الجديد: تصدير كصورة عالية الدقة للنوته (يمتد على كامل العرض لحفظ توازن التصميم) -->
+                <button id="exportImageBtn" class="col-span-2 tap-active bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
+                    <span>📸</span>
+                    <span id="uiExportImgBtn">حفظ كصورة للنوته 📸</span>
                 </button>
             </div>
 
@@ -428,6 +438,7 @@
                 tableExportBtn: "طباعة / PDF 📄",
                 tableExcelBtn: "تصدير Excel 📊",
                 copyTextBtn: "نسخ التقرير النصي 📋",
+                exportImgBtn: "حفظ كصورة للنوته 📸",
                 logPlanType: "خطة جدول يومية",
                 planFileTitle: "خطة_التداول_الاحترافية",
                 statusWin: "تحقق الهدف",
@@ -501,6 +512,7 @@
                 tableExportBtn: "Print / PDF 📄",
                 tableExcelBtn: "Export Excel 📊",
                 copyTextBtn: "Copy Text Report 📋",
+                exportImgBtn: "Save as Image 📸",
                 logPlanType: "Daily Table Plan",
                 planFileTitle: "Trading_Plan",
                 statusWin: "Target Met",
@@ -550,6 +562,7 @@
         const exportPdfBtn = document.getElementById('exportPdfBtn');
         const exportExcelBtn = document.getElementById('exportExcelBtn');
         const copyTextReportBtn = document.getElementById('copyTextReportBtn');
+        const exportImageBtn = document.getElementById('exportImageBtn');
 
         const exportBackupBtn = document.getElementById('exportBackupBtn');
         const importBackupBtn = document.getElementById('importBackupBtn');
@@ -684,6 +697,7 @@
             document.getElementById('uiExportPdfBtn').innerText = t.tableExportBtn;
             document.getElementById('uiExportExcelBtn').innerText = t.tableExcelBtn;
             document.getElementById('uiCopyTextReportBtn').innerText = t.copyTextBtn;
+            document.getElementById('uiExportImgBtn').innerText = t.exportImgBtn;
 
             updateMethodLabel();
             updateToggleStatusText();
@@ -911,7 +925,6 @@
             }
 
             try {
-                // التأكد من أن مكتبة ExcelJS تعمل
                 if (typeof ExcelJS === 'undefined') {
                     alert(currentLang === 'ar' ? "ملف exceljs.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html." : "exceljs.min.js is missing.");
                     return;
@@ -924,8 +937,6 @@
                 workbook.creator = 'Trading Calculator';
                 
                 const sheet = workbook.addWorksheet(t.planFileTitle);
-                
-                // تحديد اتجاه الصفحة
                 sheet.views = [{ rightToLeft: currentLang === 'ar', showGridLines: true }];
 
                 const headers = currentLang === 'ar' ? 
@@ -1021,7 +1032,6 @@
                     infoRow.getCell(i).border = cellBorder;
                 }
 
-                // إنشاء ملف xlsx الحقيقي والتحميل
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 
@@ -1042,7 +1052,7 @@
             }
         });
 
-        // ================= تصدير PDF مخصص للطباعة =================
+        // ================= تصدير PDF مخصص للطباعة (مُعَدَّل لفرض مظهر فاتح لمنع الحبر الأسود) =================
         exportPdfBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1058,21 +1068,21 @@
             let tableRowsHtml = '';
             currentTablePlanData.forEach(row => {
                 let statusText, statusColor, rowBgStyle = '';
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = 'background-color: rgba(16, 185, 129, 0.1);'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = 'background-color: rgba(244, 63, 94, 0.1);'; }
-                else { statusText = t.statusPending; statusColor = '#94a3b8'; }
+                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#059669'; rowBgStyle = 'background-color: #ecfdf5;'; }
+                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#dc2626'; rowBgStyle = 'background-color: #fef2f2;'; }
+                else { statusText = t.statusPending; statusColor = '#4b5563'; }
                 
-                let baseBg = row.day % 2 === 0 ? 'background-color: #1e293b;' : 'background-color: #0f172a;';
+                let baseBg = row.day % 2 === 0 ? 'background-color: #f9fafb;' : 'background-color: #ffffff;';
                 let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
                 
                 tableRowsHtml += `
-                    <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #334155;">
-                        <td style="border: 1px solid #334155; font-weight: bold; color: #38bdf8; padding: 8px;">${row.day}</td>
-                        <td style="border: 1px solid #334155; color: #cbd5e1; padding: 8px;">${formatNumber(row.start)}</td>
-                        <td style="border: 1px solid #334155; color: #f43f5e; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
-                        <td style="border: 1px solid #334155; color: #10b981; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
-                        <td style="border: 1px solid #334155; font-weight: 900; color: #f59e0b; padding: 8px;">${formatNumber(row.actualEnd)}</td>
-                        <td style="border: 1px solid #334155; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
+                    <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #e5e7eb;">
+                        <td style="border: 1px solid #d1d5db; font-weight: bold; color: #2563eb; padding: 8px;">${row.day}</td>
+                        <td style="border: 1px solid #d1d5db; color: #1f2937; padding: 8px;">${formatNumber(row.start)}</td>
+                        <td style="border: 1px solid #d1d5db; color: #dc2626; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
+                        <td style="border: 1px solid #d1d5db; color: #059669; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
+                        <td style="border: 1px solid #d1d5db; font-weight: 900; color: #d97706; padding: 8px;">${formatNumber(row.actualEnd)}</td>
+                        <td style="border: 1px solid #d1d5db; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
                     </tr>
                 `;
             });
@@ -1087,36 +1097,37 @@
                         body { 
                             margin: 0; 
                             padding: 0;
-                            background-color: transparent !important;
+                            background-color: #ffffff !important;
+                            color: #111827 !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
                         .page-wrapper {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
-                            background-color: #0f172a !important; 
-                            color: #cbd5e1 !important;
+                            background-color: #ffffff !important; 
+                            color: #111827 !important;
                             padding: 20px;
                             min-height: 100vh;
                         }
                         .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
-                        .header h1 { color: #10b981; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
+                        .header h1 { color: #059669; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
                         .meta-box { 
-                            background: #1e293b !important; 
-                            border: 1px solid #334155; 
+                            background: #f3f4f6 !important; 
+                            border: 1px solid #d1d5db; 
                             padding: 12px 20px; 
                             border-radius: 8px; 
                             font-weight: bold; 
                             font-size: 15px; 
                             display: inline-block; 
-                            color: #f8fafc !important;
+                            color: #1f2937 !important;
                         }
                         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; margin-top: 15px; }
-                        th { background-color: #1e293b !important; color: #f8fafc !important; padding: 12px; font-weight: bold; border: 1px solid #334155; }
+                        th { background-color: #f3f4f6 !important; color: #111827 !important; padding: 12px; font-weight: bold; border: 1px solid #d1d5db; }
                         .summary { 
                             margin-top: 25px; 
                             padding: 15px; 
                             border: 2px solid #10b981; 
-                            background: rgba(16, 185, 129, 0.05) !important; 
+                            background: #f0fdf4 !important; 
                             text-align: ${currentLang === 'ar' ? 'right' : 'left'}; 
                             font-size: 16px; 
                             font-weight: bold; 
@@ -1125,8 +1136,8 @@
                         @media print {
                             @page { size: A4 portrait; margin: 1cm; }
                             .page-wrapper { 
-                                background-color: #0f172a !important; 
-                                color: #cbd5e1 !important; 
+                                background-color: #ffffff !important; 
+                                color: #111827 !important; 
                             }
                         }
                     </style>
@@ -1136,9 +1147,9 @@
                         <div class="header">
                             <h1>${t.appTitle} - ${t.logPlanType}</h1>
                             <div class="meta-box">
-                                ${t.detailsCapital} <span style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</span> | 
-                                ${t.tableTargetLabel}: <span style="color: #10b981;">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;">${tableSafetyInput.value}%</span>
+                                ${t.detailsCapital} <span style="color: #d97706;">${formatNumber(initialCapital)} ${unit}</span> | 
+                                ${t.tableTargetLabel}: <span style="color: #059669;">${tableTargetInput.value}%</span> | 
+                                ${t.tableSafetyLabel}: <span style="color: #dc2626;">${tableSafetyInput.value}%</span>
                             </div>
                         </div>
                         <table>
@@ -1157,8 +1168,8 @@
                             </tbody>
                         </table>
                         <div class="summary">
-                            <span style="color: #94a3b8;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
-                            <span style="color: #10b981; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
+                            <span style="color: #4b5563;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
+                            <span style="color: #059669; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
                         </div>
                     </div>
                 </body>
@@ -1184,6 +1195,113 @@
                 iframe.contentWindow.print();
                 setTimeout(() => { document.body.removeChild(iframe); }, 1000);
             }, 500);
+        });
+
+        // ================= ميزة "تصدير كصورة للنوته (PNG)" المضافة حديثاً =================
+        exportImageBtn.addEventListener('click', () => {
+            const initialCapital = getCapital();
+            if (currentTablePlanData.length === 0 || initialCapital <= 0) {
+                showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
+                return;
+            }
+
+            if (typeof html2canvas === 'undefined') {
+                alert(currentLang === 'ar' ? "ملف html2canvas.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html للعمل أوفلاين." : "html2canvas.min.js is missing.");
+                return;
+            }
+
+            showToast(currentLang === 'ar' ? "جاري تجهيز الصورة للنوته..." : "Preparing image for your notes...", '📸');
+
+            // نقوم بنسخ الجدول مؤقتاً لتجنب مشاكل التقطيع أثناء السحب أو شريط التمرير
+            const originalContainer = document.getElementById('generatedTableContainer');
+            
+            // إنشاء عنصر حاوية مؤقتة خارج الشاشة لمنع تشويه العرض الحالي
+            const cloneWrapper = document.createElement('div');
+            cloneWrapper.style.position = 'absolute';
+            cloneWrapper.style.top = '-9999px';
+            cloneWrapper.style.left = '-9999px';
+            cloneWrapper.style.width = '390px'; // عرض مثالي متناسق مع مقاس الهواتف والنوته
+            cloneWrapper.style.backgroundColor = '#0f172a'; // الحفاظ على المظهر الداكن الفخم للتطبيق
+            cloneWrapper.style.padding = '20px';
+            cloneWrapper.style.borderRadius = '16px';
+            cloneWrapper.style.display = 'flex';
+            cloneWrapper.style.flexDirection = 'column';
+            cloneWrapper.style.gap = '12px';
+
+            // إضافة هيدر مالي أنيق في أعلى الصورة المصدرة لتبدو كصفحة احترافية ومكتملة داخل الملاحظات
+            const t = translations[currentLang];
+            const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
+
+            const headerDiv = document.createElement('div');
+            headerDiv.style.borderBottom = '2px solid #10b981';
+            headerDiv.style.paddingBottom = '12px';
+            headerDiv.style.marginBottom = '8px';
+            headerDiv.style.textAlign = 'center';
+            headerDiv.innerHTML = `
+                <div style="color: #10b981; font-size: 18px; font-weight: 900; letter-spacing: 0.05em; font-family: 'Tajawal', 'Inter', sans-serif;">
+                    ${t.appTitle} - ${t.logPlanType}
+                </div>
+                <div style="color: #94a3b8; font-size: 11px; margin-top: 4px; font-family: 'Tajawal', sans-serif;">
+                    ${t.detailsCapital} <span style="color: #f59e0b; font-weight: bold;">${formatNumber(initialCapital)} ${unit}</span>
+                </div>
+                <div style="color: #94a3b8; font-size: 11px; margin-top: 2px; font-family: 'Tajawal', sans-serif;">
+                    ${t.tableTargetCol}: <span style="color: #10b981; font-weight: bold;">${tableTargetInput.value}%</span> | 
+                    ${t.tableSafetyCol}: <span style="color: #f43f5e; font-weight: bold;">${tableSafetyInput.value}%</span>
+                </div>
+            `;
+            cloneWrapper.appendChild(headerDiv);
+
+            // نسخ جميع الكروت بوضعها الحالي (ألوانها التفاعلية: رابحة/خاسرة/معلقة)
+            const cards = originalContainer.children;
+            for (let i = 0; i < cards.length; i++) {
+                const cardClone = cards[i].cloneNode(true);
+                // إزالة أزرار الحالات التفاعلية من كروت الصورة المصدرة لتبدو نظيفة ومصممة خصيصاً للملاحظات
+                const actionButtons = cardClone.querySelector('.flex.gap-1\\.5');
+                if (actionButtons) actionButtons.remove();
+                cloneWrapper.appendChild(cardClone);
+            }
+
+            // إضافة ملخص الأرباح النهائي في نهاية كرت الصورة
+            const summaryDiv = document.createElement('div');
+            summaryDiv.style.marginTop = '12px';
+            summaryDiv.style.padding = '12px';
+            summaryDiv.style.borderRadius = '12px';
+            summaryDiv.style.border = '2px solid #10b981';
+            summaryDiv.style.background = 'rgba(16, 185, 129, 0.05)';
+            summaryDiv.style.textAlign = 'center';
+            summaryDiv.style.fontFamily = "'Tajawal', 'Inter', sans-serif";
+            summaryDiv.innerHTML = `
+                <span style="color: #94a3b8; font-size: 11px; display: block; margin-bottom: 4px;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
+                <span style="color: #10b981; font-size: 20px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
+            `;
+            cloneWrapper.appendChild(summaryDiv);
+
+            document.body.appendChild(cloneWrapper);
+
+            // استخدام مكتبة html2canvas لالتقاط الصورة بالكامل وبأعلى جودة ممكنة
+            html2canvas(cloneWrapper, {
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#0f172a',
+                scale: 2, // رفع دقة الصورة للضعف لضمان وضوح النصوص والأرقام عند تكبيرها داخل النوته
+                logging: false
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = imgData;
+                const dateStr = new Date().toISOString().split('T')[0];
+                downloadAnchor.download = `${t.planFileTitle}_${dateStr}.png`;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+                document.body.removeChild(cloneWrapper);
+                showToast(currentLang === 'ar' ? "تم حفظ الصورة بنجاح! جاهزة للإدراج في الملاحظات." : "Image saved! Ready to import to Notes.", '📸');
+            }).catch(error => {
+                console.error("html2canvas Error:", error);
+                showToast(currentLang === 'ar' ? "حدث خطأ أثناء حفظ الصورة." : "Error exporting image.", '❌');
+                document.body.removeChild(cloneWrapper);
+            });
         });
 
         // ================= التصدير والمشاركة كتقرير نصي =================
