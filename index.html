@@ -32,6 +32,7 @@
             background-color: #0f172a;
             height: 100%;
         }
+        
         .glass-card {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
@@ -65,34 +66,29 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        /* حماية الطباعة وتنسيق PDF صارم وواضح (عالي التباين - خلفية بيضاء) لمنع مشاكل المساحات السوداء بالكامل على الجوال */
+        /* حاوية الطباعة الوهمية (يتم استخدامها خلف الكواليس) */
         #printArea { display: none; }
+        
+        /* تنسيقات الطباعة الافتراضية لمنع ظهور المتصفح الأساسي */
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 1.5cm; 
-            }
+            @page { margin: 0; }
             body > div:not(#printArea) { display: none !important; }
             body { 
-                background: #ffffff !important; 
-                color: #000000 !important;
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
             #printArea { 
                 display: block !important; 
                 position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                background: #ffffff !important; 
-                color: #000000 !important;
+                left: 0; top: 0; width: 100%; 
+                margin: 0 !important; padding: 0 !important;
             }
+            .page-break-after { page-break-after: always; clear: both; }
         }
 
-        /* أنيميشن لتنبيه الـ Toast */
+        /* حركات الأنيميشن */
         @keyframes slideInUp {
             from { transform: translate(-50%, 100px); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
@@ -100,17 +96,88 @@
         .toast-animate {
             animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-animate {
+            animation: modalFadeIn 0.2s ease-out forwards;
+        }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen pb-12 select-none lang-ar" id="appBody">
 
-    <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
+    <!-- Toast Notification -->
+    <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] glass-card border border-emerald-500/30 px-5 py-3 rounded-2xl hidden flex items-center gap-2 shadow-2xl toast-animate">
         <span id="toastIcon">✨</span>
         <span id="toastText" class="text-xs font-bold text-slate-100"></span>
     </div>
 
+    <!-- نافذة إعدادات الطباعة والـ PDF (Print Modal) المنظمة والمستقلة -->
+    <div id="printSettingsModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" id="closeModalBg"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm glass-card border border-slate-700/80 rounded-2xl p-5 shadow-2xl modal-animate flex flex-col gap-5">
+            
+            <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+                <h3 class="text-emerald-400 font-bold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <span id="uiPrintModalTitle">إعدادات الطباعة والـ PDF</span>
+                </h3>
+                <button id="closeModalBtn" class="text-slate-400 hover:text-rose-400 p-1 bg-slate-800/50 rounded-lg tap-active transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- إعدادات الأيام -->
+            <div>
+                <label id="uiPrintDaysLabel" class="text-xs font-medium text-slate-300 block mb-2">عدد الأيام لكل صفحة (لترتيب الـ PDF):</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="days-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="10">10 أيام</button>
+                    <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="15">15 يوم</button>
+                    <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="20">20 يوم</button>
+                </div>
+                <input type="hidden" id="daysPerPageSelected" value="10">
+            </div>
+
+            <!-- إعدادات الخط -->
+            <div>
+                <label id="uiPrintFontLabel" class="text-xs font-medium text-slate-300 block mb-2">حجم نص الجدول:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="12px">صغير</button>
+                    <button class="font-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="14px">متوسط</button>
+                    <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="16px">كبير</button>
+                </div>
+                <input type="hidden" id="fontSizeSelected" value="14px">
+            </div>
+
+            <!-- إعدادات المظهر -->
+            <div>
+                <label id="uiPrintThemeLabel" class="text-xs font-medium text-slate-300 block mb-2">مظهر التصدير (Theme):</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="theme-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="dark">
+                        🌙 داكن (للنوته)
+                    </button>
+                    <button class="theme-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="light">
+                        ☀️ فاتح (للورق)
+                    </button>
+                </div>
+                <input type="hidden" id="themeSelected" value="dark">
+            </div>
+
+            <div class="border-t border-slate-700/60 pt-4 mt-2">
+                <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span id="uiExecutePrintBtnText">تصدير وتوليد الـ PDF 📄</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- نهاية نافذة الطباعة -->
+
     <div id="mainAppContent" class="max-w-md mx-auto px-4 pt-6">
         
+        <!-- Header Controls -->
         <div class="flex justify-between items-center mb-4 px-1">
             <button id="langToggle" class="tap-active bg-slate-800/80 text-xs font-bold px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700/60 flex items-center gap-1">
                 🌐 EN
@@ -129,6 +196,7 @@
             </div>
         </div>
 
+        <!-- Logo & Title -->
         <div class="text-center mb-5 space-y-3">
             <div class="mx-auto w-20 h-20 rounded-2xl overflow-hidden border border-emerald-500/30 p-1 bg-slate-800/80 flex items-center justify-center shadow-lg shadow-emerald-500/5 select-none no-select" oncontextmenu="return false;">
                 <img id="logoImg" src="logo.png" alt="V Logo" class="w-full h-full object-cover rounded-xl no-select pointer-events-none select-none" ondragstart="return false;" oncontextmenu="return false;" onerror="this.style.display='none'; document.getElementById('fallbackLogo').classList.remove('hidden');">
@@ -140,6 +208,7 @@
             </div>
         </div>
 
+        <!-- Navigation Tabs -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800 rounded-xl mb-4">
             <button id="tabDeals" class="tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50">
                 حاسبة الصفقات
@@ -152,6 +221,7 @@
             </button>
         </div>
 
+        <!-- Total Capital Input -->
         <div class="glass-card rounded-2xl p-4 mb-4 focus-ring transition-all duration-300">
             <div class="mb-2">
                 <span id="uiTotalCapital" class="text-sm font-medium text-slate-400">المبلغ الكلي (رأس المال)</span>
@@ -160,6 +230,7 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
 
+        <!-- Strategy Input Card (Shared between Deals and Days) -->
         <div id="strategyCard" class="glass-card rounded-2xl p-4 mb-4 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -184,6 +255,7 @@
             <div id="dealValueOutput" class="text-xs text-emerald-400 mt-2 font-medium hidden">قيمة النسبة (الصفقة): 0.00 $</div>
         </div>
 
+        <!-- ==================== TAB 1: Deals Calculator ==================== -->
         <div id="panelDeals" class="space-y-4">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -224,12 +296,13 @@
                 </div>
             </div>
 
-            <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
+            <button id="saveSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2 transition-colors">
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span id="uiSaveTradeBtn">حفظ الحسبة الحالية في سجل الجلسة</span>
             </button>
         </div>
 
+        <!-- ==================== TAB 2: Days Growth ==================== -->
         <div id="panelDays" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <div class="flex items-center justify-between">
@@ -266,12 +339,13 @@
                 </div>
             </div>
 
-            <button id="saveDaysSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
+            <button id="saveDaysSessionBtn" class="tap-active w-full bg-slate-800/40 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-medium py-3 rounded-2xl text-sm flex items-center justify-center gap-2 transition-colors">
                 <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span id="uiSaveDaysBtn">حفظ حسبة النمو في سجل الجلسة</span>
             </button>
         </div>
 
+        <!-- ==================== TAB 3: Plan Table ==================== -->
         <div id="panelTable" class="space-y-4 hidden">
             <div class="glass-card rounded-2xl p-4">
                 <h3 id="uiTableSetupTitle" class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
@@ -318,15 +392,14 @@
                 </div>
             </div>
 
-            <!-- أزرار الإجراءات للجدول (محدثة بميزة التصدير كصورة للنوته) -->
             <div id="tableActionsContainer" class="grid grid-cols-2 gap-2 hidden">
                 <button id="saveTablePlanBtn" class="tap-active bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/50 text-sky-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span id="uiSaveTableBtn">حفظ للسجل</span>
                 </button>
-                <button id="exportPdfBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
+                <button id="openPrintModalBtn" class="tap-active bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/50 text-rose-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span id="uiExportPdfBtn">طباعة / PDF 📄</span>
+                    <span id="uiExportPdfBtn">طباعة / تصدير 📄</span>
                 </button>
                 <button id="exportExcelBtn" class="tap-active bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-emerald-400 font-bold py-2.5 rounded-xl text-[10px] transition-colors flex items-center justify-center gap-1">
                     <span>📊</span>
@@ -336,7 +409,7 @@
                     <span>📋</span>
                     <span id="uiCopyTextReportBtn">نسخ التقرير النصي</span>
                 </button>
-                <!-- الزر الجديد: تصدير كصورة عالية الدقة للنوته (يمتد على كامل العرض لحفظ توازن التصميم) -->
+                
                 <button id="exportImageBtn" class="col-span-2 tap-active bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
                     <span>📸</span>
                     <span id="uiExportImgBtn">حفظ كصورة للنوته 📸</span>
@@ -344,25 +417,30 @@
             </div>
 
             <div id="generatedTableContainer" class="space-y-3 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 hidden">
+                <!-- يتم توليد البطاقات هنا عبر الجافاسكريبت -->
             </div>
         </div>
 
+        <!-- ==================== Session Log ==================== -->
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     <span id="uiSessionLogHeader">سجل صفقات الجلسة المؤقت</span>
                 </div>
-                <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10">مسح السجل</button>
+                <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10 transition-colors">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                </div>
+                <!-- يتم توليد السجل هنا عبر الجافاسكريبت -->
+            </div>
         </div>
     </div>
 
+    <!-- حاوية الطباعة المخفية -->
     <div id="printArea"></div>
 
     <script>
+        // المتغيرات العامة الأساسية
         let isUSD = true;
         let currentLang = 'ar';
         let activeTab = 'deals';
@@ -370,6 +448,7 @@
         let expandedTradeIds = new Set();
         let currentTablePlanData = []; 
 
+        // نصوص اللغات كاملة بدون اختصار
         const translations = {
             ar: {
                 appTitle: "حاسبة التداول",
@@ -435,7 +514,7 @@
                 tableBalanceSafe: "الرصيد في حال الخسارة:",
                 tableEndLabel: "الرصيد لو تحقق الهدف:",
                 tableSaveBtn: "حفظ للسجل",
-                tableExportBtn: "طباعة / PDF 📄",
+                tableExportBtn: "طباعة / تصدير 📄",
                 tableExcelBtn: "تصدير Excel 📊",
                 copyTextBtn: "نسخ التقرير النصي 📋",
                 exportImgBtn: "حفظ كصورة للنوته 📸",
@@ -443,7 +522,12 @@
                 planFileTitle: "خطة_التداول_الاحترافية",
                 statusWin: "تحقق الهدف",
                 statusLoss: "ضرب الخسارة",
-                statusPending: "معلق"
+                statusPending: "معلق",
+                printModalTitle: "إعدادات الطباعة والـ PDF",
+                printDaysLabel: "عدد الأيام لكل صفحة (لترتيب الـ PDF):",
+                printFontLabel: "حجم نص الجدول:",
+                printThemeLabel: "مظهر التصدير (Theme):",
+                executePrintBtnText: "تصدير وتوليد الـ PDF 📄"
             },
             en: {
                 appTitle: "Trading Calculator",
@@ -509,7 +593,7 @@
                 tableBalanceSafe: "Balance if hit Loss:",
                 tableEndLabel: "Balance if hit Target:",
                 tableSaveBtn: "Save Plan",
-                tableExportBtn: "Print / PDF 📄",
+                tableExportBtn: "Print / Export 📄",
                 tableExcelBtn: "Export Excel 📊",
                 copyTextBtn: "Copy Text Report 📋",
                 exportImgBtn: "Save as Image 📸",
@@ -517,10 +601,16 @@
                 planFileTitle: "Trading_Plan",
                 statusWin: "Target Met",
                 statusLoss: "Stop Loss Hit",
-                statusPending: "Pending"
+                statusPending: "Pending",
+                printModalTitle: "Print & PDF Settings",
+                printDaysLabel: "Days per page (for PDF pagination):",
+                printFontLabel: "Table Font Size:",
+                printThemeLabel: "Export Theme:",
+                executePrintBtnText: "Generate PDF 📄"
             }
         };
 
+        // تعريف جميع المتغيرات للعناصر في الصفحة
         const totalAmountInput = document.getElementById('totalAmount');
         const strategyCard = document.getElementById('strategyCard');
         const strategyInput = document.getElementById('strategyInput');
@@ -558,37 +648,43 @@
         const generateTableBtn = document.getElementById('generateTableBtn');
         const generatedTableContainer = document.getElementById('generatedTableContainer');
         const tableActionsContainer = document.getElementById('tableActionsContainer');
+        
         const saveTablePlanBtn = document.getElementById('saveTablePlanBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
         const exportExcelBtn = document.getElementById('exportExcelBtn');
         const copyTextReportBtn = document.getElementById('copyTextReportBtn');
         const exportImageBtn = document.getElementById('exportImageBtn');
+
+        const printSettingsModal = document.getElementById('printSettingsModal');
+        const openPrintModalBtn = document.getElementById('openPrintModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeModalBg = document.getElementById('closeModalBg');
+        const executePrintBtn = document.getElementById('executePrintBtn');
+        const daysBtns = document.querySelectorAll('.days-btn');
+        const fontBtns = document.querySelectorAll('.font-btn');
+        const themeBtns = document.querySelectorAll('.theme-btn');
 
         const exportBackupBtn = document.getElementById('exportBackupBtn');
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
+        // التنبيهات المنبثقة
         function showToast(text, icon = '✨') {
             const toastBox = document.getElementById('toastBox');
             const toastIcon = document.getElementById('toastIcon');
             const toastText = document.getElementById('toastText');
-            
             toastIcon.innerText = icon;
             toastText.innerText = text;
-            
             toastBox.classList.remove('hidden');
-            
-            setTimeout(() => {
-                toastBox.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => { toastBox.classList.add('hidden'); }, 3000);
         }
 
-        function getCapital() {
-            return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0;
+        // معالجة الأرقام
+        function getCapital() { 
+            return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0; 
         }
-
-        function formatNumber(num) {
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        function formatNumber(num) { 
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
         }
 
         totalAmountInput.addEventListener('input', function(e) {
@@ -601,9 +697,8 @@
             }
             this.value = val;
             calculate();
-            
-            if (activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') {
-                generateDailyPlan();
+            if (activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') { 
+                generateDailyPlan(); 
             }
         });
 
@@ -615,6 +710,7 @@
             }, { passive: false });
         }
 
+        // إدارة التبويبات (Tabs)
         function switchTab(tabName) {
             activeTab = tabName;
             const activeStyle = "tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50";
@@ -648,6 +744,7 @@
         tabDays.addEventListener('click', () => switchTab('days'));
         tabTable.addEventListener('click', () => switchTab('table'));
 
+        // إدارة اللغات وتحديث الواجهة
         function updateLanguageUI() {
             const t = translations[currentLang];
             const htmlEl = document.getElementById('appHtml');
@@ -698,17 +795,30 @@
             document.getElementById('uiExportExcelBtn').innerText = t.tableExcelBtn;
             document.getElementById('uiCopyTextReportBtn').innerText = t.copyTextBtn;
             document.getElementById('uiExportImgBtn').innerText = t.exportImgBtn;
+            
+            document.getElementById('uiPrintModalTitle').innerText = t.printModalTitle;
+            document.getElementById('uiPrintDaysLabel').innerText = t.printDaysLabel;
+            document.getElementById('uiPrintFontLabel').innerText = t.printFontLabel;
+            document.getElementById('uiPrintThemeLabel').innerText = t.printThemeLabel;
+            document.getElementById('uiExecutePrintBtnText').innerText = t.executePrintBtnText;
 
             updateMethodLabel();
             updateToggleStatusText();
             calculate();
             renderSavedLog(); 
             
-            if(generatedTableContainer.innerHTML.trim() !== '') {
-                generateDailyPlan();
+            if(generatedTableContainer.innerHTML.trim() !== '') { 
+                generateDailyPlan(); 
             }
         }
 
+        langToggle.addEventListener('click', () => {
+            currentLang = (currentLang === 'ar') ? 'en' : 'ar';
+            localStorage.setItem('app_lang', currentLang);
+            updateLanguageUI();
+        });
+
+        // دوال الحساب والتسميات
         function updateMethodLabel() {
             const t = translations[currentLang];
             if (activeTab === 'deals' || activeTab === 'days') {
@@ -729,12 +839,6 @@
                 statusTextEl.className = "text-[11px] font-bold text-right text-amber-400 mt-2";
             }
         }
-
-        langToggle.addEventListener('click', () => {
-            currentLang = (currentLang === 'ar') ? 'en' : 'ar';
-            localStorage.setItem('app_lang', currentLang);
-            updateLanguageUI();
-        });
 
         compoundToggle.addEventListener('change', () => {
             updateToggleStatusText();
@@ -807,6 +911,10 @@
             }
         }
 
+        // ========================================================
+        // وظائف بناء وإدارة الجدول التفاعلي (مفصلة ومنظمة)
+        // ========================================================
+        
         function generateDailyPlan() {
             const initialCapital = getCapital();
             
@@ -875,6 +983,7 @@
                 else if (row.status === 'loss') { statusBorderColor = "border-rose-500/80"; statusBg = "bg-rose-950/20"; }
 
                 card.className = `${statusBg} border ${statusBorderColor} rounded-xl p-3 shadow-md relative transition-all duration-300`;
+                
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-2.5 border-b border-slate-700/60 pb-1.5 px-2">
                         <span class="font-bold text-emerald-400 text-sm">${t.tableDayText} ${row.day}</span>
@@ -887,16 +996,16 @@
                     <div class="grid grid-cols-2 gap-3 text-xs px-2">
                         <div class="bg-slate-950/40 p-2 rounded-lg">
                             <div class="text-slate-400 mb-0.5">${t.tableTargetCol}:</div>
-                            <div class="font-bold text-emerald-400">+${formatNumber(actualProfit)} ${unit}</div>
+                            <div class="font-bold text-emerald-400" style="direction:ltr;">+${formatNumber(actualProfit)} ${unit}</div>
                         </div>
                         <div class="bg-slate-950/40 p-2 rounded-lg">
                             <div class="text-slate-400 mb-0.5">${t.tableSafetyCol}:</div>
-                            <div class="font-bold text-rose-400">-${formatNumber(actualLoss)} ${unit}</div>
+                            <div class="font-bold text-rose-400" style="direction:ltr;">-${formatNumber(actualLoss)} ${unit}</div>
                         </div>
                     </div>
                     <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex justify-between items-end px-2">
-                        <span class="text-xs text-slate-400">${t.tableStartLabel} <span class="text-slate-200">${formatNumber(row.start)}</span></span>
-                        <span class="font-black text-yellow-400 text-base tracking-wide">${formatNumber(row.actualEnd)} <span class="text-[10px] font-normal">${unit}</span></span>
+                        <span class="text-xs text-slate-400">${t.tableStartLabel} <span class="text-slate-200" style="direction:ltr; display:inline-block;">${formatNumber(row.start)}</span></span>
+                        <span class="font-black text-yellow-400 text-base tracking-wide" style="direction:ltr;">${formatNumber(row.actualEnd)} <span class="text-[10px] font-normal">${unit}</span></span>
                     </div>
                 `;
                 generatedTableContainer.appendChild(card);
@@ -916,176 +1025,165 @@
             if(generatedTableContainer.innerHTML.trim() !== '') generateDailyPlan();
         });
 
-        // ================= التصدير لملف Excel حقيقي (xlsx) ويدعم الأوفلاين =================
-        exportExcelBtn.addEventListener('click', async () => {
+
+        // ========================================================
+        // وظائف نافذة الطباعة والـ PDF (مستقلة ومفصلة)
+        // ========================================================
+        
+        openPrintModalBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
                 showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
                 return;
             }
-
-            try {
-                if (typeof ExcelJS === 'undefined') {
-                    alert(currentLang === 'ar' ? "ملف exceljs.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html." : "exceljs.min.js is missing.");
-                    return;
-                }
-
-                const t = translations[currentLang];
-                const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-                
-                const workbook = new ExcelJS.Workbook();
-                workbook.creator = 'Trading Calculator';
-                
-                const sheet = workbook.addWorksheet(t.planFileTitle);
-                sheet.views = [{ rightToLeft: currentLang === 'ar', showGridLines: true }];
-
-                const headers = currentLang === 'ar' ? 
-                    ['اليوم', 'رصيد البداية', 'الخسارة (الأمان)', 'الهدف اليومي', 'الرصيد الفعلي', 'الحالة'] : 
-                    ['Day', 'Start Balance', 'Safety (Loss)', 'Daily Target', 'End Balance', 'Status'];
-
-                sheet.columns = [
-                    { header: headers[0], key: 'day', width: 12 },
-                    { header: headers[1], key: 'start', width: 22 },
-                    { header: headers[2], key: 'safety', width: 22 },
-                    { header: headers[3], key: 'target', width: 22 },
-                    { header: headers[4], key: 'end', width: 22 },
-                    { header: headers[5], key: 'status', width: 18 }
-                ];
-
-                const cellBorder = {
-                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
-                };
-
-                const headerRow = sheet.getRow(1);
-                headerRow.height = 30;
-                for (let i = 1; i <= 6; i++) {
-                    const cell = headerRow.getCell(i);
-                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Arial' };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
-                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                    cell.border = cellBorder;
-                }
-
-                currentTablePlanData.forEach(row => {
-                    let statusText = '';
-                    if (row.status === 'profit') statusText = t.statusWin;
-                    else if (row.status === 'loss') statusText = t.statusLoss;
-                    else statusText = t.statusPending;
-
-                    const newRow = sheet.addRow({
-                        day: row.day,
-                        start: parseFloat(row.start.toFixed(2)),
-                        safety: parseFloat((-row.lossValue).toFixed(2)),
-                        target: parseFloat(row.profitValue.toFixed(2)),
-                        end: parseFloat(row.actualEnd.toFixed(2)),
-                        status: statusText
-                    });
-
-                    newRow.height = 24;
-                    const zebraColor = row.day % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF';
-
-                    for (let i = 1; i <= 6; i++) {
-                        const cell = newRow.getCell(i);
-                        cell.border = cellBorder;
-                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
-                        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
-                        if (i >= 2 && i <= 5) cell.numFmt = '#,##0.00';
-                    }
-
-                    newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; 
-                    newRow.getCell(4).font = { color: { argb: 'FF10B981' }, bold: true, name: 'Arial', size: 10 }; 
-                    newRow.getCell(5).font = { color: { argb: 'FFD97706' }, bold: true, name: 'Arial', size: 10 }; 
-
-                    const statusCell = newRow.getCell(6);
-                    if (row.status === 'profit') {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
-                        statusCell.font = { color: { argb: 'FF065F46' }, bold: true, name: 'Arial', size: 10 };
-                    } else if (row.status === 'loss') {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
-                        statusCell.font = { color: { argb: 'FF991B1B' }, bold: true, name: 'Arial', size: 10 };
-                    } else {
-                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                        statusCell.font = { color: { argb: 'FF475569' }, name: 'Arial', size: 10 };
-                    }
-                });
-
-                const spaceRow = sheet.addRow([]);
-                spaceRow.height = 15;
-
-                const lastRowNumber = sheet.lastRow.number + 1;
-                sheet.mergeCells(lastRowNumber, 1, lastRowNumber, 6);
-                
-                const infoRow = sheet.getRow(lastRowNumber);
-                infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
-                infoRow.height = 32;
-
-                const infoCell = infoRow.getCell(1);
-                infoCell.font = { bold: true, color: { argb: 'FF334155' }, size: 11, name: 'Arial' };
-                infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
-                infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-
-                for (let i = 1; i <= 6; i++) {
-                    infoRow.getCell(i).border = cellBorder;
-                }
-
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                const dateStr = new Date().toISOString().split('T')[0];
-                a.download = `${t.planFileTitle}_${dateStr}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح وجرى تنظيمه!" : "Excel exported successfully!", '📊');
-                
-            } catch (error) {
-                console.error("Excel Export Error: ", error);
-                showToast(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.', '❌');
-            }
+            printSettingsModal.classList.remove('hidden');
         });
 
-        // ================= تصدير PDF مخصص للطباعة (مُعَدَّل لفرض مظهر فاتح لمنع الحبر الأسود) =================
-        exportPdfBtn.addEventListener('click', () => {
-            const initialCapital = getCapital();
-            if (currentTablePlanData.length === 0 || initialCapital <= 0) {
-                showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
-                return;
-            }
+        function hidePrintModal() {
+            printSettingsModal.classList.add('hidden');
+        }
 
+        closeModalBtn.addEventListener('click', hidePrintModal);
+        closeModalBg.addEventListener('click', hidePrintModal);
+
+        // تخصيص الأيام في الطباعة
+        daysBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                daysBtns.forEach(b => {
+                    b.classList.remove('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                    b.classList.add('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                });
+                btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                document.getElementById('daysPerPageSelected').value = btn.getAttribute('data-val');
+            });
+        });
+
+        // تخصيص الخط في الطباعة
+        fontBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                fontBtns.forEach(b => {
+                    b.classList.remove('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                    b.classList.add('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                });
+                btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                document.getElementById('fontSizeSelected').value = btn.getAttribute('data-val');
+            });
+        });
+
+        // تخصيص المظهر في الطباعة
+        themeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                themeBtns.forEach(b => {
+                    b.classList.remove('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                    b.classList.add('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                });
+                btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
+                btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
+                document.getElementById('themeSelected').value = btn.getAttribute('data-val');
+            });
+        });
+
+        // تنفيذ عملية تصدير الـ PDF وتقسيم الصفحات
+        executePrintBtn.addEventListener('click', () => {
+            hidePrintModal();
+            const initialCapital = getCapital();
             const t = translations[currentLang];
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
+            
+            const daysPerPage = parseInt(document.getElementById('daysPerPageSelected').value);
+            const fontSize = document.getElementById('fontSizeSelected').value;
+            const theme = document.getElementById('themeSelected').value;
+            
+            const totalNetProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
-            let tableRowsHtml = '';
-            currentTablePlanData.forEach(row => {
-                let statusText, statusColor, rowBgStyle = '';
-                if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#059669'; rowBgStyle = 'background-color: #ecfdf5;'; }
-                else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#dc2626'; rowBgStyle = 'background-color: #fef2f2;'; }
-                else { statusText = t.statusPending; statusColor = '#4b5563'; }
+            // تحديد الألوان بناءً على اختيار المستخدم
+            let bgPage, textMain, textMuted, bgHeader, borderMain, rowZebra, bgSummary, rowProfit, rowLoss;
+            if (theme === 'dark') {
+                bgPage = '#0f172a'; textMain = '#cbd5e1'; textMuted = '#94a3b8';
+                bgHeader = '#1e293b'; borderMain = '#334155'; rowZebra = '#1e293b';
+                bgSummary = 'rgba(16, 185, 129, 0.05)';
+                rowProfit = 'rgba(16, 185, 129, 0.15)'; rowLoss = 'rgba(244, 63, 94, 0.15)';
+            } else {
+                bgPage = '#ffffff'; textMain = '#111827'; textMuted = '#4b5563';
+                bgHeader = '#f3f4f6'; borderMain = '#d1d5db'; rowZebra = '#f9fafb';
+                bgSummary = '#f0fdf4';
+                rowProfit = '#ecfdf5'; rowLoss = '#fef2f2';
+            }
+
+            let pagesHtml = '';
+            const totalPages = Math.ceil(currentTablePlanData.length / daysPerPage);
+
+            // بناء صفحات الـ PDF
+            for (let p = 0; p < totalPages; p++) {
+                const startIndex = p * daysPerPage;
+                const endIndex = Math.min(startIndex + daysPerPage, currentTablePlanData.length);
+                const pageRows = currentTablePlanData.slice(startIndex, endIndex);
+
+                let tableRowsHtml = '';
                 
-                let baseBg = row.day % 2 === 0 ? 'background-color: #f9fafb;' : 'background-color: #ffffff;';
-                let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
-                
-                tableRowsHtml += `
-                    <tr style="${finalStyle} height: 35px; border-bottom: 1px solid #e5e7eb;">
-                        <td style="border: 1px solid #d1d5db; font-weight: bold; color: #2563eb; padding: 8px;">${row.day}</td>
-                        <td style="border: 1px solid #d1d5db; color: #1f2937; padding: 8px;">${formatNumber(row.start)}</td>
-                        <td style="border: 1px solid #d1d5db; color: #dc2626; font-weight: bold; padding: 8px;">-${formatNumber(row.lossValue)}</td>
-                        <td style="border: 1px solid #d1d5db; color: #059669; font-weight: bold; padding: 8px;">+${formatNumber(row.profitValue)}</td>
-                        <td style="border: 1px solid #d1d5db; font-weight: 900; color: #d97706; padding: 8px;">${formatNumber(row.actualEnd)}</td>
-                        <td style="border: 1px solid #d1d5db; color: ${statusColor}; font-weight: bold; padding: 8px;">${statusText}</td>
-                    </tr>
+                pageRows.forEach((row, i) => {
+                    let statusText, statusColor, rowBgStyle = '';
+                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = `background-color: ${rowProfit};`; }
+                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = `background-color: ${rowLoss};`; }
+                    else { statusText = t.statusPending; statusColor = textMuted; }
+                    
+                    let baseBg = i % 2 === 0 ? `background-color: ${rowZebra};` : `background-color: ${bgPage};`;
+                    let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
+                    
+                    tableRowsHtml += `
+                        <tr style="${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};">
+                            <td style="border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 10px;">${row.day}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${textMain}; padding: 10px; direction: ltr;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 10px; direction: ltr;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 10px; direction: ltr;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 10px; direction: ltr;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 10px; letter-spacing: normal !important; direction: rtl !important;">${statusText}</td>
+                        </tr>
+                    `;
+                });
+
+                const isLastPage = (p === totalPages - 1);
+                const pageBreakClass = isLastPage ? '' : 'page-break-after';
+
+                pagesHtml += `
+                    <div class="page-wrapper ${pageBreakClass}" style="background-color: ${bgPage}; color: ${textMain};">
+                        <div class="header" style="border-bottom-color: #10b981;">
+                            <h1 style="color: #10b981; letter-spacing: normal !important; direction: rtl !important;">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
+                            <div class="meta-box" style="background: ${bgHeader}; border-color: ${borderMain}; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;">
+                                ${t.detailsCapital} <span style="color: #f59e0b;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span> | 
+                                ${t.tableTargetLabel}: <span style="color: #10b981;" dir="ltr">${tableTargetInput.value}%</span> | 
+                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;" dir="ltr">${tableSafetyInput.value}%</span>
+                            </div>
+                        </div>
+                        <table style="font-size: ${fontSize};">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${t.tableDayText}</th>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
+                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                        ${isLastPage ? `
+                            <div class="summary" style="background: ${bgSummary}; border-color: #10b981; letter-spacing: normal !important; direction: rtl !important;">
+                                <span style="color: ${textMuted};">${currentLang === 'ar' ? 'صافي الأرباح الكلية المحققة للخطة:' : 'Total Expected Net Profit:'}</span> 
+                                <span style="color: #10b981; font-size: 1.3em; margin: 0 10px; font-weight: 900;" dir="ltr">${formatNumber(totalNetProfit)} ${unit}</span>
+                            </div>
+                        ` : `
+                            <div style="text-align:center; color:${textMuted}; margin-top:20px; font-size:12px; font-weight:bold; font-family:'Tajawal', sans-serif;">--- يُتبع في الصفحة التالية ---</div>
+                        `}
+                    </div>
                 `;
-            });
+            }
 
             const printDocumentHtml = `
                 <!DOCTYPE html>
@@ -1095,83 +1193,40 @@
                     <title>${t.planFileTitle}</title>
                     <style>
                         body { 
-                            margin: 0; 
-                            padding: 0;
-                            background-color: #ffffff !important;
-                            color: #111827 !important;
+                            margin: 0; padding: 0;
+                            background-color: ${bgPage} !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
                         .page-wrapper {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial; 
-                            background-color: #ffffff !important; 
-                            color: #111827 !important;
+                            font-family: 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; 
                             padding: 20px;
-                            min-height: 100vh;
+                            box-sizing: border-box;
+                            width: 100%;
                         }
-                        .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 25px; }
-                        .header h1 { color: #059669; margin: 0 0 10px 0; font-size: 26px; font-weight: 900; }
+                        .header { text-align: center; border-bottom: 3px solid; padding-bottom: 15px; margin-bottom: 20px; }
+                        .header h1 { margin: 0 0 10px 0; font-size: 24px; font-weight: 900; }
                         .meta-box { 
-                            background: #f3f4f6 !important; 
-                            border: 1px solid #d1d5db; 
-                            padding: 12px 20px; 
-                            border-radius: 8px; 
-                            font-weight: bold; 
-                            font-size: 15px; 
-                            display: inline-block; 
-                            color: #1f2937 !important;
+                            border: 1px solid; padding: 10px 15px; border-radius: 8px; 
+                            font-weight: bold; font-size: 14px; display: inline-block; 
                         }
-                        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; margin-top: 15px; }
-                        th { background-color: #f3f4f6 !important; color: #111827 !important; padding: 12px; font-weight: bold; border: 1px solid #d1d5db; }
+                        table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 15px; }
+                        th { padding: 12px 5px; font-weight: bold; border: 1px solid; }
+                        td { padding: 8px 5px; border: 1px solid; }
                         .summary { 
-                            margin-top: 25px; 
-                            padding: 15px; 
-                            border: 2px solid #10b981; 
-                            background: #f0fdf4 !important; 
+                            margin-top: 25px; padding: 15px; border: 2px solid; 
                             text-align: ${currentLang === 'ar' ? 'right' : 'left'}; 
-                            font-size: 16px; 
-                            font-weight: bold; 
-                            border-radius: 8px; 
+                            font-weight: bold; border-radius: 8px; 
                         }
                         @media print {
-                            @page { size: A4 portrait; margin: 1cm; }
-                            .page-wrapper { 
-                                background-color: #ffffff !important; 
-                                color: #111827 !important; 
-                            }
+                            @page { margin: 1cm; }
+                            body, .page-wrapper { background-color: ${bgPage} !important; }
+                            .page-break-after { page-break-after: always; clear: both; }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="page-wrapper">
-                        <div class="header">
-                            <h1>${t.appTitle} - ${t.logPlanType}</h1>
-                            <div class="meta-box">
-                                ${t.detailsCapital} <span style="color: #d97706;">${formatNumber(initialCapital)} ${unit}</span> | 
-                                ${t.tableTargetLabel}: <span style="color: #059669;">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #dc2626;">${tableSafetyInput.value}%</span>
-                            </div>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>${t.tableDayText}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد البداية' : 'Start Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'أمان الطوارئ' : 'Safety (Loss)'}</th>
-                                    <th>${currentLang === 'ar' ? 'الهدف اليومي' : 'Daily Target'}</th>
-                                    <th>${currentLang === 'ar' ? 'رصيد النهاية' : 'End Balance'}</th>
-                                    <th>${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRowsHtml}
-                            </tbody>
-                        </table>
-                        <div class="summary">
-                            <span style="color: #4b5563;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة المحققة الخاضعة للخطة:' : 'Expected Net Plan Profit:'}</span> 
-                            <span style="color: #059669; font-size: 22px; margin: 0 10px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
-                        </div>
-                    </div>
+                    ${pagesHtml}
                 </body>
                 </html>
             `;
@@ -1197,7 +1252,10 @@
             }, 500);
         });
 
-        // ================= ميزة "تصدير كصورة للنوته (PNG)" المضافة حديثاً =================
+        // ========================================================
+        // تصدير الصورة للنوته (مع معالجة النصوص المنفصلة)
+        // ========================================================
+
         exportImageBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1210,84 +1268,101 @@
                 return;
             }
 
-            showToast(currentLang === 'ar' ? "جاري تجهيز الصورة للنوته..." : "Preparing image for your notes...", '📸');
+            showToast(currentLang === 'ar' ? "جاري تجهيز الصورة للنوته بدقة عالية..." : "Preparing high-res image...", '📸');
 
-            // نقوم بنسخ الجدول مؤقتاً لتجنب مشاكل التقطيع أثناء السحب أو شريط التمرير
             const originalContainer = document.getElementById('generatedTableContainer');
             
-            // إنشاء عنصر حاوية مؤقتة خارج الشاشة لمنع تشويه العرض الحالي
+            // إنشاء لوحة استنساخ نظيفة ومنفصلة
             const cloneWrapper = document.createElement('div');
             cloneWrapper.style.position = 'absolute';
             cloneWrapper.style.top = '-9999px';
             cloneWrapper.style.left = '-9999px';
-            cloneWrapper.style.width = '390px'; // عرض مثالي متناسق مع مقاس الهواتف والنوته
-            cloneWrapper.style.backgroundColor = '#0f172a'; // الحفاظ على المظهر الداكن الفخم للتطبيق
+            cloneWrapper.style.width = '420px'; // عرض ثابت للحفاظ على التنسيق
+            cloneWrapper.style.backgroundColor = '#0f172a'; 
             cloneWrapper.style.padding = '20px';
             cloneWrapper.style.borderRadius = '16px';
             cloneWrapper.style.display = 'flex';
             cloneWrapper.style.flexDirection = 'column';
             cloneWrapper.style.gap = '12px';
+            cloneWrapper.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-            // إضافة هيدر مالي أنيق في أعلى الصورة المصدرة لتبدو كصفحة احترافية ومكتملة داخل الملاحظات
             const t = translations[currentLang];
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
+            // بناء ترويسة الصورة مع حماية الحروف (inline styles)
             const headerDiv = document.createElement('div');
             headerDiv.style.borderBottom = '2px solid #10b981';
             headerDiv.style.paddingBottom = '12px';
             headerDiv.style.marginBottom = '8px';
             headerDiv.style.textAlign = 'center';
             headerDiv.innerHTML = `
-                <div style="color: #10b981; font-size: 18px; font-weight: 900; letter-spacing: 0.05em; font-family: 'Tajawal', 'Inter', sans-serif;">
+                <div style="color: #10b981; font-size: 20px; font-weight: 900; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; unicode-bidi: normal; direction: rtl;">
                     ${t.appTitle} - ${t.logPlanType}
                 </div>
-                <div style="color: #94a3b8; font-size: 11px; margin-top: 4px; font-family: 'Tajawal', sans-serif;">
-                    ${t.detailsCapital} <span style="color: #f59e0b; font-weight: bold;">${formatNumber(initialCapital)} ${unit}</span>
+                <div style="color: #94a3b8; font-size: 13px; margin-top: 6px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
+                    ${t.detailsCapital} <span style="color: #f59e0b; font-weight: bold;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span>
                 </div>
-                <div style="color: #94a3b8; font-size: 11px; margin-top: 2px; font-family: 'Tajawal', sans-serif;">
-                    ${t.tableTargetCol}: <span style="color: #10b981; font-weight: bold;">${tableTargetInput.value}%</span> | 
-                    ${t.tableSafetyCol}: <span style="color: #f43f5e; font-weight: bold;">${tableSafetyInput.value}%</span>
+                <div style="color: #94a3b8; font-size: 13px; margin-top: 4px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
+                    ${t.tableTargetCol}: <span style="color: #10b981; font-weight: bold;" dir="ltr">${tableTargetInput.value}%</span> | 
+                    ${t.tableSafetyCol}: <span style="color: #f43f5e; font-weight: bold;" dir="ltr">${tableSafetyInput.value}%</span>
                 </div>
             `;
             cloneWrapper.appendChild(headerDiv);
 
-            // نسخ جميع الكروت بوضعها الحالي (ألوانها التفاعلية: رابحة/خاسرة/معلقة)
+            // استنساخ البطاقات وتأمينها
             const cards = originalContainer.children;
             for (let i = 0; i < cards.length; i++) {
                 const cardClone = cards[i].cloneNode(true);
-                // إزالة أزرار الحالات التفاعلية من كروت الصورة المصدرة لتبدو نظيفة ومصممة خصيصاً للملاحظات
+                // إزالة الأزرار التفاعلية من الصورة المصدرة
                 const actionButtons = cardClone.querySelector('.flex.gap-1\\.5');
                 if (actionButtons) actionButtons.remove();
+                
+                // حماية النصوص داخل الكرت للصورة فقط
+                cardClone.style.letterSpacing = "normal";
+                cardClone.style.unicodeBidi = "normal";
+                
+                const texts = cardClone.querySelectorAll('span, div');
+                texts.forEach(txt => {
+                    txt.style.letterSpacing = "normal";
+                    txt.style.fontVariantLigatures = "normal";
+                });
+                
                 cloneWrapper.appendChild(cardClone);
             }
 
-            // إضافة ملخص الأرباح النهائي في نهاية كرت الصورة
+            // بناء ملخص الصورة
             const summaryDiv = document.createElement('div');
             summaryDiv.style.marginTop = '12px';
-            summaryDiv.style.padding = '12px';
+            summaryDiv.style.padding = '15px';
             summaryDiv.style.borderRadius = '12px';
             summaryDiv.style.border = '2px solid #10b981';
             summaryDiv.style.background = 'rgba(16, 185, 129, 0.05)';
             summaryDiv.style.textAlign = 'center';
-            summaryDiv.style.fontFamily = "'Tajawal', 'Inter', sans-serif";
+            summaryDiv.style.fontFamily = "'Tajawal', sans-serif";
             summaryDiv.innerHTML = `
-                <span style="color: #94a3b8; font-size: 11px; display: block; margin-bottom: 4px;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
-                <span style="color: #10b981; font-size: 20px; font-weight: 900;">${formatNumber(netProfit)} ${unit}</span>
+                <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: normal !important; direction: rtl;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
+                <span style="color: #10b981; font-size: 24px; font-weight: 900; display: block;" dir="ltr">${formatNumber(netProfit)} ${unit}</span>
             `;
             cloneWrapper.appendChild(summaryDiv);
 
             document.body.appendChild(cloneWrapper);
 
-            // استخدام مكتبة html2canvas لالتقاط الصورة بالكامل وبأعلى جودة ممكنة
+            // التصدير باستخدام Canvas مع إعدادات دقيقة للحروف العربية
             html2canvas(cloneWrapper, {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#0f172a',
-                scale: 2, // رفع دقة الصورة للضعف لضمان وضوح النصوص والأرقام عند تكبيرها داخل النوته
-                logging: false
+                scale: 3, 
+                logging: false,
+                onclone: (doc) => {
+                    // حقن ستايل طوارئ في اللوحة المؤقتة لضمان ربط الحروف
+                    const style = doc.createElement('style');
+                    style.innerHTML = `* { letter-spacing: normal !important; font-variant-ligatures: normal !important; }`;
+                    doc.head.appendChild(style);
+                }
             }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
+                const imgData = canvas.toDataURL('image/png', 1.0);
                 const downloadAnchor = document.createElement('a');
                 downloadAnchor.href = imgData;
                 const dateStr = new Date().toISOString().split('T')[0];
@@ -1296,7 +1371,7 @@
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
                 document.body.removeChild(cloneWrapper);
-                showToast(currentLang === 'ar' ? "تم حفظ الصورة بنجاح! جاهزة للإدراج في الملاحظات." : "Image saved! Ready to import to Notes.", '📸');
+                showToast(currentLang === 'ar' ? "تم حفظ الصورة بنجاح! نصوص واضحة $100\\%$." : "Image saved perfectly!", '📸');
             }).catch(error => {
                 console.error("html2canvas Error:", error);
                 showToast(currentLang === 'ar' ? "حدث خطأ أثناء حفظ الصورة." : "Error exporting image.", '❌');
@@ -1304,259 +1379,332 @@
             });
         });
 
-        // ================= التصدير والمشاركة كتقرير نصي =================
-        copyTextReportBtn.addEventListener('click', () => {
+        // ========================================================
+        // وظائف التصدير الأخرى (Excel, Text, Backup) مفصلة
+        // ========================================================
+
+        exportExcelBtn.addEventListener('click', async () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
                 showToast(currentLang === 'ar' ? "يرجى إنشاء الجدول أولاً." : "Please generate the table first.", '⚠️');
                 return;
             }
+            try {
+                if (typeof ExcelJS === 'undefined') {
+                    alert(currentLang === 'ar' ? "ملف exceljs.min.js مفقود. يرجى التأكد من وجوده بجانب ملف index.html." : "exceljs.min.js is missing.");
+                    return;
+                }
+                const t = translations[currentLang];
+                const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+                const workbook = new ExcelJS.Workbook();
+                const sheet = workbook.addWorksheet(t.planFileTitle);
+                
+                sheet.views = [{ rightToLeft: currentLang === 'ar', showGridLines: true }];
+                
+                const headers = currentLang === 'ar' ? 
+                    ['اليوم', 'رصيد البداية', 'الخسارة (الأمان)', 'الهدف اليومي', 'الرصيد الفعلي', 'الحالة'] : 
+                    ['Day', 'Start Balance', 'Safety (Loss)', 'Daily Target', 'End Balance', 'Status'];
+                
+                sheet.columns = [
+                    { header: headers[0], key: 'day', width: 12 }, 
+                    { header: headers[1], key: 'start', width: 22 },
+                    { header: headers[2], key: 'safety', width: 22 }, 
+                    { header: headers[3], key: 'target', width: 22 },
+                    { header: headers[4], key: 'end', width: 22 }, 
+                    { header: headers[5], key: 'status', width: 18 }
+                ];
+                
+                const cellBorder = { 
+                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, 
+                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, 
+                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, 
+                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } } 
+                };
+                
+                const headerRow = sheet.getRow(1);
+                headerRow.height = 30;
+                for (let i = 1; i <= 6; i++) {
+                    const cell = headerRow.getCell(i);
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Arial' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = cellBorder;
+                }
+                
+                currentTablePlanData.forEach(row => {
+                    let statusText = '';
+                    if (row.status === 'profit') statusText = t.statusWin;
+                    else if (row.status === 'loss') statusText = t.statusLoss;
+                    else statusText = t.statusPending;
+                    
+                    const newRow = sheet.addRow({
+                        day: row.day, 
+                        start: parseFloat(row.start.toFixed(2)), 
+                        safety: parseFloat((-row.lossValue).toFixed(2)),
+                        target: parseFloat(row.profitValue.toFixed(2)), 
+                        end: parseFloat(row.actualEnd.toFixed(2)), 
+                        status: statusText
+                    });
+                    
+                    newRow.height = 24;
+                    const zebraColor = row.day % 2 === 0 ? 'FFF8FAFC' : 'FFFFFFFF';
+                    
+                    for (let i = 1; i <= 6; i++) {
+                        const cell = newRow.getCell(i);
+                        cell.border = cellBorder; 
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: zebraColor } };
+                        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
+                        if (i >= 2 && i <= 5) cell.numFmt = '#,##0.00';
+                    }
+                    
+                    newRow.getCell(3).font = { color: { argb: 'FFEF4444' }, bold: true, name: 'Arial', size: 10 }; 
+                    newRow.getCell(4).font = { color: { argb: 'FF10B981' }, bold: true, name: 'Arial', size: 10 }; 
+                    newRow.getCell(5).font = { color: { argb: 'FFD97706' }, bold: true, name: 'Arial', size: 10 }; 
+                    
+                    const statusCell = newRow.getCell(6);
+                    if (row.status === 'profit') { 
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }; 
+                        statusCell.font = { color: { argb: 'FF065F46' }, bold: true, name: 'Arial', size: 10 }; 
+                    } 
+                    else if (row.status === 'loss') { 
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; 
+                        statusCell.font = { color: { argb: 'FF991B1B' }, bold: true, name: 'Arial', size: 10 }; 
+                    } 
+                    else { 
+                        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }; 
+                        statusCell.font = { color: { argb: 'FF475569' }, name: 'Arial', size: 10 }; 
+                    }
+                });
+                
+                const spaceRow = sheet.addRow([]); 
+                spaceRow.height = 15;
+                const lastRowNumber = sheet.lastRow.number + 1;
+                sheet.mergeCells(lastRowNumber, 1, lastRowNumber, 6);
+                
+                const infoRow = sheet.getRow(lastRowNumber);
+                infoRow.getCell(1).value = `${t.detailsCapital} ${formatNumber(initialCapital)} ${unit} | ${t.tableTargetLabel}: ${tableTargetInput.value}% | ${t.tableSafetyLabel}: ${tableSafetyInput.value}%`;
+                infoRow.height = 32;
+                
+                const infoCell = infoRow.getCell(1);
+                infoCell.font = { bold: true, color: { argb: 'FF334155' }, size: 11, name: 'Arial' };
+                infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                
+                for (let i = 1; i <= 6; i++) { 
+                    infoRow.getCell(i).border = cellBorder; 
+                }
+                
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                const dateStr = new Date().toISOString().split('T')[0];
+                a.download = `${t.planFileTitle}_${dateStr}.xlsx`;
+                document.body.appendChild(a); 
+                a.click(); 
+                document.body.removeChild(a); 
+                window.URL.revokeObjectURL(url);
+                showToast(currentLang === 'ar' ? "تم تصدير ملف Excel بنجاح!" : "Excel exported successfully!", '📊');
+            } catch (error) { 
+                showToast(currentLang === 'ar' ? 'حدث خطأ أثناء تصدير الملف.' : 'Error generating Excel file.', '❌'); 
+            }
+        });
 
+        copyTextReportBtn.addEventListener('click', () => {
+            const initialCapital = getCapital();
+            if (currentTablePlanData.length === 0 || initialCapital <= 0) return;
             const t = translations[currentLang];
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
-
+            
             let reportText = "";
             if (currentLang === 'ar') {
-                reportText += `📊 *تقرير خطة التداول الاحترافية*\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += `💰 رأس المال الأصلي: ${formatNumber(initialCapital)} ${unit}\n`;
-                reportText += `🎯 الهدف اليومي: ${tableTargetInput.value}%\n`;
-                reportText += `🛡️ رصيد الأمان (الخسارة): ${tableSafetyInput.value}%\n`;
-                reportText += `📅 مدة الخطة: ${tableDaysInput.value} أيام\n`;
-                reportText += `⚙️ نوع الحساب: ${tableCompoundToggle.checked ? 'أرباح مركبة (تراكمي)' : 'أرباح ثابتة (بسيط)'}\n`;
-                reportText += `───────────────────────────────\n\n`;
-                reportText += `| اليوم | البداية | الخسارة | الهدف | النهاية | الحالة |\n`;
-                reportText += `├─────┼────────┼────────┼───────┼────────┼────────┤\n`;
-                
+                reportText += `📊 *تقرير خطة التداول الاحترافية*\n───────────────────────────────\n💰 رأس المال الأصلي: ${formatNumber(initialCapital)} ${unit}\n🎯 الهدف اليومي: ${tableTargetInput.value}%\n🛡️ رصيد الأمان (الخسارة): ${tableSafetyInput.value}%\n📅 مدة الخطة: ${tableDaysInput.value} أيام\n⚙️ نوع الحساب: ${tableCompoundToggle.checked ? 'أرباح مركبة (تراكمي)' : 'أرباح ثابتة (بسيط)'}\n───────────────────────────────\n\n| اليوم | البداية | الخسارة | الهدف | النهاية | الحالة |\n├─────┼────────┼────────┼───────┼────────┼────────┤\n`;
                 currentTablePlanData.forEach(row => {
-                    let statusTxt = ' معلق ⚪';
-                    if (row.status === 'profit') statusTxt = ' ربح 🟢';
+                    let statusTxt = ' معلق ⚪'; 
+                    if (row.status === 'profit') statusTxt = ' ربح 🟢'; 
                     else if (row.status === 'loss') statusTxt = ' خسارة 🔴';
-
                     reportText += `|  ${row.day.toString().padEnd(2, ' ')} | ${formatNumber(row.start).padEnd(6, ' ')} | -${formatNumber(row.lossValue).padEnd(5, ' ')} | +${formatNumber(row.profitValue).padEnd(5, ' ')} | ${formatNumber(row.actualEnd).padEnd(6, ' ')} |${statusTxt} |\n`;
                 });
-                
-                reportText += `\n───────────────────────────────\n`;
-                reportText += `📈 صافي الأرباح المتوقعة: ${formatNumber(netProfit)} ${unit}\n`;
-                reportText += `💵 الرصيد الإجمالي النهائي: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += ` تم التوليد بواسطة حاسبة التداول الذكية`;
+                reportText += `\n───────────────────────────────\n📈 صافي الأرباح المتوقعة: ${formatNumber(netProfit)} ${unit}\n💵 الرصيد الإجمالي النهائي: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n───────────────────────────────\n تم التوليد بواسطة حاسبة التداول الذكية`;
             } else {
-                reportText += `📊 *Professional Trading Plan Report*\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += `💰 Initial Capital: ${formatNumber(initialCapital)} ${unit}\n`;
-                reportText += `🎯 Daily Target: ${tableTargetInput.value}%\n`;
-                reportText += `🛡️ Safety Balance (Loss): ${tableSafetyInput.value}%\n`;
-                reportText += `📅 Plan Duration: ${tableDaysInput.value} Days\n`;
-                reportText += `⚙️ Type: ${tableCompoundToggle.checked ? 'Compound' : 'Simple'}\n`;
-                reportText += `───────────────────────────────\n\n`;
-                reportText += `| Day | Start | Loss | Target | End | Status |\n`;
-                reportText += `├─────┼───────┼──────┼────────┼─────┼────────┤\n`;
-                
+                reportText += `📊 *Professional Trading Plan Report*\n───────────────────────────────\n💰 Initial Capital: ${formatNumber(initialCapital)} ${unit}\n🎯 Daily Target: ${tableTargetInput.value}%\n🛡️ Safety Balance (Loss): ${tableSafetyInput.value}%\n📅 Plan Duration: ${tableDaysInput.value} Days\n⚙️ Type: ${tableCompoundToggle.checked ? 'Compound' : 'Simple'}\n───────────────────────────────\n\n| Day | Start | Loss | Target | End | Status |\n├─────┼───────┼──────┼────────┼─────┼────────┤\n`;
                 currentTablePlanData.forEach(row => {
-                    let statusTxt = ' Pending ⚪';
-                    if (row.status === 'profit') statusTxt = ' Win 🟢';
+                    let statusTxt = ' Pending ⚪'; 
+                    if (row.status === 'profit') statusTxt = ' Win 🟢'; 
                     else if (row.status === 'loss') statusTxt = ' Loss 🔴';
-
                     reportText += `|  ${row.day.toString().padEnd(2, ' ')} | ${formatNumber(row.start).padEnd(5, ' ')} | -${formatNumber(row.lossValue).padEnd(4, ' ')} | +${formatNumber(row.profitValue).padEnd(4, ' ')} | ${formatNumber(row.actualEnd).padEnd(5, ' ')} |${statusTxt} |\n`;
                 });
-                
-                reportText += `\n───────────────────────────────\n`;
-                reportText += `📈 Expected Net Profit: ${formatNumber(netProfit)} ${unit}\n`;
-                reportText += `💵 Final Balance: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n`;
-                reportText += `───────────────────────────────\n`;
-                reportText += ` Generated by Trading Calculator App`;
+                reportText += `\n───────────────────────────────\n📈 Expected Net Profit: ${formatNumber(netProfit)} ${unit}\n💵 Final Balance: ${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)} ${unit}\n───────────────────────────────\n Generated by Trading Calculator App`;
             }
-
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = reportText;
-            tempTextArea.setAttribute('readonly', '');
-            tempTextArea.style.position = 'absolute';
-            tempTextArea.style.left = '-9999px';
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            tempTextArea.setSelectionRange(0, 99999);
             
-            try {
-                document.execCommand('copy');
-                showToast(currentLang === 'ar' ? "تم نسخ التقرير النصي إلى الحافظة! جاهز للصق." : "Formatted text report copied to clipboard!", '📋');
-            } catch (err) {
-                console.error('Failed to copy', err);
-                showToast(currentLang === 'ar' ? "فشل النسخ التلقائي." : "Copy failed.", '❌');
-            }
+            const tempTextArea = document.createElement('textarea'); 
+            tempTextArea.value = reportText; 
+            document.body.appendChild(tempTextArea); 
+            tempTextArea.select();
+            
+            try { 
+                document.execCommand('copy'); 
+                showToast(currentLang === 'ar' ? "تم نسخ التقرير النصي إلى الحافظة! جاهز للصق." : "Formatted text report copied to clipboard!", '📋'); 
+            } catch (err) { 
+                showToast("Copy failed.", '❌'); 
+            } 
             document.body.removeChild(tempTextArea);
         });
 
-        // ================= تصدير واستيراد البيانات كنسخة احتياطية JSON =================
         exportBackupBtn.addEventListener('click', () => {
             const rawSessions = localStorage.getItem('trading_sessions_raw') || '[]';
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(rawSessions);
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `trading_calculator_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const downloadAnchor = document.createElement('a'); 
+            downloadAnchor.setAttribute("href", dataStr); 
+            downloadAnchor.setAttribute("download", `trading_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor); 
+            downloadAnchor.click(); 
+            downloadAnchor.remove(); 
             showToast(currentLang === 'ar' ? "تم تصدير نسخة احتياطية!" : "Backup exported!", '📥');
         });
 
-        importBackupBtn.addEventListener('click', () => {
-            importFile.click();
+        importBackupBtn.addEventListener('click', () => { 
+            importFile.click(); 
         });
-
+        
         importFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+            const file = e.target.files[0]; 
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(evt) {
-                try {
-                    const parsed = JSON.parse(evt.target.result);
-                    if (Array.isArray(parsed)) {
-                        localStorage.setItem('trading_sessions_raw', JSON.stringify(parsed));
-                        showToast(currentLang === 'ar' ? "تم استيراد النسخة الاحتياطية بنجاح!" : "Backup imported successfully!", '📤');
-                        renderSavedLog();
-                    } else {
-                        showToast(currentLang === 'ar' ? "ملف النسخ الاحتياطي غير صالح." : "Invalid backup file format.", '❌');
-                    }
-                } catch (error) {
-                    showToast(currentLang === 'ar' ? "حدث خطأ أثناء قراءة الملف." : "Error reading backup file.", '❌');
+                try { 
+                    const parsed = JSON.parse(evt.target.result); 
+                    if (Array.isArray(parsed)) { 
+                        localStorage.setItem('trading_sessions_raw', JSON.stringify(parsed)); 
+                        showToast(currentLang === 'ar' ? "تم الاستيراد بنجاح!" : "Imported successfully!", '📤'); 
+                        renderSavedLog(); 
+                    } 
+                } catch (error) { 
+                    showToast("Error.", '❌'); 
                 }
-            };
+            }; 
             reader.readAsText(file);
         });
 
-        // ================= حفظ خطة الجدول في السجل =================
         saveTablePlanBtn.addEventListener('click', () => {
-            const initialCapital = getCapital();
+            const initialCapital = getCapital(); 
             if (initialCapital <= 0 || currentTablePlanData.length === 0) return;
-
-            const trade = {
-                id: Date.now(),
+            
+            saveRawTrade({ 
+                id: Date.now(), 
                 isTablePlan: true, 
-                total: initialCapital,
-                targetRate: tableTargetInput.value,
-                safetyRate: tableSafetyInput.value,
-                days: tableDaysInput.value,
-                isCompound: tableCompoundToggle.checked,
-                final: currentTablePlanData[currentTablePlanData.length - 1].actualEnd,
-                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR')
-            };
-
-            saveRawTrade(trade);
-            saveTablePlanBtn.classList.add('bg-sky-500', 'text-white');
-            setTimeout(() => saveTablePlanBtn.classList.remove('bg-sky-500', 'text-white'), 300);
+                total: initialCapital, 
+                targetRate: tableTargetInput.value, 
+                safetyRate: tableSafetyInput.value, 
+                days: tableDaysInput.value, 
+                isCompound: tableCompoundToggle.checked, 
+                final: currentTablePlanData[currentTablePlanData.length - 1].actualEnd, 
+                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR') 
+            });
+            
+            saveTablePlanBtn.classList.add('bg-sky-500', 'text-white'); 
+            setTimeout(() => saveTablePlanBtn.classList.remove('bg-sky-500', 'text-white'), 300); 
             showToast(currentLang === 'ar' ? "تم الحفظ بنجاح!" : "Saved successfully!", '💾');
         });
 
-        currencyToggle.addEventListener('click', () => {
-            isUSD = !isUSD;
-            currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
-            if (calcMethodToggle.checked) {
-                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-            }
-            calculate();
-            if(activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') {
-                generateDailyPlan(); 
-            }
-        });
+        // ========================================================
+        // إدارة السجل المؤقت والبيانات المفصلة
+        // ========================================================
 
-        function toggleExpandTrade(id) {
-            if (expandedTradeIds.has(id)) expandedTradeIds.delete(id);
-            else expandedTradeIds.add(id);
-            renderSavedLog();
+        function toggleExpandTrade(id) { 
+            expandedTradeIds.has(id) ? expandedTradeIds.delete(id) : expandedTradeIds.add(id); 
+            renderSavedLog(); 
         }
 
         function restoreTradeToCalculator(id) {
-            const savedData = localStorage.getItem('trading_sessions_raw');
+            const savedData = localStorage.getItem('trading_sessions_raw'); 
             if (!savedData) return;
             
-            const trades = JSON.parse(savedData);
-            const trade = trades.find(t => t.id === id);
+            const trade = JSON.parse(savedData).find(t => t.id === id); 
             if (!trade) return;
-
-            isUSD = (trade.unit === '$' || trade.unit === 'USD');
+            
+            isUSD = (trade.unit === '$' || trade.unit === 'USD'); 
             currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
-
-            totalAmountInput.value = trade.total;
+            
+            totalAmountInput.value = trade.total; 
             totalAmountInput.dispatchEvent(new Event('input'));
-
-            if (trade.isTablePlan) {
-                switchTab('table');
-                tableTargetInput.value = trade.targetRate;
-                tableSafetyInput.value = trade.safetyRate;
-                tableDaysInput.value = trade.days;
-                tableCompoundToggle.checked = trade.isCompound;
-                generateDailyPlan();
-            } else if (trade.isGrowth) {
-                switchTab('days');
-                calcMethodToggle.checked = !trade.isPercent;
-                strategyInput.value = trade.inputVal;
-                compoundToggle.checked = trade.isCompound !== undefined ? trade.isCompound : true;
-                daysCountInput.value = trade.days || '';
-                updateMethodLabel();
-                calculate();
-            } else {
-                switchTab('deals');
-                calcMethodToggle.checked = !trade.isPercent;
-                strategyInput.value = trade.inputVal;
+            
+            if (trade.isTablePlan) { 
+                switchTab('table'); 
+                tableTargetInput.value = trade.targetRate; 
+                tableSafetyInput.value = trade.safetyRate; 
+                tableDaysInput.value = trade.days; 
+                tableCompoundToggle.checked = trade.isCompound; 
+                generateDailyPlan(); 
+            } 
+            else if (trade.isGrowth) { 
+                switchTab('days'); 
+                calcMethodToggle.checked = !trade.isPercent; 
+                strategyInput.value = trade.inputVal; 
+                compoundToggle.checked = trade.isCompound !== undefined ? trade.isCompound : true; 
+                daysCountInput.value = trade.days || ''; 
+                updateMethodLabel(); 
+                calculate(); 
+            } 
+            else { 
+                switchTab('deals'); 
+                calcMethodToggle.checked = !trade.isPercent; 
+                strategyInput.value = trade.inputVal; 
                 
-                const inputValNum = parseFloat(trade.inputVal) || 0;
-                const dealVal = trade.isPercent ? (trade.total * (inputValNum / 100)) : inputValNum;
+                const dealVal = trade.isPercent ? (trade.total * ((parseFloat(trade.inputVal)||0) / 100)) : (parseFloat(trade.inputVal)||0); 
+                let pTarget = trade.profitTarget; 
+                let lTarget = trade.lossTarget; 
                 
-                let pTarget = trade.profitTarget;
-                let lTarget = trade.lossTarget;
+                if (dealVal > 0) { 
+                    if (!pTarget) pTarget = Math.round((trade.profit / dealVal) * 100); 
+                    if (!lTarget) lTarget = Math.round((trade.loss / dealVal) * 100); 
+                } 
                 
-                if (dealVal > 0) {
-                    if (!pTarget || pTarget === '') pTarget = Math.round((trade.profit / dealVal) * 100);
-                    if (!lTarget || lTarget === '') lTarget = Math.round((trade.loss / dealVal) * 100);
-                }
-
-                const hasAdvanced = (pTarget !== 100 || lTarget !== 100 || trade.advancedTargets === true);
-                advancedTargetsToggle.checked = hasAdvanced;
+                const hasAdv = (pTarget !== 100 || lTarget !== 100 || trade.advancedTargets === true); 
+                advancedTargetsToggle.checked = hasAdv; 
                 
-                if (hasAdvanced) {
-                    profitTargetInput.value = pTarget || '';
-                    lossTargetInput.value = lTarget || '';
-                    advancedFields.classList.remove('hidden');
-                } else {
-                    profitTargetInput.value = '';
-                    lossTargetInput.value = '';
-                    advancedFields.classList.add('hidden');
-                }
-                updateMethodLabel();
-                calculate();
+                if (hasAdv) { 
+                    profitTargetInput.value = pTarget || ''; 
+                    lossTargetInput.value = lTarget || ''; 
+                    advancedFields.classList.remove('hidden'); 
+                } else { 
+                    profitTargetInput.value = ''; 
+                    lossTargetInput.value = ''; 
+                    advancedFields.classList.add('hidden'); 
+                } 
+                updateMethodLabel(); 
+                calculate(); 
             }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' }); 
             showToast(currentLang === 'ar' ? "تم استعادة الحسبة للآلة!" : "Calculator restored!", '↺');
         }
 
         function renderSavedLog() {
-            const savedData = localStorage.getItem('trading_sessions_raw');
+            const savedData = localStorage.getItem('trading_sessions_raw'); 
             const t = translations[currentLang];
             
             if (savedData) {
                 const trades = JSON.parse(savedData);
-                if (trades.length === 0) {
-                    logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`;
-                    return;
+                if (trades.length === 0) { 
+                    logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`; 
+                    return; 
                 }
                 
                 logContainer.innerHTML = '';
+                
                 trades.forEach(trade => {
-                    const isExpanded = expandedTradeIds.has(trade.id);
+                    const isExpanded = expandedTradeIds.has(trade.id); 
                     const logItem = document.createElement('div');
                     
                     if (trade.isTablePlan) {
                         logItem.className = "bg-slate-900/40 border border-sky-500/30 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 bg-gradient-to-l from-sky-500/10 to-transparent transition-all duration-300";
-                        const compoundTxt = trade.isCompound ? t.statusCompound : t.statusSimple;
-                        
                         logItem.innerHTML = `
                             <div class="flex justify-between font-bold text-sky-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span>${t.logPlanType} (${trade.days} ${currentLang === 'ar' ? 'أيام' : 'Days'})</span>
-                                <span class="text-[10px] bg-sky-950/60 border border-sky-600/30 px-2 py-0.5 rounded text-sky-300">${compoundTxt}</span>
+                                <span class="text-[10px] bg-sky-950/60 border border-sky-600/30 px-2 py-0.5 rounded text-sky-300">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
                             </div>
                             <div class="flex justify-between text-xs mt-1 text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
@@ -1573,16 +1721,12 @@
                                 <button class="w-full bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active" onclick="restoreTradeToCalculator(${trade.id})">${t.restoreStateBtn}</button>
                             </div>
                         `;
-                    }
-                    else if (trade.isGrowth) {
+                    } else if (trade.isGrowth) {
                         logItem.className = "bg-slate-900/40 border border-yellow-500/20 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 bg-gradient-to-l from-yellow-500/5 to-transparent transition-all duration-300";
-                        const growthTypeText = trade.isCompound ? t.statusCompound : t.statusSimple;
-                        const rateOrValue = trade.isPercent ? `${trade.inputVal}%` : `${formatNumber(parseFloat(trade.inputVal))} ${trade.unit}`;
-
                         logItem.innerHTML = `
                             <div class="flex justify-between font-bold text-yellow-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
-                                <span>${t.logDaysType}: ${rateOrValue}</span>
-                                <span class="text-[10px] bg-yellow-950/60 border border-yellow-600/30 px-2 py-0.5 rounded text-yellow-300 font-medium">${growthTypeText}</span>
+                                <span>${t.logDaysType}: ${trade.isPercent ? trade.inputVal+'%' : formatNumber(parseFloat(trade.inputVal))+' '+trade.unit}</span>
+                                <span class="text-[10px] bg-yellow-950/60 border border-yellow-600/30 px-2 py-0.5 rounded text-yellow-300 font-medium">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
                             </div>
                             <div class="flex justify-between text-xs mt-1 text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
@@ -1601,12 +1745,10 @@
                         `;
                     } else {
                         logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 transition-all duration-300";
-                        const typeText = trade.isPercent ? `${t.typePercent} (${trade.inputVal}%)` : t.typeFixed;
-                        
                         logItem.innerHTML = `
                             <div class="flex justify-between font-bold text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
-                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">${t.logType} ${typeText}</span>
+                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">${t.logType} ${trade.isPercent ? t.typePercent+' ('+trade.inputVal+'%)' : t.typeFixed}</span>
                             </div>
                             <div class="flex justify-between items-center mt-1 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
                                 <span class="text-emerald-400 font-semibold">${t.logProfit} ${formatNumber(trade.profit)} ${trade.unit}</span>
@@ -1622,141 +1764,143 @@
                     }
                     logContainer.appendChild(logItem);
                 });
-            } else {
-                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`;
+            } else { 
+                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`; 
             }
         }
 
-        function saveRawTrade(trade) {
-            let trades = [];
-            const savedData = localStorage.getItem('trading_sessions_raw');
-            if (savedData) trades = JSON.parse(savedData);
-            trades.unshift(trade);
-            localStorage.setItem('trading_sessions_raw', JSON.stringify(trades));
-            renderSavedLog();
+        function saveRawTrade(trade) { 
+            let trades = []; 
+            const savedData = localStorage.getItem('trading_sessions_raw'); 
+            if (savedData) trades = JSON.parse(savedData); 
+            trades.unshift(trade); 
+            localStorage.setItem('trading_sessions_raw', JSON.stringify(trades)); 
+            renderSavedLog(); 
         }
 
-        calcMethodToggle.addEventListener('change', () => {
-            const t = translations[currentLang];
-            if (calcMethodToggle.checked) {
-                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
-                strategyInput.placeholder = "0.00";
-                document.getElementById('quickRatios').classList.add('hidden');
-            } else {
-                inputUnit.innerText = "%";
-                strategyInput.placeholder = "0";
-                document.getElementById('quickRatios').classList.remove('hidden');
-            }
-            strategyInput.value = '';
-            updateMethodLabel();
-            calculate();
-        });
-
-        advancedTargetsToggle.addEventListener('change', () => {
-            if (advancedTargetsToggle.checked) advancedFields.classList.remove('hidden');
-            else advancedFields.classList.add('hidden');
-            calculate();
-        });
-
-        document.querySelectorAll('.ratio-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                strategyInput.value = btn.getAttribute('data-value');
-                calculate();
-            });
-        });
-
-        [strategyInput, daysCountInput, profitTargetInput, lossTargetInput].forEach(input => {
-            input.addEventListener('input', calculate);
-        });
-
+        // تسجيل العمليات
         saveSessionBtn.addEventListener('click', () => {
-            const total = getCapital();
-            if (total === 0) return;
-            const isPercentageMethod = !calcMethodToggle.checked;
-            const inputValNum = parseFloat(strategyInput.value) || 0;
-            let dealValue = isPercentageMethod ? total * (inputValNum / 100) : inputValNum;
-
-            let finalProfit = dealValue;
+            const total = getCapital(); 
+            if (total === 0) return; 
+            
+            const isPercentageMethod = !calcMethodToggle.checked; 
+            const inputValNum = parseFloat(strategyInput.value) || 0; 
+            let dealValue = isPercentageMethod ? total * (inputValNum / 100) : inputValNum; 
+            let finalProfit = dealValue; 
             let finalLoss = dealValue;
-
-            if (advancedTargetsToggle.checked) {
-                finalProfit = dealValue * ((parseFloat(profitTargetInput.value) || 0) / 100);
-                finalLoss = dealValue * ((parseFloat(lossTargetInput.value) || 0) / 100);
+            
+            if (advancedTargetsToggle.checked) { 
+                finalProfit = dealValue * ((parseFloat(profitTargetInput.value) || 0) / 100); 
+                finalLoss = dealValue * ((parseFloat(lossTargetInput.value) || 0) / 100); 
             }
-
-            saveRawTrade({
-                id: Date.now(),
-                total: total,
-                isPercent: isPercentageMethod,
-                inputVal: strategyInput.value || '0',
-                profit: finalProfit,
-                loss: finalLoss,
-                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'),
-                isGrowth: false,
-                advancedTargets: advancedTargetsToggle.checked,
-                profitTarget: profitTargetInput.value || '',
-                lossTarget: lossTargetInput.value || ''
-            });
+            
+            saveRawTrade({ 
+                id: Date.now(), 
+                total: total, 
+                isPercent: isPercentageMethod, 
+                inputVal: strategyInput.value || '0', 
+                profit: finalProfit, 
+                loss: finalLoss, 
+                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'), 
+                isGrowth: false, 
+                advancedTargets: advancedTargetsToggle.checked, 
+                profitTarget: profitTargetInput.value || '', 
+                lossTarget: lossTargetInput.value || '' 
+            }); 
+            
             showToast(currentLang === 'ar' ? "تم حفظ الصفقة في السجل!" : "Trade saved to session log!", '💾');
         });
 
         saveDaysSessionBtn.addEventListener('click', () => {
-            const total = getCapital();
-            const days = parseInt(daysCountInput.value) || 0;
-            const inputVal = parseFloat(strategyInput.value) || 0;
+            const total = getCapital(); 
+            const days = parseInt(daysCountInput.value) || 0; 
+            const inputVal = parseFloat(strategyInput.value) || 0; 
+            
             if (total === 0 || days <= 0 || inputVal <= 0) return;
-
-            const isPercentageMethod = !calcMethodToggle.checked;
-            const isCompound = compoundToggle.checked;
+            
+            const isPercentageMethod = !calcMethodToggle.checked; 
+            const isCompound = compoundToggle.checked; 
             let finalBalance = total;
-
-            if (isCompound) {
-                if (isPercentageMethod) finalBalance = total * Math.pow(1 + (inputVal / 100), days);
-                else finalBalance = total + (inputVal * days);
-            } else {
-                if (isPercentageMethod) finalBalance = total + (total * (inputVal / 100) * days);
-                else finalBalance = total + (inputVal * days);
+            
+            if (isCompound) { 
+                finalBalance = isPercentageMethod ? total * Math.pow(1 + (inputVal / 100), days) : total + (inputVal * days); 
+            } else { 
+                finalBalance = isPercentageMethod ? total + (total * (inputVal / 100) * days) : total + (inputVal * days); 
             }
-
-            saveRawTrade({
-                id: Date.now(),
-                total: total,
-                days: days,
-                isPercent: isPercentageMethod,
-                inputVal: strategyInput.value || '0',
-                profit: finalBalance - total,
-                final: finalBalance,
-                isCompound: isCompound,
-                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'),
-                isGrowth: true
-            });
+            
+            saveRawTrade({ 
+                id: Date.now(), 
+                total: total, 
+                days: days, 
+                isPercent: isPercentageMethod, 
+                inputVal: strategyInput.value || '0', 
+                profit: finalBalance - total, 
+                final: finalBalance, 
+                isCompound: isCompound, 
+                unit: isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR'), 
+                isGrowth: true 
+            }); 
+            
             showToast(currentLang === 'ar' ? "تم حفظ النمو في السجل!" : "Growth saved to session log!", '📈');
         });
 
-        clearLogBtn.addEventListener('click', () => {
-            localStorage.removeItem('trading_sessions_raw');
-            renderSavedLog();
-            showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared!", '🗑️');
+        clearLogBtn.addEventListener('click', () => { 
+            localStorage.removeItem('trading_sessions_raw'); 
+            renderSavedLog(); 
+            showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared!", '🗑️'); 
         });
 
-        function updateResultLabels() {
-            const t = translations[currentLang];
-            const isBaseCalculated = !calcMethodToggle.checked;
-            const labelPlus = document.getElementById('label-plus');
-            const labelMinus = document.getElementById('label-minus');
-            if (isBaseCalculated) {
-                labelPlus.innerText = t.profitRatioLabel;
-                labelMinus.innerText = t.lossRatioLabel;
-            } else {
-                labelPlus.innerText = t.profitTotalLabel;
-                labelMinus.innerText = t.lossTotalLabel;
-            }
+        // دوال مساعدة لليوزرز
+        calcMethodToggle.addEventListener('change', () => { 
+            const t = translations[currentLang]; 
+            if (calcMethodToggle.checked) { 
+                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR'); 
+                strategyInput.placeholder = "0.00"; 
+                document.getElementById('quickRatios').classList.add('hidden'); 
+            } else { 
+                inputUnit.innerText = "%"; 
+                strategyInput.placeholder = "0"; 
+                document.getElementById('quickRatios').classList.remove('hidden'); 
+            } 
+            strategyInput.value = ''; 
+            updateMethodLabel(); 
+            calculate(); 
+        });
+
+        advancedTargetsToggle.addEventListener('change', () => { 
+            advancedTargetsToggle.checked ? advancedFields.classList.remove('hidden') : advancedFields.classList.add('hidden'); 
+            calculate(); 
+        });
+
+        document.querySelectorAll('.ratio-btn').forEach(btn => { 
+            btn.addEventListener('click', () => { 
+                strategyInput.value = btn.getAttribute('data-value'); 
+                calculate(); 
+            }); 
+        });
+
+        [strategyInput, daysCountInput, profitTargetInput, lossTargetInput].forEach(input => { 
+            input.addEventListener('input', calculate); 
+        });
+
+        function updateResultLabels() { 
+            const t = translations[currentLang]; 
+            const isBaseCalculated = !calcMethodToggle.checked; 
+            const labelPlus = document.getElementById('label-plus'); 
+            const labelMinus = document.getElementById('label-minus'); 
+            if (isBaseCalculated) { 
+                labelPlus.innerText = t.profitRatioLabel; 
+                labelMinus.innerText = t.lossRatioLabel; 
+            } else { 
+                labelPlus.innerText = t.profitTotalLabel; 
+                labelMinus.innerText = t.lossTotalLabel; 
+            } 
         }
 
-        window.addEventListener('load', () => {
-            const savedLang = localStorage.getItem('app_lang');
-            if (savedLang) currentLang = savedLang;
-            updateLanguageUI();
+        window.addEventListener('load', () => { 
+            const savedLang = localStorage.getItem('app_lang'); 
+            if (savedLang) currentLang = savedLang; 
+            updateLanguageUI(); 
         });
     </script>
 </body>
