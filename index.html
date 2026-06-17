@@ -66,24 +66,31 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
-        /* حاوية الطباعة الوهمية (يتم استخدامها خلف الكواليس) */
+        /* ======================================================== */
+        /* الطباعة المباشرة (Direct Print CSS) */
+        /* ======================================================== */
         #printArea { display: none; }
         
-        /* تنسيقات الطباعة الافتراضية لمنع ظهور المتصفح الأساسي */
         @media print {
             @page { margin: 0; }
-            body > div:not(#printArea) { display: none !important; }
-            body { 
+            body > *:not(#printArea) { display: none !important; }
+            body, html { 
                 margin: 0 !important;
                 padding: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                background-color: transparent !important;
+                height: 100% !important;
             }
             #printArea { 
                 display: block !important; 
                 position: absolute; 
-                left: 0; top: 0; width: 100%; 
-                margin: 0 !important; padding: 0 !important;
+                left: 0; top: 0; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .page-break-after { page-break-after: always; clear: both; }
         }
@@ -114,62 +121,71 @@
         <span id="toastText" class="text-xs font-bold text-slate-100"></span>
     </div>
 
-    <!-- نافذة إعدادات الطباعة والـ PDF (Print Modal) المنظمة والمستقلة -->
+    <!-- نافذة إعدادات الطباعة والـ PDF (Print Modal) المحدثة لحل مشكلة الاقتطاع -->
     <div id="printSettingsModal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" id="closeModalBg"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm glass-card border border-slate-700/80 rounded-2xl p-5 shadow-2xl modal-animate flex flex-col gap-5">
-            
-            <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
-                <h3 class="text-emerald-400 font-bold flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    <span id="uiPrintModalTitle">إعدادات الطباعة والـ PDF</span>
-                </h3>
-                <button id="closeModalBtn" class="text-slate-400 hover:text-rose-400 p-1 bg-slate-800/50 rounded-lg tap-active transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <!-- إعدادات الأيام -->
-            <div>
-                <label id="uiPrintDaysLabel" class="text-xs font-medium text-slate-300 block mb-2">عدد الأيام لكل صفحة (لترتيب الـ PDF):</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button class="days-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="10">10 أيام</button>
-                    <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="15">15 يوم</button>
-                    <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="20">20 يوم</button>
-                </div>
-                <input type="hidden" id="daysPerPageSelected" value="10">
-            </div>
-
-            <!-- إعدادات الخط -->
-            <div>
-                <label id="uiPrintFontLabel" class="text-xs font-medium text-slate-300 block mb-2">حجم نص الجدول:</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="12px">صغير</button>
-                    <button class="font-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="14px">متوسط</button>
-                    <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="16px">كبير</button>
-                </div>
-                <input type="hidden" id="fontSizeSelected" value="14px">
-            </div>
-
-            <!-- إعدادات المظهر -->
-            <div>
-                <label id="uiPrintThemeLabel" class="text-xs font-medium text-slate-300 block mb-2">مظهر التصدير (Theme):</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="theme-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="dark">
-                        🌙 داكن (للنوته)
-                    </button>
-                    <button class="theme-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="light">
-                        ☀️ فاتح (للورق)
+        <!-- تم تعديل الحاوية هنا لتكون مرنة وقابلة للتمرير (Responsive & Scrollable) -->
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="pointer-events-auto relative w-full max-w-sm glass-card border border-slate-700/80 rounded-2xl shadow-2xl modal-animate flex flex-col overflow-hidden max-h-[85vh]">
+                
+                <!-- الترويسة (ثابتة) -->
+                <div class="flex justify-between items-center border-b border-slate-700/60 p-5 pb-4 shrink-0 bg-slate-900/40">
+                    <h3 class="text-emerald-400 font-bold flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span id="uiPrintModalTitle">إعدادات الطباعة والـ PDF</span>
+                    </h3>
+                    <button id="closeModalBtn" class="text-slate-400 hover:text-rose-400 p-1 bg-slate-800/50 rounded-lg tap-active transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                <input type="hidden" id="themeSelected" value="dark">
-            </div>
 
-            <div class="border-t border-slate-700/60 pt-4 mt-2">
-                <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span id="uiExecutePrintBtnText">تصدير وتوليد الـ PDF 📄</span>
-                </button>
+                <!-- المحتوى الداخلي (قابل للتمرير Scrollable) -->
+                <div class="p-5 flex flex-col gap-5 overflow-y-auto custom-scrollbar bg-slate-900/20">
+                    <!-- إعدادات الأيام -->
+                    <div>
+                        <label id="uiPrintDaysLabel" class="text-xs font-medium text-slate-300 block mb-2">عدد الأيام لكل صفحة (لترتيب الـ PDF):</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="days-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="10">10 أيام</button>
+                            <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="15">15 يوم</button>
+                            <button class="days-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="20">20 يوم</button>
+                        </div>
+                        <input type="hidden" id="daysPerPageSelected" value="10">
+                    </div>
+
+                    <!-- إعدادات الخط -->
+                    <div>
+                        <label id="uiPrintFontLabel" class="text-xs font-medium text-slate-300 block mb-2">حجم نص الجدول:</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="12px">صغير</button>
+                            <button class="font-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="14px">متوسط</button>
+                            <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold transition-all" data-val="16px">كبير</button>
+                        </div>
+                        <input type="hidden" id="fontSizeSelected" value="14px">
+                    </div>
+
+                    <!-- إعدادات المظهر -->
+                    <div>
+                        <label id="uiPrintThemeLabel" class="text-xs font-medium text-slate-300 block mb-2">مظهر التصدير (Theme):</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="theme-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="dark">
+                                🌙 داكن (للنوته)
+                            </button>
+                            <button class="theme-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="light">
+                                ☀️ فاتح (للورق)
+                            </button>
+                        </div>
+                        <input type="hidden" id="themeSelected" value="dark">
+                    </div>
+                </div>
+
+                <!-- زر التنفيذ (ثابت بالأسفل) -->
+                <div class="p-5 pt-4 border-t border-slate-700/60 shrink-0 bg-slate-900/40">
+                    <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span id="uiExecutePrintBtnText">تصدير وتوليد الـ PDF 📄</span>
+                    </button>
+                </div>
+                
             </div>
         </div>
     </div>
@@ -230,7 +246,7 @@
             <div id="convertedAmount" class="text-xs text-slate-500 text-right mt-1.5 font-medium transition-colors duration-150">يساوي: 0.00 ر.س</div>
         </div>
 
-        <!-- Strategy Input Card (Shared between Deals and Days) -->
+        <!-- Strategy Input Card -->
         <div id="strategyCard" class="glass-card rounded-2xl p-4 mb-4 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <span id="methodLabel" class="text-sm font-medium text-slate-300">نسبة لخصم الصفقة %</span>
@@ -417,7 +433,6 @@
             </div>
 
             <div id="generatedTableContainer" class="space-y-3 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 hidden">
-                <!-- يتم توليد البطاقات هنا عبر الجافاسكريبت -->
             </div>
         </div>
 
@@ -425,22 +440,20 @@
         <div id="sessionLogWrapper" class="glass-card rounded-2xl p-4 mt-4 mb-8">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5 text-sm font-bold text-slate-300">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     <span id="uiSessionLogHeader">سجل صفقات الجلسة المؤقت</span>
                 </div>
                 <button id="clearLogBtn" class="text-xs font-bold text-rose-400 tap-active px-2 py-1 rounded hover:bg-rose-500/10 transition-colors">مسح السجل</button>
             </div>
             <div id="logContainer" class="space-y-2 pr-1 text-xs">
-                <!-- يتم توليد السجل هنا عبر الجافاسكريبت -->
             </div>
         </div>
     </div>
 
-    <!-- حاوية الطباعة المخفية -->
+    <!-- حاوية الطباعة المباشرة -->
     <div id="printArea"></div>
 
     <script>
-        // المتغيرات العامة الأساسية
         let isUSD = true;
         let currentLang = 'ar';
         let activeTab = 'deals';
@@ -448,7 +461,6 @@
         let expandedTradeIds = new Set();
         let currentTablePlanData = []; 
 
-        // نصوص اللغات كاملة بدون اختصار
         const translations = {
             ar: {
                 appTitle: "حاسبة التداول",
@@ -610,7 +622,6 @@
             }
         };
 
-        // تعريف جميع المتغيرات للعناصر في الصفحة
         const totalAmountInput = document.getElementById('totalAmount');
         const strategyCard = document.getElementById('strategyCard');
         const strategyInput = document.getElementById('strategyInput');
@@ -667,7 +678,6 @@
         const importBackupBtn = document.getElementById('importBackupBtn');
         const importFile = document.getElementById('importFile');
 
-        // التنبيهات المنبثقة
         function showToast(text, icon = '✨') {
             const toastBox = document.getElementById('toastBox');
             const toastIcon = document.getElementById('toastIcon');
@@ -678,7 +688,6 @@
             setTimeout(() => { toastBox.classList.add('hidden'); }, 3000);
         }
 
-        // معالجة الأرقام
         function getCapital() { 
             return parseFloat(totalAmountInput.value.replace(/,/g, '')) || 0; 
         }
@@ -710,7 +719,6 @@
             }, { passive: false });
         }
 
-        // إدارة التبويبات (Tabs)
         function switchTab(tabName) {
             activeTab = tabName;
             const activeStyle = "tap-active py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-slate-100 bg-slate-800 border border-slate-700/50";
@@ -744,7 +752,6 @@
         tabDays.addEventListener('click', () => switchTab('days'));
         tabTable.addEventListener('click', () => switchTab('table'));
 
-        // إدارة اللغات وتحديث الواجهة
         function updateLanguageUI() {
             const t = translations[currentLang];
             const htmlEl = document.getElementById('appHtml');
@@ -818,7 +825,6 @@
             updateLanguageUI();
         });
 
-        // دوال الحساب والتسميات
         function updateMethodLabel() {
             const t = translations[currentLang];
             if (activeTab === 'deals' || activeTab === 'days') {
@@ -912,7 +918,7 @@
         }
 
         // ========================================================
-        // وظائف بناء وإدارة الجدول التفاعلي (مفصلة ومنظمة)
+        // وظائف بناء وإدارة الجدول التفاعلي
         // ========================================================
         
         function generateDailyPlan() {
@@ -1027,7 +1033,7 @@
 
 
         // ========================================================
-        // وظائف نافذة الطباعة والـ PDF (مستقلة ومفصلة)
+        // وظائف نافذة الطباعة والـ PDF المباشر (Direct Print Engine)
         // ========================================================
         
         openPrintModalBtn.addEventListener('click', () => {
@@ -1085,7 +1091,7 @@
             });
         });
 
-        // تنفيذ عملية تصدير الـ PDF وتقسيم الصفحات
+        // الطباعة المباشرة من نفس الصفحة لتجنب تدمير التنسيقات على الجوال
         executePrintBtn.addEventListener('click', () => {
             hidePrintModal();
             const initialCapital = getCapital();
@@ -1099,7 +1105,7 @@
             
             const totalNetProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
-            // تحديد الألوان بناءً على اختيار المستخدم
+            // تحديد ألوان الطباعة الصارمة (لن يتجاوزها المتصفح)
             let bgPage, textMain, textMuted, bgHeader, borderMain, rowZebra, bgSummary, rowProfit, rowLoss;
             if (theme === 'dark') {
                 bgPage = '#0f172a'; textMain = '#cbd5e1'; textMuted = '#94a3b8';
@@ -1116,7 +1122,6 @@
             let pagesHtml = '';
             const totalPages = Math.ceil(currentTablePlanData.length / daysPerPage);
 
-            // بناء صفحات الـ PDF
             for (let p = 0; p < totalPages; p++) {
                 const startIndex = p * daysPerPage;
                 const endIndex = Math.min(startIndex + daysPerPage, currentTablePlanData.length);
@@ -1126,21 +1131,21 @@
                 
                 pageRows.forEach((row, i) => {
                     let statusText, statusColor, rowBgStyle = '';
-                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = `background-color: ${rowProfit};`; }
-                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = `background-color: ${rowLoss};`; }
+                    if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = `background-color: ${rowProfit} !important;`; }
+                    else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = `background-color: ${rowLoss} !important;`; }
                     else { statusText = t.statusPending; statusColor = textMuted; }
                     
-                    let baseBg = i % 2 === 0 ? `background-color: ${rowZebra};` : `background-color: ${bgPage};`;
+                    let baseBg = i % 2 === 0 ? `background-color: ${rowZebra} !important;` : `background-color: transparent !important;`;
                     let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
                     
                     tableRowsHtml += `
                         <tr style="${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};">
-                            <td style="border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 10px;">${row.day}</td>
-                            <td style="border: 1px solid ${borderMain}; color: ${textMain}; padding: 10px; direction: ltr;">${formatNumber(row.start)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 10px; direction: ltr;">-${formatNumber(row.lossValue)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 10px; direction: ltr;">+${formatNumber(row.profitValue)}</td>
-                            <td style="border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 10px; direction: ltr;">${formatNumber(row.actualEnd)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 10px; letter-spacing: normal !important; direction: rtl !important;">${statusText}</td>
+                            <td style="border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 12px 6px;">${row.day}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${textMain}; padding: 12px 6px; direction: ltr;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 12px 6px; direction: ltr;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 12px 6px; direction: ltr;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 12px 6px; direction: ltr;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 12px 6px; letter-spacing: normal !important; direction: rtl !important;">${statusText}</td>
                         </tr>
                     `;
                 });
@@ -1148,25 +1153,26 @@
                 const isLastPage = (p === totalPages - 1);
                 const pageBreakClass = isLastPage ? '' : 'page-break-after';
 
+                // تم تغيير العرض إلى 100% ليأخذ المساحة بشكل تلقائي في الجوال
                 pagesHtml += `
-                    <div class="page-wrapper ${pageBreakClass}" style="background-color: ${bgPage}; color: ${textMain};">
-                        <div class="header" style="border-bottom-color: #10b981;">
-                            <h1 style="color: #10b981; letter-spacing: normal !important; direction: rtl !important;">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
-                            <div class="meta-box" style="background: ${bgHeader}; border-color: ${borderMain}; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;">
+                    <div class="${pageBreakClass}" style="width: 100%; box-sizing: border-box; padding: 25px; min-height: 100vh; background-color: ${bgPage} !important; color: ${textMain}; font-family: 'Tajawal', sans-serif;">
+                        <div style="text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;">
+                            <h1 style="color: #10b981; font-size: 24px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: normal !important; direction: rtl !important;">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
+                            <div style="background-color: ${bgHeader} !important; border: 1px solid ${borderMain}; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;">
                                 ${t.detailsCapital} <span style="color: #f59e0b;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span> | 
                                 ${t.tableTargetLabel}: <span style="color: #10b981;" dir="ltr">${tableTargetInput.value}%</span> | 
                                 ${t.tableSafetyLabel}: <span style="color: #f43f5e;" dir="ltr">${tableSafetyInput.value}%</span>
                             </div>
                         </div>
-                        <table style="font-size: ${fontSize};">
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: ${fontSize};">
                             <thead>
                                 <tr>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${t.tableDayText}</th>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
-                                    <th style="background-color: ${bgHeader}; color: ${textMain}; border-color: ${borderMain}; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${t.tableDayText}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
+                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1174,7 +1180,7 @@
                             </tbody>
                         </table>
                         ${isLastPage ? `
-                            <div class="summary" style="background: ${bgSummary}; border-color: #10b981; letter-spacing: normal !important; direction: rtl !important;">
+                            <div style="margin-top: 25px; padding: 15px; border: 2px solid #10b981; text-align: ${currentLang === 'ar' ? 'right' : 'left'}; font-weight: bold; border-radius: 8px; background-color: ${bgSummary} !important; letter-spacing: normal !important; direction: rtl !important;">
                                 <span style="color: ${textMuted};">${currentLang === 'ar' ? 'صافي الأرباح الكلية المحققة للخطة:' : 'Total Expected Net Profit:'}</span> 
                                 <span style="color: #10b981; font-size: 1.3em; margin: 0 10px; font-weight: 900;" dir="ltr">${formatNumber(totalNetProfit)} ${unit}</span>
                             </div>
@@ -1185,75 +1191,23 @@
                 `;
             }
 
-            const printDocumentHtml = `
-                <!DOCTYPE html>
-                <html dir="${dirAtt}">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${t.planFileTitle}</title>
-                    <style>
-                        body { 
-                            margin: 0; padding: 0;
-                            background-color: ${bgPage} !important;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        .page-wrapper {
-                            font-family: 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; 
-                            padding: 20px;
-                            box-sizing: border-box;
-                            width: 100%;
-                        }
-                        .header { text-align: center; border-bottom: 3px solid; padding-bottom: 15px; margin-bottom: 20px; }
-                        .header h1 { margin: 0 0 10px 0; font-size: 24px; font-weight: 900; }
-                        .meta-box { 
-                            border: 1px solid; padding: 10px 15px; border-radius: 8px; 
-                            font-weight: bold; font-size: 14px; display: inline-block; 
-                        }
-                        table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 15px; }
-                        th { padding: 12px 5px; font-weight: bold; border: 1px solid; }
-                        td { padding: 8px 5px; border: 1px solid; }
-                        .summary { 
-                            margin-top: 25px; padding: 15px; border: 2px solid; 
-                            text-align: ${currentLang === 'ar' ? 'right' : 'left'}; 
-                            font-weight: bold; border-radius: 8px; 
-                        }
-                        @media print {
-                            @page { margin: 1cm; }
-                            body, .page-wrapper { background-color: ${bgPage} !important; }
-                            .page-break-after { page-break-after: always; clear: both; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${pagesHtml}
-                </body>
-                </html>
-            `;
-
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'fixed';
-            iframe.style.bottom = '0';
-            iframe.style.right = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
-            iframe.style.border = 'none';
-            document.body.appendChild(iframe);
-
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(printDocumentHtml);
-            doc.close();
-
-            iframe.contentWindow.focus();
+            // حقن الكود مباشرة في الصفحة وطباعته
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = `<div dir="${dirAtt}">${pagesHtml}</div>`;
+            
+            // مهلة زمنية قصيرة للسماح للمتصفح برسم التنسيقات والألوان قبل استدعاء نافذة الطباعة
             setTimeout(() => {
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 1000);
-            }, 500);
+                window.print();
+                
+                // مسح منطقة الطباعة بعد الإنتهاء (تقريبياً بعد عودة المستخدم من نافذة الطباعة)
+                setTimeout(() => {
+                    printArea.innerHTML = '';
+                }, 1000);
+            }, 300);
         });
 
         // ========================================================
-        // تصدير الصورة للنوته (مع معالجة النصوص المنفصلة)
+        // تصدير الصورة للنوته (تعمل بكفاءة وحماية للحروف)
         // ========================================================
 
         exportImageBtn.addEventListener('click', () => {
@@ -1272,12 +1226,11 @@
 
             const originalContainer = document.getElementById('generatedTableContainer');
             
-            // إنشاء لوحة استنساخ نظيفة ومنفصلة
             const cloneWrapper = document.createElement('div');
             cloneWrapper.style.position = 'absolute';
             cloneWrapper.style.top = '-9999px';
             cloneWrapper.style.left = '-9999px';
-            cloneWrapper.style.width = '420px'; // عرض ثابت للحفاظ على التنسيق
+            cloneWrapper.style.width = '420px'; 
             cloneWrapper.style.backgroundColor = '#0f172a'; 
             cloneWrapper.style.padding = '20px';
             cloneWrapper.style.borderRadius = '16px';
@@ -1290,7 +1243,6 @@
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const netProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
-            // بناء ترويسة الصورة مع حماية الحروف (inline styles)
             const headerDiv = document.createElement('div');
             headerDiv.style.borderBottom = '2px solid #10b981';
             headerDiv.style.paddingBottom = '12px';
@@ -1310,15 +1262,12 @@
             `;
             cloneWrapper.appendChild(headerDiv);
 
-            // استنساخ البطاقات وتأمينها
             const cards = originalContainer.children;
             for (let i = 0; i < cards.length; i++) {
                 const cardClone = cards[i].cloneNode(true);
-                // إزالة الأزرار التفاعلية من الصورة المصدرة
                 const actionButtons = cardClone.querySelector('.flex.gap-1\\.5');
                 if (actionButtons) actionButtons.remove();
                 
-                // حماية النصوص داخل الكرت للصورة فقط
                 cardClone.style.letterSpacing = "normal";
                 cardClone.style.unicodeBidi = "normal";
                 
@@ -1331,7 +1280,6 @@
                 cloneWrapper.appendChild(cardClone);
             }
 
-            // بناء ملخص الصورة
             const summaryDiv = document.createElement('div');
             summaryDiv.style.marginTop = '12px';
             summaryDiv.style.padding = '15px';
@@ -1348,7 +1296,6 @@
 
             document.body.appendChild(cloneWrapper);
 
-            // التصدير باستخدام Canvas مع إعدادات دقيقة للحروف العربية
             html2canvas(cloneWrapper, {
                 useCORS: true,
                 allowTaint: true,
@@ -1356,7 +1303,6 @@
                 scale: 3, 
                 logging: false,
                 onclone: (doc) => {
-                    // حقن ستايل طوارئ في اللوحة المؤقتة لضمان ربط الحروف
                     const style = doc.createElement('style');
                     style.innerHTML = `* { letter-spacing: normal !important; font-variant-ligatures: normal !important; }`;
                     doc.head.appendChild(style);
@@ -1380,7 +1326,7 @@
         });
 
         // ========================================================
-        // وظائف التصدير الأخرى (Excel, Text, Backup) مفصلة
+        // وظائف التصدير الإضافية (Excel, Text, Backup)
         // ========================================================
 
         exportExcelBtn.addEventListener('click', async () => {
@@ -1778,7 +1724,7 @@
             renderSavedLog(); 
         }
 
-        // تسجيل العمليات
+        // تسجيل العمليات في السجل
         saveSessionBtn.addEventListener('click', () => {
             const total = getCapital(); 
             if (total === 0) return; 
@@ -1850,7 +1796,7 @@
             showToast(currentLang === 'ar' ? "تم مسح السجل بالكامل!" : "Log cleared!", '🗑️'); 
         });
 
-        // دوال مساعدة لليوزرز
+        // دوال الإعدادات السريعة
         calcMethodToggle.addEventListener('change', () => { 
             const t = translations[currentLang]; 
             if (calcMethodToggle.checked) { 
