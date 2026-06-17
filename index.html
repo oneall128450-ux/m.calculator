@@ -121,16 +121,22 @@
         <span id="toastText" class="text-xs font-bold text-slate-100"></span>
     </div>
 
-    <!-- نافذة إعدادات الطباعة والـ PDF (Print Modal) المحدثة لحل مشكلة الاقتطاع -->
-    <div id="printSettingsModal" class="fixed inset-0 z-50 hidden">
+    <!-- ============================================================== -->
+    <!-- نافذة إعدادات الطباعة والـ PDF (مُصلحة بالكامل للشاشات الصغيرة) -->
+    <!-- ============================================================== -->
+    <div id="printSettingsModal" class="fixed inset-0 z-[80] hidden">
+        <!-- الخلفية المعتمة -->
         <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" id="closeModalBg"></div>
-        <!-- تم تعديل الحاوية هنا لتكون مرنة وقابلة للتمرير (Responsive & Scrollable) -->
-        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-            <div class="pointer-events-auto relative w-full max-w-sm glass-card border border-slate-700/80 rounded-2xl shadow-2xl modal-animate flex flex-col overflow-hidden max-h-[85vh]">
+        
+        <!-- حاوية التوسيط المرنة -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            
+            <!-- جسم النافذة (السحر هنا في flex-col و max-h-[85vh]) -->
+            <div class="relative w-full max-w-sm glass-card border border-slate-700/80 rounded-2xl shadow-2xl modal-animate flex flex-col max-h-[85vh]">
                 
-                <!-- الترويسة (ثابتة) -->
-                <div class="flex justify-between items-center border-b border-slate-700/60 p-5 pb-4 shrink-0 bg-slate-900/40">
-                    <h3 class="text-emerald-400 font-bold flex items-center gap-2">
+                <!-- 1. الترويسة (ثابتة - لا تنضغط shrink-0) -->
+                <div class="flex justify-between items-center border-b border-slate-700/60 p-4 shrink-0 bg-slate-900/60 rounded-t-2xl">
+                    <h3 class="text-emerald-400 font-bold flex items-center gap-2 text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         <span id="uiPrintModalTitle">إعدادات الطباعة والـ PDF</span>
                     </h3>
@@ -139,8 +145,9 @@
                     </button>
                 </div>
 
-                <!-- المحتوى الداخلي (قابل للتمرير Scrollable) -->
-                <div class="p-5 flex flex-col gap-5 overflow-y-auto custom-scrollbar bg-slate-900/20">
+                <!-- 2. المحتوى الأوسط (قابل للتمرير - flex-1 min-h-0 overflow-y-auto) -->
+                <div class="p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-slate-900/20">
+                    
                     <!-- إعدادات الأيام -->
                     <div>
                         <label id="uiPrintDaysLabel" class="text-xs font-medium text-slate-300 block mb-2">عدد الأيام لكل صفحة (لترتيب الـ PDF):</label>
@@ -176,11 +183,12 @@
                         </div>
                         <input type="hidden" id="themeSelected" value="dark">
                     </div>
+
                 </div>
 
-                <!-- زر التنفيذ (ثابت بالأسفل) -->
-                <div class="p-5 pt-4 border-t border-slate-700/60 shrink-0 bg-slate-900/40">
-                    <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                <!-- 3. التذييل وزر التنفيذ (ثابت - لا ينضغط shrink-0) -->
+                <div class="p-4 border-t border-slate-700/60 shrink-0 bg-slate-900/60 rounded-b-2xl">
+                    <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <span id="uiExecutePrintBtnText">تصدير وتوليد الـ PDF 📄</span>
                     </button>
@@ -791,7 +799,7 @@
             document.getElementById('uiNetProfitLabel').innerText = t.netProfitLabel;
             daysCountInput.placeholder = t.daysPlaceholder;
 
-            document.getElementById('uiTableSetupTitle').innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> ${t.tableSetupTitle}`;
+            document.getElementById('uiTableSetupTitle').innerHTML = `<svg class=\"w-4 h-4 text-emerald-400\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"></path></svg> ${t.tableSetupTitle}`;
             document.getElementById('uiTableTarget').innerText = t.tableTargetLabel;
             document.getElementById('uiTableSafety').innerText = t.tableSafetyLabel;
             document.getElementById('uiTableDays').innerText = t.tableDaysLabel;
@@ -934,7 +942,7 @@
             const daysCount = parseInt(tableDaysInput.value) || 0;
 
             if (targetRate <= 0 || safetyRate <= 0 || daysCount <= 0) {
-                generatedTableContainer.innerHTML = `<div class="text-center text-rose-400 py-4 font-bold text-sm bg-rose-500/10 rounded-xl border border-rose-500/20">${currentLang === 'ar' ? 'الرجاء تعبئة جميع الحقول بشكل صحيح.' : 'Please fill all fields correctly.'}</div>`;
+                generatedTableContainer.innerHTML = `<div class=\"text-center text-rose-400 py-4 font-bold text-sm bg-rose-500/10 rounded-xl border border-rose-500/20\">${currentLang === 'ar' ? 'الرجاء تعبئة جميع الحقول بشكل صحيح.' : 'Please fill all fields correctly.'}</div>`;
                 generatedTableContainer.classList.remove('hidden');
                 tableActionsContainer.classList.add('hidden');
                 return;
@@ -991,27 +999,27 @@
                 card.className = `${statusBg} border ${statusBorderColor} rounded-xl p-3 shadow-md relative transition-all duration-300`;
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center mb-2.5 border-b border-slate-700/60 pb-1.5 px-2">
-                        <span class="font-bold text-emerald-400 text-sm">${t.tableDayText} ${row.day}</span>
-                        <div class="flex gap-1.5">
-                            <button onclick="updateDayStatus(${index}, 'profit')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'profit' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-emerald-400 border border-emerald-500/20'} transition-all">${currentLang === 'ar' ? 'ربح 🟢' : 'Win'}</button>
-                            <button onclick="updateDayStatus(${index}, 'loss')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'loss' ? 'bg-rose-500 text-slate-950' : 'bg-slate-800 text-rose-400 border border-rose-500/20'} transition-all">${currentLang === 'ar' ? 'خسارة 🔴' : 'Loss'}</button>
-                            <button onclick="updateDayStatus(${index}, 'pending')" class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'pending' ? 'bg-slate-600 text-white' : 'bg-slate-800 text-slate-400'} transition-all">${currentLang === 'ar' ? 'معلق ⚪' : 'Reset'}</button>
+                    <div class=\"flex justify-between items-center mb-2.5 border-b border-slate-700/60 pb-1.5 px-2\">
+                        <span class=\"font-bold text-emerald-400 text-sm\">${t.tableDayText} ${row.day}</span>
+                        <div class=\"flex gap-1.5\">
+                            <button onclick=\"updateDayStatus(${index}, 'profit')\" class=\"px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'profit' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-emerald-400 border border-emerald-500/20'} transition-all\">${currentLang === 'ar' ? 'ربح 🟢' : 'Win'}</button>
+                            <button onclick=\"updateDayStatus(${index}, 'loss')\" class=\"px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'loss' ? 'bg-rose-500 text-slate-950' : 'bg-slate-800 text-rose-400 border border-rose-500/20'} transition-all\">${currentLang === 'ar' ? 'خسارة 🔴' : 'Loss'}</button>
+                            <button onclick=\"updateDayStatus(${index}, 'pending')\" class=\"px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'pending' ? 'bg-slate-600 text-white' : 'bg-slate-800 text-slate-400'} transition-all\">${currentLang === 'ar' ? 'معلق ⚪' : 'Reset'}</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 text-xs px-2">
-                        <div class="bg-slate-950/40 p-2 rounded-lg">
-                            <div class="text-slate-400 mb-0.5">${t.tableTargetCol}:</div>
-                            <div class="font-bold text-emerald-400" style="direction:ltr;">+${formatNumber(actualProfit)} ${unit}</div>
+                    <div class=\"grid grid-cols-2 gap-3 text-xs px-2\">
+                        <div class=\"bg-slate-950/40 p-2 rounded-lg\">
+                            <div class=\"text-slate-400 mb-0.5\">${t.tableTargetCol}:</div>
+                            <div class=\"font-bold text-emerald-400\" style=\"direction:ltr;\">+${formatNumber(actualProfit)} ${unit}</div>
                         </div>
-                        <div class="bg-slate-950/40 p-2 rounded-lg">
-                            <div class="text-slate-400 mb-0.5">${t.tableSafetyCol}:</div>
-                            <div class="font-bold text-rose-400" style="direction:ltr;">-${formatNumber(actualLoss)} ${unit}</div>
+                        <div class=\"bg-slate-950/40 p-2 rounded-lg\">
+                            <div class=\"text-slate-400 mb-0.5\">${t.tableSafetyCol}:</div>
+                            <div class=\"font-bold text-rose-400\" style=\"direction:ltr;\">-${formatNumber(actualLoss)} ${unit}</div>
                         </div>
                     </div>
-                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex justify-between items-end px-2">
-                        <span class="text-xs text-slate-400">${t.tableStartLabel} <span class="text-slate-200" style="direction:ltr; display:inline-block;">${formatNumber(row.start)}</span></span>
-                        <span class="font-black text-yellow-400 text-base tracking-wide" style="direction:ltr;">${formatNumber(row.actualEnd)} <span class="text-[10px] font-normal">${unit}</span></span>
+                    <div class=\"mt-2.5 pt-2 border-t border-slate-700/60 flex justify-between items-end px-2\">
+                        <span class=\"text-xs text-slate-400\">${t.tableStartLabel} <span class=\"text-slate-200\" style=\"direction:ltr; display:inline-block;\">${formatNumber(row.start)}</span></span>
+                        <span class=\"font-black text-yellow-400 text-base tracking-wide\" style=\"direction:ltr;\">${formatNumber(row.actualEnd)} <span class=\"text-[10px] font-normal\">${unit}</span></span>
                     </div>
                 `;
                 generatedTableContainer.appendChild(card);
@@ -1139,13 +1147,13 @@
                     let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
                     
                     tableRowsHtml += `
-                        <tr style="${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};">
-                            <td style="border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 12px 6px;">${row.day}</td>
-                            <td style="border: 1px solid ${borderMain}; color: ${textMain}; padding: 12px 6px; direction: ltr;">${formatNumber(row.start)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 12px 6px; direction: ltr;">-${formatNumber(row.lossValue)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 12px 6px; direction: ltr;">+${formatNumber(row.profitValue)}</td>
-                            <td style="border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 12px 6px; direction: ltr;">${formatNumber(row.actualEnd)}</td>
-                            <td style="border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 12px 6px; letter-spacing: normal !important; direction: rtl !important;">${statusText}</td>
+                        <tr style=\"${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};\">
+                            <td style=\"border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 12px 6px;\">${row.day}</td>
+                            <td style=\"border: 1px solid ${borderMain}; color: ${textMain}; padding: 12px 6px; direction: ltr;\">${formatNumber(row.start)}</td>
+                            <td style=\"border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 12px 6px; direction: ltr;\">-${formatNumber(row.lossValue)}</td>
+                            <td style=\"border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 12px 6px; direction: ltr;\">+${formatNumber(row.profitValue)}</td>
+                            <td style=\"border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 12px 6px; direction: ltr;\">${formatNumber(row.actualEnd)}</td>
+                            <td style=\"border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 12px 6px; letter-spacing: normal !important; direction: rtl !important;\">${statusText}</td>
                         </tr>
                     `;
                 });
@@ -1155,24 +1163,24 @@
 
                 // تم تغيير العرض إلى 100% ليأخذ المساحة بشكل تلقائي في الجوال
                 pagesHtml += `
-                    <div class="${pageBreakClass}" style="width: 100%; box-sizing: border-box; padding: 25px; min-height: 100vh; background-color: ${bgPage} !important; color: ${textMain}; font-family: 'Tajawal', sans-serif;">
-                        <div style="text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;">
-                            <h1 style="color: #10b981; font-size: 24px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: normal !important; direction: rtl !important;">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
-                            <div style="background-color: ${bgHeader} !important; border: 1px solid ${borderMain}; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;">
-                                ${t.detailsCapital} <span style="color: #f59e0b;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span> | 
-                                ${t.tableTargetLabel}: <span style="color: #10b981;" dir="ltr">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style="color: #f43f5e;" dir="ltr">${tableSafetyInput.value}%</span>
+                    <div class=\"${pageBreakClass}\" style=\"width: 100%; box-sizing: border-box; padding: 25px; min-height: 100vh; background-color: ${bgPage} !important; color: ${textMain}; font-family: 'Tajawal', sans-serif;\">
+                        <div style=\"text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;\">
+                            <h1 style=\"color: #10b981; font-size: 24px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: normal !important; direction: rtl !important;\">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
+                            <div style=\"background-color: ${bgHeader} !important; border: 1px solid ${borderMain}; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;\">
+                                ${t.detailsCapital} <span style=\"color: #f59e0b;\" dir=\"ltr\">${formatNumber(initialCapital)} ${unit}</span> | 
+                                ${t.tableTargetLabel}: <span style=\"color: #10b981;\" dir=\"ltr\">${tableTargetInput.value}%</span> | 
+                                ${t.tableSafetyLabel}: <span style=\"color: #f43f5e;\" dir=\"ltr\">${tableSafetyInput.value}%</span>
                             </div>
                         </div>
-                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: ${fontSize};">
+                        <table style=\"width: 100%; border-collapse: collapse; text-align: center; font-size: ${fontSize};\">
                             <thead>
                                 <tr>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${t.tableDayText}</th>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
-                                    <th style="background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${t.tableDayText}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
+                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1180,12 +1188,12 @@
                             </tbody>
                         </table>
                         ${isLastPage ? `
-                            <div style="margin-top: 25px; padding: 15px; border: 2px solid #10b981; text-align: ${currentLang === 'ar' ? 'right' : 'left'}; font-weight: bold; border-radius: 8px; background-color: ${bgSummary} !important; letter-spacing: normal !important; direction: rtl !important;">
-                                <span style="color: ${textMuted};">${currentLang === 'ar' ? 'صافي الأرباح الكلية المحققة للخطة:' : 'Total Expected Net Profit:'}</span> 
-                                <span style="color: #10b981; font-size: 1.3em; margin: 0 10px; font-weight: 900;" dir="ltr">${formatNumber(totalNetProfit)} ${unit}</span>
+                            <div style=\"margin-top: 25px; padding: 15px; border: 2px solid #10b981; text-align: ${currentLang === 'ar' ? 'right' : 'left'}; font-weight: bold; border-radius: 8px; background-color: ${bgSummary} !important; letter-spacing: normal !important; direction: rtl !important;\">
+                                <span style=\"color: ${textMuted};\">${currentLang === 'ar' ? 'صافي الأرباح الكلية المحققة للخطة:' : 'Total Expected Net Profit:'}</span> 
+                                <span style=\"color: #10b981; font-size: 1.3em; margin: 0 10px; font-weight: 900;\" dir=\"ltr\">${formatNumber(totalNetProfit)} ${unit}</span>
                             </div>
                         ` : `
-                            <div style="text-align:center; color:${textMuted}; margin-top:20px; font-size:12px; font-weight:bold; font-family:'Tajawal', sans-serif;">--- يُتبع في الصفحة التالية ---</div>
+                            <div style=\"text-align:center; color:${textMuted}; margin-top:20px; font-size:12px; font-weight:bold; font-family:'Tajawal', sans-serif;\">--- يُتبع في الصفحة التالية ---</div>
                         `}
                     </div>
                 `;
@@ -1193,7 +1201,7 @@
 
             // حقن الكود مباشرة في الصفحة وطباعته
             const printArea = document.getElementById('printArea');
-            printArea.innerHTML = `<div dir="${dirAtt}">${pagesHtml}</div>`;
+            printArea.innerHTML = `<div dir=\"${dirAtt}\">${pagesHtml}</div>`;
             
             // مهلة زمنية قصيرة للسماح للمتصفح برسم التنسيقات والألوان قبل استدعاء نافذة الطباعة
             setTimeout(() => {
@@ -1249,15 +1257,15 @@
             headerDiv.style.marginBottom = '8px';
             headerDiv.style.textAlign = 'center';
             headerDiv.innerHTML = `
-                <div style="color: #10b981; font-size: 20px; font-weight: 900; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; unicode-bidi: normal; direction: rtl;">
+                <div style=\"color: #10b981; font-size: 20px; font-weight: 900; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; unicode-bidi: normal; direction: rtl;\">
                     ${t.appTitle} - ${t.logPlanType}
                 </div>
-                <div style="color: #94a3b8; font-size: 13px; margin-top: 6px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
-                    ${t.detailsCapital} <span style="color: #f59e0b; font-weight: bold;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span>
+                <div style=\"color: #94a3b8; font-size: 13px; margin-top: 6px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;\">
+                    ${t.detailsCapital} <span style=\"color: #f59e0b; font-weight: bold;\" dir=\"ltr\">${formatNumber(initialCapital)} ${unit}</span>
                 </div>
-                <div style="color: #94a3b8; font-size: 13px; margin-top: 4px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
-                    ${t.tableTargetCol}: <span style="color: #10b981; font-weight: bold;" dir="ltr">${tableTargetInput.value}%</span> | 
-                    ${t.tableSafetyCol}: <span style="color: #f43f5e; font-weight: bold;" dir="ltr">${tableSafetyInput.value}%</span>
+                <div style=\"color: #94a3b8; font-size: 13px; margin-top: 4px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;\">
+                    ${t.tableTargetCol}: <span style=\"color: #10b981; font-weight: bold;\" dir=\"ltr\">${tableTargetInput.value}%</span> | 
+                    ${t.tableSafetyCol}: <span style=\"color: #f43f5e; font-weight: bold;\" dir=\"ltr\">${tableSafetyInput.value}%</span>
                 </div>
             `;
             cloneWrapper.appendChild(headerDiv);
@@ -1289,8 +1297,8 @@
             summaryDiv.style.textAlign = 'center';
             summaryDiv.style.fontFamily = "'Tajawal', sans-serif";
             summaryDiv.innerHTML = `
-                <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: normal !important; direction: rtl;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
-                <span style="color: #10b981; font-size: 24px; font-weight: 900; display: block;" dir="ltr">${formatNumber(netProfit)} ${unit}</span>
+                <span style=\"color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: normal !important; direction: rtl;\">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
+                <span style=\"color: #10b981; font-size: 24px; font-weight: 900; display: block;\" dir=\"ltr\">${formatNumber(netProfit)} ${unit}</span>
             `;
             cloneWrapper.appendChild(summaryDiv);
 
@@ -1635,7 +1643,7 @@
             if (savedData) {
                 const trades = JSON.parse(savedData);
                 if (trades.length === 0) { 
-                    logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`; 
+                    logContainer.innerHTML = `<div class=\"text-center text-slate-600 py-4 font-medium\" id=\"emptyLogMsg\">${t.emptyLog}</div>`; 
                     return; 
                 }
                 
@@ -1648,70 +1656,70 @@
                     if (trade.isTablePlan) {
                         logItem.className = "bg-slate-900/40 border border-sky-500/30 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 bg-gradient-to-l from-sky-500/10 to-transparent transition-all duration-300";
                         logItem.innerHTML = `
-                            <div class="flex justify-between font-bold text-sky-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
+                            <div class=\"flex justify-between font-bold text-sky-400 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
                                 <span>${t.logPlanType} (${trade.days} ${currentLang === 'ar' ? 'أيام' : 'Days'})</span>
-                                <span class="text-[10px] bg-sky-950/60 border border-sky-600/30 px-2 py-0.5 rounded text-sky-300">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
+                                <span class=\"text-[10px] bg-sky-950/60 border border-sky-600/30 px-2 py-0.5 rounded text-sky-300\">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
                             </div>
-                            <div class="flex justify-between text-xs mt-1 text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
+                            <div class=\"flex justify-between text-xs mt-1 text-slate-400 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
                                 <span>${t.tableTargetCol}: ${trade.targetRate}%</span>
                             </div>
-                            <div class="flex justify-between items-center mt-1 pt-1.5 border-t border-slate-800/80 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
-                                <span class="text-rose-400 font-bold">${t.tableSafetyCol}: ${trade.safetyRate}%</span>
-                                <span class="text-sky-400 font-black">${t.logFinal} ${formatNumber(trade.final)} ${trade.unit}</span>
+                            <div class=\"flex justify-between items-center mt-1 pt-1.5 border-t border-slate-800/80 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
+                                <span class=\"text-rose-400 font-bold\">${t.tableSafetyCol}: ${trade.safetyRate}%</span>
+                                <span class=\"text-sky-400 font-black\">${t.logFinal} ${formatNumber(trade.final)} ${trade.unit}</span>
                             </div>
-                            <div class="text-right mt-1">
-                                <button class="text-[10px] font-bold text-sky-500 hover:text-sky-400" onclick="toggleExpandTrade(${trade.id})">${isExpanded ? t.detailsHide : t.detailsShow}</button>
+                            <div class=\"text-right mt-1\">
+                                <button class=\"text-[10px] font-bold text-sky-500 hover:text-sky-400\" onclick=\"toggleExpandTrade(${trade.id})\">${isExpanded ? t.detailsHide : t.detailsShow}</button>
                             </div>
-                            <div class="${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg">
-                                <button class="w-full bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active" onclick="restoreTradeToCalculator(${trade.id})">${t.restoreStateBtn}</button>
+                            <div class=\"${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg\">
+                                <button class=\"w-full bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active\" onclick=\"restoreTradeToCalculator(${trade.id})\">${t.restoreStateBtn}</button>
                             </div>
                         `;
                     } else if (trade.isGrowth) {
                         logItem.className = "bg-slate-900/40 border border-yellow-500/20 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 bg-gradient-to-l from-yellow-500/5 to-transparent transition-all duration-300";
                         logItem.innerHTML = `
-                            <div class="flex justify-between font-bold text-yellow-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
+                            <div class=\"flex justify-between font-bold text-yellow-400 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
                                 <span>${t.logDaysType}: ${trade.isPercent ? trade.inputVal+'%' : formatNumber(parseFloat(trade.inputVal))+' '+trade.unit}</span>
-                                <span class="text-[10px] bg-yellow-950/60 border border-yellow-600/30 px-2 py-0.5 rounded text-yellow-300 font-medium">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
+                                <span class=\"text-[10px] bg-yellow-950/60 border border-yellow-600/30 px-2 py-0.5 rounded text-yellow-300 font-medium\">${trade.isCompound ? t.statusCompound : t.statusSimple}</span>
                             </div>
-                            <div class="flex justify-between text-xs mt-1 text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
+                            <div class=\"flex justify-between text-xs mt-1 text-slate-400 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
                                 <span>${t.logDays} ${trade.days}</span>
                             </div>
-                            <div class="flex justify-between items-center mt-1 pt-1.5 border-t border-slate-800/80 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
-                                <span class="text-emerald-400 font-bold">${t.logProfit} ${formatNumber(trade.profit)} ${trade.unit}</span>
-                                <span class="text-yellow-400 font-black">${t.logFinal} ${formatNumber(trade.final)} ${trade.unit}</span>
+                            <div class=\"flex justify-between items-center mt-1 pt-1.5 border-t border-slate-800/80 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
+                                <span class=\"text-emerald-400 font-bold\">${t.logProfit} ${formatNumber(trade.profit)} ${trade.unit}</span>
+                                <span class=\"text-yellow-400 font-black\">${t.logFinal} ${formatNumber(trade.final)} ${trade.unit}</span>
                             </div>
-                            <div class="text-right mt-1">
-                                <button class="text-[10px] font-bold text-yellow-500 hover:text-yellow-400 transition-colors" onclick="toggleExpandTrade(${trade.id})">${isExpanded ? t.detailsHide : t.detailsShow}</button>
+                            <div class=\"text-right mt-1\">
+                                <button class=\"text-[10px] font-bold text-yellow-500 hover:text-yellow-400 transition-colors\" onclick=\"toggleExpandTrade(${trade.id})\">${isExpanded ? t.detailsHide : t.detailsShow}</button>
                             </div>
-                            <div class="${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg">
-                                <button class="w-full mt-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active" onclick="restoreTradeToCalculator(${trade.id})">${t.restoreStateBtn}</button>
+                            <div class=\"${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg\">
+                                <button class=\"w-full mt-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active\" onclick=\"restoreTradeToCalculator(${trade.id})\">${t.restoreStateBtn}</button>
                             </div>
                         `;
                     } else {
                         logItem.className = "bg-slate-900/40 border border-slate-800 rounded-xl p-3 flex flex-col gap-1 text-slate-300 mb-2 transition-all duration-300";
                         logItem.innerHTML = `
-                            <div class="flex justify-between font-bold text-slate-400 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
+                            <div class=\"flex justify-between font-bold text-slate-400 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
                                 <span>${t.logCapital} ${formatNumber(trade.total)} ${trade.unit}</span>
-                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">${t.logType} ${trade.isPercent ? t.typePercent+' ('+trade.inputVal+'%)' : t.typeFixed}</span>
+                                <span class=\"text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400\">${t.logType} ${trade.isPercent ? t.typePercent+' ('+trade.inputVal+'%)' : t.typeFixed}</span>
                             </div>
-                            <div class="flex justify-between items-center mt-1 cursor-pointer" onclick="toggleExpandTrade(${trade.id})">
-                                <span class="text-emerald-400 font-semibold">${t.logProfit} ${formatNumber(trade.profit)} ${trade.unit}</span>
-                                <span class="text-rose-400 font-semibold">${t.logLoss} ${formatNumber(trade.loss)} ${trade.unit}</span>
+                            <div class=\"flex justify-between items-center mt-1 cursor-pointer\" onclick=\"toggleExpandTrade(${trade.id})\">
+                                <span class=\"text-emerald-400 font-semibold\">${t.logProfit} ${formatNumber(trade.profit)} ${trade.unit}</span>
+                                <span class=\"text-rose-400 font-semibold\">${t.logLoss} ${formatNumber(trade.loss)} ${trade.unit}</span>
                             </div>
-                            <div class="text-right mt-1">
-                                <button class="text-[10px] font-bold text-slate-500 hover:text-slate-400 transition-colors" onclick="toggleExpandTrade(${trade.id})">${isExpanded ? t.detailsHide : t.detailsShow}</button>
+                            <div class=\"text-right mt-1\">
+                                <button class=\"text-[10px] font-bold text-slate-500 hover:text-slate-400 transition-colors\" onclick=\"toggleExpandTrade(${trade.id})\">${isExpanded ? t.detailsHide : t.detailsShow}</button>
                             </div>
-                            <div class="${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg">
-                                <button class="w-full mt-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active" onclick="restoreTradeToCalculator(${trade.id})">${t.restoreStateBtn}</button>
+                            <div class=\"${isExpanded ? 'block' : 'hidden'} mt-3 pt-3 border-t border-dashed border-slate-800 text-xs space-y-1.5 text-slate-400 bg-slate-950/30 p-2.5 rounded-lg\">
+                                <button class=\"w-full mt-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 tap-active\" onclick=\"restoreTradeToCalculator(${trade.id})\">${t.restoreStateBtn}</button>
                             </div>
                         `;
                     }
                     logContainer.appendChild(logItem);
                 });
             } else { 
-                logContainer.innerHTML = `<div class="text-center text-slate-600 py-4 font-medium" id="emptyLogMsg">${t.emptyLog}</div>`; 
+                logContainer.innerHTML = `<div class=\"text-center text-slate-600 py-4 font-medium\" id=\"emptyLogMsg\">${t.emptyLog}</div>`; 
             }
         }
 
