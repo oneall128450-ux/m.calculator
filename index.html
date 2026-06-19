@@ -67,51 +67,48 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
         /* ======================================================== */
-        /* الطباعة المباشرة (Direct Print CSS) */
+        /* الطباعة المباشرة المحدثة والمحمية ضد الألوان السوداء */
         /* ======================================================== */
         #printArea { display: none; }
         
-@media print {
-    /* إخفاء التطبيق بالكامل ما عدا ساحة الطباعة المخصصة */
-    #mainAppContent, .fixed, .modal, button, header, nav, #printSettingsModal {
-        display: none !important;
-    }
-    #printArea {
-        display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* فرض الألوان بدقة شديدة ومنع اختفاء النصوص والشاشات السوداء */
-    html, body {
-        background-color: var(--p-bg) !important;
-        color: var(--p-text) !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    .print-page {
-        page-break-after: always !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        box-sizing: border-box;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 12mm 10mm !important; /* هوامش مثالية لمنع تجاوز الصفحات */
-        background-color: var(--p-bg) !important;
-        color: var(--p-text) !important;
-    }
-
-    tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-}
-        
+        @media print {
+            @page { margin: 0; }
+            body > *:not(#printArea) { display: none !important; }
+            body, html { 
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: var(--p-bg) !important;
+                color: var(--p-text) !important;
+                height: auto !important;
+            }
+            #printArea { 
+                display: block !important; 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print-page {
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                box-sizing: border-box;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 12mm 10mm !important; /* هوامش متزنة لمنع انفصال الأوراق */
+                background-color: var(--p-bg) !important;
+                color: var(--p-text) !important;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
 
         /* حركات الأنيميشن */
         @keyframes slideInUp {
@@ -140,87 +137,79 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- نافذة إعدادات الطباعة والـ PDF (مُصلحة بالكامل للشاشات الصغيرة) -->
+    <!-- نافذة إعدادات الطباعة والـ PDF الاحترافية الجديدة مع العرض المسبق التفاعلي -->
     <!-- ============================================================== -->
-    <div id="printSettingsModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4 lang-ar animate-fade-in">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <span>📄 إعدادات تصدير وتوليد PDF</span>
-            </h3>
-            <button id="closePrintModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
+    <div id="printSettingsModal" class="fixed inset-0 z-[80] hidden">
+        <!-- الخلفية المعتمة -->
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" id="closeModalBg"></div>
         
-        <div class="p-5 overflow-y-auto space-y-4 text-sm text-slate-300">
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">حجم الخط والتقسيم الذكي للصفحات:</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" data-size="small" class="font-size-btn p-2 rounded-xl border border-blue-500 bg-blue-500/10 text-blue-400 font-medium transition flex flex-col items-center justify-center min-h-[55px]">
-                        <span class="text-sm font-bold">صغير</span>
-                        <span class="text-[9px] text-slate-400 opacity-80">(صفحة واحدة)</span>
-                    </button>
-                    <button type="button" data-size="medium" class="font-size-btn p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 font-medium transition flex flex-col items-center justify-center min-h-[55px] hover:border-slate-700">
-                        <span class="text-sm font-bold">متوسط</span>
-                        <span class="text-[9px] text-slate-500">(صفحتان)</span>
-                    </button>
-                    <button type="button" data-size="large" class="font-size-btn p-2 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 font-medium transition flex flex-col items-center justify-center min-h-[55px] hover:border-slate-700">
-                        <span class="text-sm font-bold">كبير</span>
-                        <span class="text-[9px] text-slate-500">(٣ صفحات)</span>
-                    </button>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">مظهر لون ملف الـ PDF:</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" data-theme="light" class="print-theme-btn p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 font-medium transition flex items-center justify-center gap-2 hover:border-slate-700">
-                        <span class="w-3 h-3 rounded-full bg-white border border-slate-400"></span>
-                        <span class="text-xs">مظهر فاتح للورق</span>
-                    </button>
-                    <button type="button" data-theme="dark" class="print-theme-btn p-2.5 rounded-xl border border-blue-500 bg-blue-500/10 text-blue-400 font-medium transition flex items-center justify-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-slate-900 border border-slate-700"></span>
-                        <span class="text-xs">مظهر داكن فخم</span>
+        <!-- حاوية التوسيط المرنة -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            
+            <!-- جسم النافذة المحدث بالكامل -->
+            <div class="relative w-full max-w-sm glass-card border border-slate-700/80 rounded-2xl shadow-2xl modal-animate flex flex-col max-h-[88vh]">
+                
+                <!-- 1. الترويسة -->
+                <div class="flex justify-between items-center border-b border-slate-700/60 p-4 shrink-0 bg-slate-900/60 rounded-t-2xl">
+                    <h3 class="text-emerald-400 font-bold flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span id="uiPrintModalTitle">إعدادات الطباعة والـ PDF</span>
+                    </h3>
+                    <button id="closeModalBtn" class="text-slate-400 hover:text-rose-400 p-1 bg-slate-800/50 rounded-lg tap-active transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-            </div>
 
-            <input type="hidden" id="fontSizeSelected" value="small">
-            <input type="hidden" id="themeSelected" value="dark">
-
-            <div class="pt-2 border-t border-slate-800">
-                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">العرض المسبق لهيكل صفحات الـ PDF قبل الحفظ:</label>
-                <div id="printPreviewVisualContainer" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 justify-center items-center min-h-[150px]">
-                    </div>
-            </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950 flex gap-3">
-            <button id="cancelPrintBtn" class="flex-1 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-medium hover:bg-slate-800 transition">إلغاء</button>
-            <button id="executePrintBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold shadow-lg shadow-blue-500/20 hover:from-blue-500 hover:to-indigo-500 transition">توليد وطباعة PDF</button>
-        </div>
-    </div>
-</div>
-
-
-                    <!-- إعدادات المظهر -->
+                <!-- 2. المحتوى الأوسط القابل للتمرير -->
+                <div class="p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-slate-900/20 text-slate-300">
+                    
+                    <!-- إعدادات حجم الخط والتقسيم التلقائي -->
                     <div>
-                        <label id="uiPrintThemeLabel" class="text-xs font-medium text-slate-300 block mb-2">مظهر التصدير (Theme):</label>
+                        <label id="uiPrintFontLabel" class="text-xs font-semibold text-slate-400 block mb-2 uppercase tracking-wider">حجم نص الجدول والتقسيم الذكي:</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="font-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center min-h-[50px]" data-val="small">
+                                <span>صغير</span>
+                                <span class="text-[8px] opacity-80">(صفحة واحدة)</span>
+                            </button>
+                            <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center min-h-[50px]" data-val="medium">
+                                <span>متوسط</span>
+                                <span class="text-[8px] opacity-60">(صفحتان)</span>
+                            </button>
+                            <button class="font-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center min-h-[50px]" data-val="large">
+                                <span>كبير</span>
+                                <span class="text-[8px] opacity-60">(٣ صفحات)</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="fontSizeSelected" value="small">
+                    </div>
+
+                    <!-- إعدادات المظهر المطور لمنع أخطاء الشاشة السوداء -->
+                    <div>
+                        <label id="uiPrintThemeLabel" class="text-xs font-semibold text-slate-400 block mb-2 uppercase tracking-wider">مظهر التصدير (Theme):</label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button class="theme-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="dark">
+                            <button class="theme-btn tap-active bg-slate-800 border border-emerald-500/50 text-emerald-400 py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 transition-all" data-val="dark">
+                                <span class="w-3 h-3 rounded-full bg-slate-900 border border-slate-700"></span>
                                 🌙 داكن (للنوته)
                             </button>
-                            <button class="theme-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-1 transition-all" data-val="light">
+                            <button class="theme-btn tap-active bg-slate-800/60 border border-slate-700/50 text-slate-400 py-2.5 rounded-xl text-xs font-bold flex justify-center items-center gap-2 transition-all" data-val="light">
+                                <span class="w-3 h-3 rounded-full bg-white border border-slate-300"></span>
                                 ☀️ فاتح (للورق)
                             </button>
                         </div>
                         <input type="hidden" id="themeSelected" value="dark">
                     </div>
 
+                    <!-- ميزة العرض المسبق التفاعلي والذكي للـ PDF (Live Preview) -->
+                    <div class="pt-3 border-t border-slate-800">
+                        <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">شكل صفحات الـ PDF المتوقعة:</label>
+                        <div id="printPreviewVisualContainer" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-wrap gap-3 justify-center items-center min-h-[140px]">
+                            <!-- يتم ملؤه عبر الـ JS تلقائياً -->
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- 3. التذييل وزر التنفيذ (ثابت - لا ينضغط shrink-0) -->
+                <!-- 3. التذييل وزر التنفيذ -->
                 <div class="p-4 border-t border-slate-700/60 shrink-0 bg-slate-900/60 rounded-b-2xl">
                     <button id="executePrintBtn" class="tap-active w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -578,8 +567,8 @@
                 statusLoss: "ضرب الخسارة",
                 statusPending: "معلق",
                 printModalTitle: "إعدادات الطباعة والـ PDF",
-                printDaysLabel: "عدد الأيام لكل صفحة (لترتيب الـ PDF):",
-                printFontLabel: "حجم نص الجدول:",
+                printDaysLabel: "عدد الأيام لكل صفحة:",
+                printFontLabel: "حجم نص الجدول والتقسيم الذكي:",
                 printThemeLabel: "مظهر التصدير (Theme):",
                 executePrintBtnText: "تصدير وتوليد الـ PDF 📄"
             },
@@ -657,8 +646,8 @@
                 statusLoss: "Stop Loss Hit",
                 statusPending: "Pending",
                 printModalTitle: "Print & PDF Settings",
-                printDaysLabel: "Days per page (for PDF pagination):",
-                printFontLabel: "Table Font Size:",
+                printDaysLabel: "Days per page:",
+                printFontLabel: "Table Font Size & Smart Division:",
                 printThemeLabel: "Export Theme:",
                 executePrintBtnText: "Generate PDF 📄"
             }
@@ -712,7 +701,6 @@
         const closeModalBtn = document.getElementById('closeModalBtn');
         const closeModalBg = document.getElementById('closeModalBg');
         const executePrintBtn = document.getElementById('executePrintBtn');
-        const daysBtns = document.querySelectorAll('.days-btn');
         const fontBtns = document.querySelectorAll('.font-btn');
         const themeBtns = document.querySelectorAll('.theme-btn');
 
@@ -846,7 +834,6 @@
             document.getElementById('uiExportImgBtn').innerText = t.exportImgBtn;
             
             document.getElementById('uiPrintModalTitle').innerText = t.printModalTitle;
-            document.getElementById('uiPrintDaysLabel').innerText = t.printDaysLabel;
             document.getElementById('uiPrintFontLabel').innerText = t.printFontLabel;
             document.getElementById('uiPrintThemeLabel').innerText = t.printThemeLabel;
             document.getElementById('uiExecutePrintBtnText').innerText = t.executePrintBtnText;
@@ -1075,9 +1062,54 @@
 
 
         // ========================================================
-        // وظائف نافذة الطباعة والـ PDF المباشر (Direct Print Engine)
+        // وظائف نافذة المعاينة الحية وإعدادات الطباعة والـ PDF الذكية
         // ========================================================
         
+        // دالة تحديث المعاينة الحية المصغرة داخل نافذة الطباعة
+        function updatePrintPreview() {
+            const size = document.getElementById('fontSizeSelected').value;
+            const theme = document.getElementById('themeSelected').value;
+            const container = document.getElementById('printPreviewVisualContainer');
+            
+            if (!container) return;
+            container.innerHTML = '';
+            
+            let pagesCount = 1;
+            if (size === 'small') pagesCount = 1;
+            else if (size === 'medium') pagesCount = 2;
+            else if (size === 'large') pagesCount = 3;
+            
+            const isLight = (theme === 'light');
+            const bgClass = isLight ? 'bg-white border-slate-300' : 'bg-slate-950 border-slate-800';
+            const textClass = isLight ? 'text-slate-800' : 'text-slate-300';
+            const lineClass = isLight ? 'bg-slate-200' : 'bg-slate-800';
+            const accentLine = isLight ? 'bg-blue-100 border-blue-200' : 'bg-blue-950/40 border-blue-900/50';
+
+            for (let i = 1; i <= pagesCount; i++) {
+                const pageBox = document.createElement('div');
+                pageBox.className = `w-[85px] h-[120px] rounded-lg border shadow-lg relative flex flex-col p-2 transition-all duration-300 ${bgClass}`;
+                
+                pageBox.innerHTML = `
+                    <div class="text-[6px] font-bold ${textClass} mb-1 border-b pb-0.5 border-slate-700 border-dashed flex justify-between items-center">
+                        <span>ورقة ${i}</span>
+                        <span class="text-[5px] text-blue-500 font-extrabold uppercase">${size === 'small' ? 'صغير' : size === 'medium' ? 'وسط' : 'كبير'}</span>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <div class="h-1.5 ${lineClass} rounded-sm w-full"></div>
+                        <div class="h-1 ${lineClass} rounded-sm w-5/6"></div>
+                        <div class="h-1 ${lineClass} rounded-sm w-full"></div>
+                        <div class="h-1 ${lineClass} rounded-sm w-4/5"></div>
+                    </div>
+                    ${(i === pagesCount) ? `
+                        <div class="h-3.5 ${accentLine} rounded border w-full mt-1 flex items-center justify-center">
+                            <span class="text-[5px] text-blue-400 font-bold">الملخص المالي 📊</span>
+                        </div>
+                    ` : ''}
+                `;
+                container.appendChild(pageBox);
+            }
+        }
+
         openPrintModalBtn.addEventListener('click', () => {
             const initialCapital = getCapital();
             if (currentTablePlanData.length === 0 || initialCapital <= 0) {
@@ -1085,6 +1117,7 @@
                 return;
             }
             printSettingsModal.classList.remove('hidden');
+            updatePrintPreview(); // تشغيل المعاينة بمجرد الفتح
         });
 
         function hidePrintModal() {
@@ -1094,20 +1127,7 @@
         closeModalBtn.addEventListener('click', hidePrintModal);
         closeModalBg.addEventListener('click', hidePrintModal);
 
-        // تخصيص الأيام في الطباعة
-        daysBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                daysBtns.forEach(b => {
-                    b.classList.remove('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
-                    b.classList.add('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
-                });
-                btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
-                btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
-                document.getElementById('daysPerPageSelected').value = btn.getAttribute('data-val');
-            });
-        });
-
-        // تخصيص الخط في الطباعة
+        // تخصيص الخط والتقسيم الذكي في الطباعة
         fontBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 fontBtns.forEach(b => {
@@ -1117,6 +1137,7 @@
                 btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
                 btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
                 document.getElementById('fontSizeSelected').value = btn.getAttribute('data-val');
+                updatePrintPreview(); // تحديث فوري للمعاينة
             });
         });
 
@@ -1130,10 +1151,11 @@
                 btn.classList.add('bg-slate-800', 'border-emerald-500/50', 'text-emerald-400');
                 btn.classList.remove('bg-slate-800/60', 'border-slate-700/50', 'text-slate-400');
                 document.getElementById('themeSelected').value = btn.getAttribute('data-val');
+                updatePrintPreview(); // تحديث فوري للمعاينة
             });
         });
 
-        // الطباعة المباشرة من نفس الصفحة لتجنب تدمير التنسيقات على الجوال
+        // الطباعة المباشرة وحفظ الـ PDF بجودة ناصعة وبلا مشاكل اللون الأسود
         executePrintBtn.addEventListener('click', () => {
             hidePrintModal();
             const initialCapital = getCapital();
@@ -1141,80 +1163,100 @@
             const unit = isUSD ? '$' : (currentLang === 'ar' ? 'ر.س' : 'SAR');
             const dirAtt = currentLang === 'ar' ? 'rtl' : 'ltr';
             
-            const daysPerPage = parseInt(document.getElementById('daysPerPageSelected').value);
-            const fontSize = document.getElementById('fontSizeSelected').value;
+            const size = document.getElementById('fontSizeSelected').value;
             const theme = document.getElementById('themeSelected').value;
+
+            let daysPerPage = 20;
+            let fontSizePx = '11px';
+            
+            if (size === 'small') {
+                daysPerPage = 20; // 20 يوم بالضبط في ورقة واحدة مكثفة
+                fontSizePx = '11.5px'; 
+            } else if (size === 'medium') {
+                daysPerPage = 10; // تقسيم تلقائي متزن لصفحتين
+                fontSizePx = '13.5px';
+            } else if (size === 'large') {
+                daysPerPage = 7; // تقسيم كبير جداً ومريح لـ ٣ صفحات
+                fontSizePx = '15.5px';
+            }
             
             const totalNetProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
-            // تحديد ألوان الطباعة الصارمة (لن يتجاوزها المتصفح)
+            // ضبط ألوان قوية ومحددة لإنقاذ الطابعة وحماية النصوص من الاختفاء والظلال السوداء
             let bgPage, textMain, textMuted, bgHeader, borderMain, rowZebra, bgSummary, rowProfit, rowLoss;
             if (theme === 'dark') {
-                bgPage = '#0f172a'; textMain = '#cbd5e1'; textMuted = '#94a3b8';
+                bgPage = '#0f172a'; textMain = '#f8fafc'; textMuted = '#94a3b8';
                 bgHeader = '#1e293b'; borderMain = '#334155'; rowZebra = '#1e293b';
-                bgSummary = 'rgba(16, 185, 129, 0.05)';
+                bgSummary = 'rgba(16, 185, 129, 0.08)';
                 rowProfit = 'rgba(16, 185, 129, 0.15)'; rowLoss = 'rgba(244, 63, 94, 0.15)';
             } else {
-                bgPage = '#ffffff'; textMain = '#111827'; textMuted = '#4b5563';
-                bgHeader = '#f3f4f6'; borderMain = '#d1d5db'; rowZebra = '#f9fafb';
+                bgPage = '#ffffff'; textMain = '#0f172a'; textMuted = '#475569';
+                bgHeader = '#f1f5f9'; borderMain = '#cbd5e1'; rowZebra = '#f8fafc';
                 bgSummary = '#f0fdf4';
                 rowProfit = '#ecfdf5'; rowLoss = '#fef2f2';
             }
 
+            // تزويد الـ CSS بمتغيرات الألوان الحقيقية للطباعة
+            const printArea = document.getElementById('printArea');
+            printArea.style.setProperty('--p-bg', bgPage);
+            printArea.style.setProperty('--p-text', textMain);
+
             let pagesHtml = '';
-            const totalPages = Math.ceil(currentTablePlanData.length / daysPerPage);
+            const totalDays = currentTablePlanData.length;
 
-            for (let p = 0; p < totalPages; p++) {
-                const startIndex = p * daysPerPage;
-                const endIndex = Math.min(startIndex + daysPerPage, currentTablePlanData.length);
-                const pageRows = currentTablePlanData.slice(startIndex, endIndex);
-
-                let tableRowsHtml = '';
+            for (let startIdx = 0; startIdx < totalDays; startIdx += daysPerPage) {
+                const chunk = currentTablePlanData.slice(startIdx, startIdx + daysPerPage);
+                const isLastPage = (startIdx + daysPerPage >= totalDays);
+                const pageNumber = Math.floor(startIdx / daysPerPage) + 1;
                 
-                pageRows.forEach((row, i) => {
+                let tableRowsHtml = '';
+                chunk.forEach((row, rIdx) => {
                     let statusText, statusColor, rowBgStyle = '';
                     if (row.status === 'profit') { statusText = t.statusWin; statusColor = '#10b981'; rowBgStyle = `background-color: ${rowProfit} !important;`; }
                     else if (row.status === 'loss') { statusText = t.statusLoss; statusColor = '#f43f5e'; rowBgStyle = `background-color: ${rowLoss} !important;`; }
                     else { statusText = t.statusPending; statusColor = textMuted; }
                     
-                    let baseBg = i % 2 === 0 ? `background-color: ${rowZebra} !important;` : `background-color: transparent !important;`;
+                    let baseBg = rIdx % 2 === 0 ? `background-color: ${rowZebra} !important;` : `background-color: transparent !important;`;
                     let finalStyle = rowBgStyle !== '' ? rowBgStyle : baseBg;
                     
                     tableRowsHtml += `
-                        <tr style=\"${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};\">
-                            <td style=\"border: 1px solid ${borderMain}; font-weight: bold; color: #38bdf8; padding: 12px 6px;\">${row.day}</td>
-                            <td style=\"border: 1px solid ${borderMain}; color: ${textMain}; padding: 12px 6px; direction: ltr;\">${formatNumber(row.start)}</td>
-                            <td style=\"border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 12px 6px; direction: ltr;\">-${formatNumber(row.lossValue)}</td>
-                            <td style=\"border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 12px 6px; direction: ltr;\">+${formatNumber(row.profitValue)}</td>
-                            <td style=\"border: 1px solid ${borderMain}; font-weight: 900; color: #f59e0b; padding: 12px 6px; direction: ltr;\">${formatNumber(row.actualEnd)}</td>
-                            <td style=\"border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 12px 6px; letter-spacing: normal !important; direction: rtl !important;\">${statusText}</td>
+                        <tr style="${finalStyle} height: auto; border-bottom: 1px solid ${borderMain};">
+                            <td style="border: 1px solid ${borderMain}; font-weight: bold; padding: 10px 4px;">${row.day}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${textMain}; padding: 10px 4px; direction: ltr;">${formatNumber(row.start)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #f43f5e; font-weight: bold; padding: 10px 4px; direction: ltr;">-${formatNumber(row.lossValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: #10b981; font-weight: bold; padding: 10px 4px; direction: ltr;">+${formatNumber(row.profitValue)}</td>
+                            <td style="border: 1px solid ${borderMain}; font-weight: 900; padding: 10px 4px; direction: ltr;">${formatNumber(row.actualEnd)}</td>
+                            <td style="border: 1px solid ${borderMain}; color: ${statusColor}; font-weight: bold; padding: 10px 4px;">${statusText}</td>
                         </tr>
                     `;
                 });
 
-                const isLastPage = (p === totalPages - 1);
                 const pageBreakClass = isLastPage ? '' : 'page-break-after';
 
-                // تم تغيير العرض إلى 100% ليأخذ المساحة بشكل تلقائي في الجوال
                 pagesHtml += `
-                    <div class=\"${pageBreakClass}\" style=\"width: 100%; box-sizing: border-box; padding: 25px; min-height: 100vh; background-color: ${bgPage} !important; color: ${textMain}; font-family: 'Tajawal', sans-serif;\">
-                        <div style=\"text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 20px;\">
-                            <h1 style=\"color: #10b981; font-size: 24px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: normal !important; direction: rtl !important;\">${t.appTitle} - ${t.logPlanType} (ص ${p + 1})</h1>
-                            <div style=\"background-color: ${bgHeader} !important; border: 1px solid ${borderMain}; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block; color: ${textMain}; letter-spacing: normal !important; direction: rtl !important;\">
-                                ${t.detailsCapital} <span style=\"color: #f59e0b;\" dir=\"ltr\">${formatNumber(initialCapital)} ${unit}</span> | 
-                                ${t.tableTargetLabel}: <span style=\"color: #10b981;\" dir=\"ltr\">${tableTargetInput.value}%</span> | 
-                                ${t.tableSafetyLabel}: <span style=\"color: #f43f5e;\" dir=\"ltr\">${tableSafetyInput.value}%</span>
+                    <div class="${pageBreakClass} print-page" style="background-color: ${bgPage} !important; color: ${textMain} !important; font-size: ${fontSizePx};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-b: 2px solid ${borderMain}; padding-bottom: 6px;">
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.3em; font-weight: bold; color: ${theme === 'light' ? '#2563eb' : '#60a5fa'}">
+                                    ${t.appTitle} - ${t.logPlanType}
+                                </h2>
+                                <p style="margin: 2px 0 0 0; font-size: 0.8em; opacity: 0.7;">
+                                    تاريخ التقارير: ${new Date().toLocaleDateString('ar-EG')}
+                                </p>
+                            </div>
+                            <div style="font-size: 0.85em; font-weight: bold; opacity: 0.8;">
+                                صفحة ${pageNumber}
                             </div>
                         </div>
-                        <table style=\"width: 100%; border-collapse: collapse; text-align: center; font-size: ${fontSize};\">
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: ${fontSizePx}; background-color: ${bgPage}; color: ${textMain};">
                             <thead>
-                                <tr>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${t.tableDayText}</th>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'البداية' : 'Start'}</th>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الخسارة' : 'Safety'}</th>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الهدف' : 'Target'}</th>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'النهاية' : 'End'}</th>
-                                    <th style=\"background-color: ${bgHeader} !important; color: ${textMain}; border: 1px solid ${borderMain}; padding: 12px 5px; font-weight: bold; letter-spacing: normal !important; direction: rtl !important;\">${currentLang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <tr style="background-color: ${theme === 'light' ? '#2563eb' : '#1e3a8a'} !important; color: #ffffff !important; font-weight: bold;">
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">${t.tableDayText}</th>
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">رأس المال</th>
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">الخسارة (الأمان)</th>
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">الهدف اليومي</th>
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">الرصيد القادم</th>
+                                    <th style="border: 1px solid ${borderMain}; padding: 8px 4px;">الحالة</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1222,26 +1264,38 @@
                             </tbody>
                         </table>
                         ${isLastPage ? `
-                            <div style=\"margin-top: 25px; padding: 15px; border: 2px solid #10b981; text-align: ${currentLang === 'ar' ? 'right' : 'left'}; font-weight: bold; border-radius: 8px; background-color: ${bgSummary} !important; letter-spacing: normal !important; direction: rtl !important;\">
-                                <span style=\"color: ${textMuted};\">${currentLang === 'ar' ? 'صافي الأرباح الكلية المحققة للخطة:' : 'Total Expected Net Profit:'}</span> 
-                                <span style=\"color: #10b981; font-size: 1.3em; margin: 0 10px; font-weight: 900;\" dir=\"ltr\">${formatNumber(totalNetProfit)} ${unit}</span>
+                            <div style="margin-top: 15px; padding: 12px; border: 2px solid #10b981; text-align: right; border-radius: 8px; background-color: ${bgSummary} !important;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 1em; font-weight: bold; color: ${theme === 'light' ? '#1e40af' : '#60a5fa'}; border-b: 1px solid ${borderMain}; padding-bottom: 3px;">
+                                    📊 الملخص المالي النهائي للخطة
+                                </h3>
+                                <div style="display: flex; justify-content: space-between; gap: 8px; text-align: center;">
+                                    <div style="flex: 1; background-color: ${bgPage}; padding: 6px; border-radius: 6px; border: 1px solid ${borderMain};">
+                                        <span style="font-size: 0.75em; opacity: 0.7; display: block; margin-bottom: 2px;">رأس المال الأول</span>
+                                        <strong style="font-size: 0.95em; color: ${textMain};">${formatNumber(initialCapital)}</strong>
+                                    </div>
+                                    <div style="flex: 1; background-color: ${bgPage}; padding: 6px; border-radius: 6px; border: 1px solid ${borderMain};">
+                                        <span style="font-size: 0.75em; opacity: 0.7; display: block; margin-bottom: 2px;">صافي الأرباح</span>
+                                        <strong style="font-size: 0.95em; color: #10b981;">${formatNumber(totalNetProfit)}</strong>
+                                    </div>
+                                    <div style="flex: 1; background-color: ${bgPage}; padding: 6px; border-radius: 6px; border: 1px solid ${borderMain};">
+                                        <span style="font-size: 0.75em; opacity: 0.7; display: block; margin-bottom: 2px;">الحساب النهائي</span>
+                                        <strong style="font-size: 0.95em; color: ${theme === 'light' ? '#2563eb' : '#60a5fa'};">${formatNumber(currentTablePlanData[currentTablePlanData.length - 1].actualEnd)}</strong>
+                                    </div>
+                                </div>
                             </div>
                         ` : `
-                            <div style=\"text-align:center; color:${textMuted}; margin-top:20px; font-size:12px; font-weight:bold; font-family:'Tajawal', sans-serif;\">--- يُتبع في الصفحة التالية ---</div>
+                            <div style="text-align:center; color:${textMuted}; margin-top:12px; font-size:11px; font-weight:bold;">--- يُتبع في الصفحة التالية ---</div>
                         `}
                     </div>
                 `;
             }
 
-            // حقن الكود مباشرة في الصفحة وطباعته
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = `<div dir=\"${dirAtt}\">${pagesHtml}</div>`;
+            // حقن الكود مباشرة في مساحة الطباعة
+            printArea.innerHTML = `<div dir="${dirAtt}">${pagesHtml}</div>`;
             
-            // مهلة زمنية قصيرة للسماح للمتصفح برسم التنسيقات والألوان قبل استدعاء نافذة الطباعة
+            // تشغيل مهلة قصيرة لضمان استقرار ورسم التنسيقات على الجوال ثم تشغيل محرك طباعة النظام للـ PDF
             setTimeout(() => {
                 window.print();
-                
-                // مسح منطقة الطباعة بعد الإنتهاء (تقريبياً بعد عودة المستخدم من نافذة الطباعة)
                 setTimeout(() => {
                     printArea.innerHTML = '';
                 }, 1000);
@@ -1291,15 +1345,15 @@
             headerDiv.style.marginBottom = '8px';
             headerDiv.style.textAlign = 'center';
             headerDiv.innerHTML = `
-                <div style=\"color: #10b981; font-size: 20px; font-weight: 900; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; unicode-bidi: normal; direction: rtl;\">
+                <div style="color: #10b981; font-size: 20px; font-weight: 900; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; unicode-bidi: normal; direction: rtl;">
                     ${t.appTitle} - ${t.logPlanType}
                 </div>
-                <div style=\"color: #94a3b8; font-size: 13px; margin-top: 6px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;\">
-                    ${t.detailsCapital} <span style=\"color: #f59e0b; font-weight: bold;\" dir=\"ltr\">${formatNumber(initialCapital)} ${unit}</span>
+                <div style="color: #94a3b8; font-size: 13px; margin-top: 6px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
+                    ${t.detailsCapital} <span style="color: #f59e0b; font-weight: bold;" dir="ltr">${formatNumber(initialCapital)} ${unit}</span>
                 </div>
-                <div style=\"color: #94a3b8; font-size: 13px; margin-top: 4px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;\">
-                    ${t.tableTargetCol}: <span style=\"color: #10b981; font-weight: bold;\" dir=\"ltr\">${tableTargetInput.value}%</span> | 
-                    ${t.tableSafetyCol}: <span style=\"color: #f43f5e; font-weight: bold;\" dir=\"ltr\">${tableSafetyInput.value}%</span>
+                <div style="color: #94a3b8; font-size: 13px; margin-top: 4px; font-family: 'Tajawal', sans-serif; letter-spacing: normal !important; direction: rtl;">
+                    ${t.tableTargetCol}: <span style="color: #10b981; font-weight: bold;" dir="ltr">${tableTargetInput.value}%</span> | 
+                    ${t.tableSafetyCol}: <span style="color: #f43f5e; font-weight: bold;" dir="ltr">${tableSafetyInput.value}%</span>
                 </div>
             `;
             cloneWrapper.appendChild(headerDiv);
@@ -1331,8 +1385,8 @@
             summaryDiv.style.textAlign = 'center';
             summaryDiv.style.fontFamily = "'Tajawal', sans-serif";
             summaryDiv.innerHTML = `
-                <span style=\"color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: normal !important; direction: rtl;\">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
-                <span style=\"color: #10b981; font-size: 24px; font-weight: 900; display: block;\" dir=\"ltr\">${formatNumber(netProfit)} ${unit}</span>
+                <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: normal !important; direction: rtl;">${currentLang === 'ar' ? 'صافي الأرباح المتوقعة:' : 'Expected Net Profit:'}</span>
+                <span style="color: #10b981; font-size: 24px; font-weight: 900; display: block;" dir="ltr">${formatNumber(netProfit)} ${unit}</span>
             `;
             cloneWrapper.appendChild(summaryDiv);
 
@@ -1359,7 +1413,7 @@
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
                 document.body.removeChild(cloneWrapper);
-                showToast(currentLang === 'ar' ? "تم حفظ الصورة بنجاح! نصوص واضحة $100\\%$." : "Image saved perfectly!", '📸');
+                showToast(currentLang === 'ar' ? "تم حفظ الصورة بنجاح! نصوص واضحة %100" : "Image saved perfectly!", '📸');
             }).catch(error => {
                 console.error("html2canvas Error:", error);
                 showToast(currentLang === 'ar' ? "حدث خطأ أثناء حفظ الصورة." : "Error exporting image.", '❌');
@@ -1598,7 +1652,7 @@
         });
 
         // ========================================================
-        // إدارة السجل المؤقت والبيانات المفصلة
+        // إدارة السجل المؤقت والبيانات المفصلة للآلة الزمنية
         // ========================================================
 
         function toggleExpandTrade(id) { 
