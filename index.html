@@ -67,7 +67,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
 
         /* ======================================================== */
-        /* الطباعة المباشرة وتأمين ألوان الـ PDF بالكامل */
+        /* الطباعة المباشرة والـ PDF المطور لمنع الشاشات السوداء */
         /* ======================================================== */
         #printArea { display: none; }
         
@@ -123,7 +123,7 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- نافذة إعدادات الطباعة والـ PDF (مُصلحة بالكامل للشاشات الصغيرة) -->
+    <!-- نافذة إعدادات الطباعة والـ PDF المحدثة بالكامل -->
     <!-- ============================================================== -->
     <div id="printSettingsModal" class="fixed inset-0 z-[80] hidden">
         <!-- الخلفية المعتمة -->
@@ -1042,7 +1042,7 @@
 
 
         // ========================================================
-        // وظائف المعاينة وطباعة الـ PDF (مع حماية تامة ضد ألوان النظام الداكنة)
+        // وظائف المعاينة وطباعة الـ PDF (Direct Print Engine)
         // ========================================================
         
         openPrintModalBtn.addEventListener('click', () => {
@@ -1100,7 +1100,7 @@
             });
         });
 
-        // الطباعة المباشرة من الصفحة مع حماية كاملة ضد أخطاء السواد العشوائي
+        // الطباعة المباشرة من نفس الصفحة لتجنب تدمير التنسيقات على الجوال
         executePrintBtn.addEventListener('click', () => {
             hidePrintModal();
             const initialCapital = getCapital();
@@ -1114,7 +1114,7 @@
             
             const totalNetProfit = currentTablePlanData[currentTablePlanData.length - 1].actualEnd - initialCapital;
 
-            // تحديد ألوان صلبة ومثالية للمتصفح مباشرة
+            // تحديد ألوان الطباعة الصارمة (لن يتجاوزها المتصفح)
             let bgPage, textMain, textMuted, bgHeader, borderMain, rowZebra, bgSummary, rowProfit, rowLoss;
             if (theme === 'dark') {
                 bgPage = '#0c101d'; textMain = '#f1f5f9'; textMuted = '#94a3b8';
@@ -1212,7 +1212,7 @@
         });
 
         // ========================================================
-        // تصدير الصورة للنوته (جدول أعمدة متناسق وجميل جداً بدون تكرار الصناديق)
+        // تصدير الصورة للنوته (أعمدة عمودية متناسقة فائقة الوضوح والترتيب)
         // ========================================================
 
         exportImageBtn.addEventListener('click', () => {
@@ -1234,8 +1234,8 @@
             cloneWrapper.style.position = 'absolute';
             cloneWrapper.style.top = '-9999px';
             cloneWrapper.style.left = '-9999px';
-            cloneWrapper.style.width = '520px'; 
-            cloneWrapper.style.backgroundColor = '#070a13'; // خلفية سوداء عميقة ناصعة
+            cloneWrapper.style.width = '550px'; 
+            cloneWrapper.style.backgroundColor = '#070a13'; // خلفية سوداء عميقة ناصعة جداً
             cloneWrapper.style.padding = '24px';
             cloneWrapper.style.borderRadius = '16px';
             cloneWrapper.style.boxSizing = 'border-box';
@@ -1257,7 +1257,7 @@
                     📈 ${t.appTitle} - ${t.logPlanType}
                 </div>
                 <div style="color: #94a3b8; font-size: 11px; font-weight: 500; display: flex; justify-content: center; gap: 8px;">
-                    <span>رأس المال: <strong style="color: #f59e0b;">${formatNumber(initialCapital)} ${unit}</strong></span> |
+                    <span>رأس المال: <strong style="color: #fbbf24;">${formatNumber(initialCapital)} ${unit}</strong></span> |
                     <span>الهدف: <strong style="color: #10b981;">${tableTargetInput.value}%</strong></span> |
                     <span>الأمان: <strong style="color: #f43f5e;">${tableSafetyInput.value}%</strong></span>
                 </div>
@@ -1272,15 +1272,15 @@
             tableElement.style.fontSize = '12px';
             tableElement.style.color = '#e2e8f0';
 
-            // ترويسة الأعمدة النحيفة
+            // ترويسة الأعمدة النحيفة المحددة
             const thead = document.createElement('thead');
             thead.innerHTML = `
-                <tr style="border-bottom: 2px solid #1e293b; color: #94a3b8; font-weight: 700; height: 35px;">
-                    <th style="padding: 6px 4px; font-size: 11px; width: 14%;">الأيام</th>
-                    <th style="padding: 6px 4px; font-size: 11px; width: 22%;">المبلغ الأساسي</th>
-                    <th style="padding: 6px 4px; font-size: 11px; width: 21%;">الهدف (Target)</th>
-                    <th style="padding: 6px 4px; font-size: 11px; width: 21%;">الخسارة (الأمان)</th>
-                    <th style="padding: 6px 4px; font-size: 11px; width: 22%;">نهاية اليوم</th>
+                <tr style="border-bottom: 2px solid #1e293b; color: #94a3b8; font-weight: 700; height: 35px; background-color: #0b0e1a;">
+                    <th style="padding: 6px 4px; border: 1px solid #1e293b; font-size: 11px; width: 14%;">الأيام</th>
+                    <th style="padding: 6px 4px; border: 1px solid #1e293b; font-size: 11px; width: 22%;">المبلغ الأساسي</th>
+                    <th style="padding: 6px 4px; border: 1px solid #1e293b; font-size: 11px; width: 21%;">الهدف (Target)</th>
+                    <th style="padding: 6px 4px; border: 1px solid #1e293b; font-size: 11px; width: 21%;">الخسارة (الأمان)</th>
+                    <th style="padding: 6px 4px; border: 1px solid #1e293b; font-size: 11px; width: 22%;">نهاية اليوم</th>
                 </tr>
             `;
             tableElement.appendChild(thead);
@@ -1289,37 +1289,38 @@
             const tbody = document.createElement('tbody');
             currentTablePlanData.forEach((row) => {
                 const tr = document.createElement('tr');
-                tr.style.height = '34px';
-                tr.style.borderBottom = '1px solid #161e2e'; // خطوط أفقية ناعمة جداً
+                tr.style.height = '36px';
+                tr.style.borderBottom = '1px solid #161e2e'; // خطوط تقسيم نحيفة وممتازة
                 
-                // حسابات القيم ليكون الجدول ثرياً بالمعلومات
-                const profitAmt = row.profitValue;
-                const lossAmt = row.lossValue;
+                let rowBg = 'transparent';
+                if (row.status === 'profit') rowBg = 'rgba(16, 185, 129, 0.05)';
+                else if (row.status === 'loss') rowBg = 'rgba(244, 63, 94, 0.05)';
+                tr.style.backgroundColor = rowBg;
 
                 // اليوم بالكامل عمودياً
-                const dayCell = `<td style="padding: 6px 4px; font-weight: bold; color: #38bdf8;">اليوم ${row.day}</td>`;
+                const dayCell = `<td style="padding: 6px 4px; font-weight: bold; border: 1px solid #1e293b; color: #38bdf8;">اليوم ${row.day}</td>`;
                 
                 // المبلغ الأساسي بداية اليوم
-                const startCell = `<td style="padding: 6px 4px; color: #cbd5e1; direction: ltr;">${formatNumber(row.start)}</td>`;
+                const startCell = `<td style="padding: 6px 4px; border: 1px solid #1e293b; color: #cbd5e1; direction: ltr;">${formatNumber(row.start)}</td>`;
                 
-                // الهدف (النسبة وتحتها القيمة)
+                // الهدف (النسبة وتحتها القيمة المكتسبة)
                 const targetCell = `
-                    <td style="padding: 6px 4px;">
+                    <td style="padding: 6px 4px; border: 1px solid #1e293b;">
                         <div style="font-weight: bold; color: #10b981; font-size: 10px;">${row.profitRate}%</div>
-                        <div style="color: #34d399; font-size: 11px; margin-top: 1px; direction: ltr;">+${formatNumber(profitAmt)}</div>
+                        <div style="color: #34d399; font-size: 11px; margin-top: 1px; direction: ltr;">+${formatNumber(row.profitValue)}</div>
                     </td>
                 `;
                 
-                // الأمان (النسبة وتحتها القيمة)
+                // الأمان (النسبة وتحتها مبلغ الوقف)
                 const safetyCell = `
-                    <td style="padding: 6px 4px;">
+                    <td style="padding: 6px 4px; border: 1px solid #1e293b;">
                         <div style="font-weight: bold; color: #ef4444; font-size: 10px;">${row.safetyRate}%</div>
-                        <div style="color: #f87171; font-size: 11px; margin-top: 1px; direction: ltr;">-${formatNumber(lossAmt)}</div>
+                        <div style="color: #f87171; font-size: 11px; margin-top: 1px; direction: ltr;">-${formatNumber(row.lossValue)}</div>
                     </td>
                 `;
                 
                 // رصيد نهاية اليوم
-                const endCell = `<td style="padding: 6px 4px; font-weight: bold; color: #fbbf24; direction: ltr;">${formatNumber(row.actualEnd)}</td>`;
+                const endCell = `<td style="padding: 6px 4px; border: 1px solid #1e293b; font-weight: bold; color: #fbbf24; direction: ltr;">${formatNumber(row.actualEnd)}</td>`;
 
                 tr.innerHTML = dayCell + startCell + targetCell + safetyCell + endCell;
                 tbody.appendChild(tr);
