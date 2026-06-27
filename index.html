@@ -818,6 +818,9 @@
             document.getElementById('uiPrintThemeLabel').innerText = t.printThemeLabel;
             document.getElementById('uiExecutePrintBtnText').innerText = t.executePrintBtnText;
 
+            // تحديث نص زر العملة والوحدات بالتوازي مع اللغة والعملة الحالية
+            currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
+
             updateMethodLabel();
             updateToggleStatusText();
             calculate();
@@ -832,6 +835,34 @@
             currentLang = (currentLang === 'ar') ? 'en' : 'ar';
             localStorage.setItem('app_lang', currentLang);
             updateLanguageUI();
+        });
+
+        // ========================================================
+        // تفعيل زر التبديل بين الدولار والريال السعودي
+        // ========================================================
+        currencyToggle.addEventListener('click', () => {
+            isUSD = !isUSD;
+            
+            // تحديث نص زر التبديل نفسه
+            currencyToggle.innerText = isUSD ? '$ USD' : (currentLang === 'ar' ? 'ر.س SAR' : 'SAR SAR');
+            
+            // تحديث الرمز بجانب حقل الإدخال إذا كان نمط الإدخال بالعملة الثابتة
+            if (calcMethodToggle.checked) {
+                inputUnit.innerText = isUSD ? "$" : (currentLang === 'ar' ? 'ر.س' : 'SAR');
+            }
+            
+            // إعادة الحساب بالعملة والأسعار الجديدة فوراً
+            calculate();
+            
+            // إذا كان المستخدم قد أنشأ جدول الخطة اليومية، يُعاد توليدها بالعملة والرموز الجديدة تلقائياً
+            if (activeTab === 'table' && generatedTableContainer.innerHTML.trim() !== '') { 
+                generateDailyPlan(); 
+            }
+            
+            // إعادة عرض السجل المؤقت لعكس رموز العملة الجديدة
+            renderSavedLog();
+            
+            showToast(currentLang === 'ar' ? "تم تبديل العملة بنجاح!" : "Currency changed successfully!", '🌐');
         });
 
         function updateMethodLabel() {
@@ -1213,7 +1244,6 @@
 
         // ========================================================
         // تصدير الصورة للنوته (أعمدة عمودية متناسقة فائقة الوضوح والترتيب)
-        // هذا هو القسم الذي تم إعادة كتابته بالكامل لإنشاء جدول أعمدة مستقل
         // ========================================================
 
         exportImageBtn.addEventListener('click', () => {
